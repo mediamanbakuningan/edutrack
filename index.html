@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1e56e0">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EduTrack">
@@ -802,36 +802,37 @@ button,.btn,.btn:hover,.btn:active,.btn.pri,.btn.pri:hover,.btn.ghost,.btn.ghost
 .btn:hover{filter:brightness(.97)}.btn:active{filter:brightness(.92)}
 </style>
 <style>
-.pwa-btn{display:none;align-items:center;gap:8px;height:38px;margin:14px 0 0;padding:0 16px;border-radius:999px;cursor:pointer;
-  background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.42);font-weight:600;font-size:.84rem;line-height:1;font-family:inherit;
-  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .2s,color .2s}
+/* Tombol Install Aplikasi: tersembunyi sampai browser mengizinkan pemasangan (gaya pill putih) */
+.pwa-btn{display:none;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;padding:11px 26px;border-radius:999px;cursor:pointer;
+  background:#fff;color:#0b1f19;border:1px solid #cbd5e1;font-weight:700;font-size:.92rem;line-height:1;font-family:inherit;
+  box-shadow:0 6px 16px rgba(0,0,0,.14);transition:.2s}
 .pwa-btn svg{width:17px;height:17px;flex:none}
-.pwa-btn.alt{margin:14px auto 0;background:transparent;color:var(--pr);border:1px solid var(--pr);-webkit-backdrop-filter:none;backdrop-filter:none}
-.pwa-btn.alt:hover,.pwa-btn.alt:focus-visible{background:var(--pr);color:#fff}
-.pwa-btn:hover,.pwa-btn:focus-visible{background:#fff;color:var(--pr)}
+.pwa-btn:hover,.pwa-btn:focus-visible{background:#f1f5f9}
+.pwa-btn.alt{margin-top:14px;box-shadow:none}
 html.pwa-can .pwa-btn{display:inline-flex}
 .pwa-st{margin:0 0 10px;padding-left:20px;line-height:1.7;text-align:left}
 </style>
 <script>
-/* ===== Tombol "Install Aplikasi" (PWA) ===== */
+/* ===== Install Aplikasi (PWA) ===== */
 var PWA={ev:null};
 function pwaStandalone(){try{return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}catch(e){return false;}}
 function pwaIOS(){var u=navigator.userAgent||'';return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
 function pwaShow(on){document.documentElement.classList.toggle('pwa-can',!!on&&!pwaStandalone());}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();PWA.ev=e;pwaShow(true);});
-window.addEventListener('appinstalled',function(){PWA.ev=null;pwaShow(false);try{if(typeof toast==='function')toast('Aplikasi berhasil dipasang','ok');}catch(_){}});
-pwaShow(true); /* tampil selama belum berjalan sebagai aplikasi terpasang; tanpa event install -> petunjuk manual */
-function pwaInstall(){
-  if(PWA.ev){
-    var ev=PWA.ev;PWA.ev=null;
-    ev.prompt();
-    ev.userChoice.then(function(c){if(c&&c.outcome==='accepted')pwaShow(false);}).catch(function(){});
+window.addEventListener('appinstalled',function(){PWA.ev=null;pwaShow(false);});
+if(pwaIOS())pwaShow(true); /* iOS tidak punya event install: tampilkan tombol + petunjuk */
+function installApp(){
+  var p=PWA.ev;
+  if(p){
+    p.prompt();
+    p.userChoice.then(function(){PWA.ev=null;pwaShow(false);});
     return;
   }
-  var steps=pwaIOS()
-    ?'<li>Ketuk tombol <b>Bagikan</b> (ikon kotak dengan panah ke atas) di Safari.</li><li>Gulir lalu pilih <b>Tambah ke Layar Utama</b>.</li><li>Ketuk <b>Tambah</b>.</li>'
-    :'<li>Buka menu browser (ikon <b>&#8942;</b> atau <b>&#8943;</b>).</li><li>Pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</li><li>Konfirmasi pemasangan.</li><li>Jika pilihannya tidak ada, buka situs ini lewat <b>Chrome</b> atau <b>Edge</b>.</li>';
-  modal('Pasang Aplikasi','<p class="mu" style="margin:0 0 10px">Pasang aplikasi ini agar bisa dibuka langsung dari layar utama perangkat.</p><ol class="pwa-st">'+steps+'</ol>',[{t:'Mengerti',c:'pri',f:function(){closeM();}}]);
+  if(pwaIOS()){
+    modal('Pasang Aplikasi','<p class="mu" style="margin:0 0 10px">Pasang aplikasi ini agar bisa dibuka dari layar utama.</p><ol class="pwa-st"><li>Ketuk tombol <b>Bagikan</b> (ikon kotak dengan panah ke atas) di Safari.</li><li>Pilih <b>Tambah ke Layar Utama</b>.</li><li>Ketuk <b>Tambah</b>.</li></ol>',[{t:'Mengerti',c:'pri',f:function(){closeM();}}]);
+    return;
+  }
+  try{toast("Gunakan menu browser \u2192 'Tambahkan ke Layar Utama'.");}catch(e){}
 }
 </script>
 </head>
@@ -1489,7 +1490,7 @@ function vLogin(){
     (w
       ?`<form onsubmit="login(event)"><label for="ni">NISN anak</label><input id="ni" class="in" required inputmode="numeric" autocomplete="off" placeholder="Contoh: 0091234567"><p class="mu" style="margin-top:8px">Wali murid masuk dengan NISN anak.</p><button id="lb" class="btn pri w" style="margin-top:16px">Masuk sebagai Wali Murid</button></form>`
       :`<form onsubmit="login(event)"><label for="u">Username</label><input id="u" class="in" required autocomplete="username" placeholder=""><label for="p">Kata sandi</label><div class="pw"><input id="p" type="password" class="in" required autocomplete="current-password"><button type="button" id="pwb" class="pwt" onclick="togPw()" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">${ico('eye')}</button></div><button id="lb" class="btn pri w" style="margin-top:16px">Masuk</button></form>`)+
-    `<button type="button" class="pwa-btn alt" onclick="pwaInstall()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Download Aplikasi</button>`+
+    `<button type="button" class="pwa-btn alt" onclick="installApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Install Aplikasi</button>`+
     `<p class="mu" style="margin-top:14px">@2026 All Rights Reserved | albustomipauzi</p></div>`;
 }
 function lmSet(m){if(S.lm===m)return;S.lm=m;render();}
@@ -5659,7 +5660,7 @@ function heroIns(){
     a.insertAdjacentHTML('afterbegin',
     `<div class="hero"><div class="hero-tx">${heroRole()}<div class="hero-top"><h2>${esc(nm)}</h2></div>`+
     (q?`<blockquote class="hero-q">\u201C${esc(q)}\u201D</blockquote>`:'')+
-    `<button type="button" class="pwa-btn" onclick="pwaInstall()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Download Aplikasi</button></div></div>`);
+    `<button type="button" class="pwa-btn" onclick="installApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Install Aplikasi</button></div></div>`);
 }
 
 const logoSvg=(c)=>CFG.logo?`<span class="lg ${c||''}" aria-hidden="true"><img src="${esc(CFG.logo)}" alt=""></span>`:`<span class="lg ${c||''}" aria-hidden="true"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="url(#etg)"/><rect x="9" y="22" width="5.5" height="9" rx="2.2" fill="#fff" opacity=".6"/><rect x="17.2" y="16" width="5.5" height="15" rx="2.2" fill="#fff" opacity=".8"/><rect x="25.5" y="9" width="5.5" height="22" rx="2.2" fill="#fff"/></svg></span>`;
@@ -5862,9 +5863,8 @@ if(TOKEN){
 }
 </script>
 <script>
-if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
-  window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});
-}
+/* Service Worker bersifat opsional: hanya didaftarkan bila sw.js ada */
+if('serviceWorker' in navigator){fetch('sw.js',{method:'HEAD'}).then(function(r){if(r.ok)navigator.serviceWorker.register('sw.js');}).catch(function(){});}
 </script>
 </body>
 </html>
