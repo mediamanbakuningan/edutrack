@@ -1,5 +1,18 @@
-// Menyajikan logo aplikasi (disimpan sebagai data URL di Sheet) sebagai gambar untuk og:image.
+// Menyajikan logo aplikasi (disimpan sebagai data URL di Sheet) sebagai gambar og:image.
+// WhatsApp menolak/menyembunyikan gambar yang terlalu kecil, jadi logo ditaruh di kanvas persegi 600x600.
 const { getCfg } = require('./_cfg');
+let sharp = null;
+try { sharp = require('sharp'); } catch (e) { sharp = null; }
+
+async function toCard(buf) {
+  if (!sharp) return { body: buf, type: null };
+  const logo = await sharp(buf).resize(480, 480, { fit: 'inside' }).png().toBuffer();
+  const base = sharp({ create: { width: 600, height: 600, channels: 3, background: '#ffffff' } })
+    .composite([{ input: logo, gravity: 'centre' }]);
+  let out = await base.clone().png({ compressionLevel: 9 }).toBuffer();
+  if (out.length > 280 * 1024) return { body: await base.jpeg({ quality: 85 }).toBuffer(), type: 'image/jpeg' };
+  return { body: out, type: 'image/png' };
+}
 
 module.exports = async (req, res) => {
   const c = await getCfg();
@@ -10,11 +23,13 @@ module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60');
     return res.end();
   }
-  const buf = Buffer.from(m[2], 'base64');
+  let out;
+  try { out = await toCard(Buffer.from(m[2], 'base64')); }
+  catch (e) { out = { body: Buffer.from(m[2], 'base64'), type: null }; }
   res.statusCode = 200;
-  res.setHeader('Content-Type', m[1] === 'png' ? 'image/png' : 'image/jpeg');
-  res.setHeader('Content-Length', buf.length);
+  res.setHeader('Content-Type', out.type || (m[1] === 'png' ? 'image/png' : 'image/jpeg'));
+  res.setHeader('Content-Length', out.body.length);
   // URL membawa ?v=<hash logo>, jadi aman di-cache lama; berubah otomatis saat logo diganti
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800');
-  res.end(buf);
+  res.end(out.body);
 };
