@@ -803,9 +803,11 @@ button,.btn,.btn:hover,.btn:active,.btn.pri,.btn.pri:hover,.btn.ghost,.btn.ghost
 </style>
 <style>
 .pwa-btn{display:none;align-items:center;gap:8px;height:38px;margin:14px 0 0;padding:0 16px;border-radius:999px;cursor:pointer;
-  background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.42);font:600 .84rem/1 inherit;font-family:inherit;
+  background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.42);font-weight:600;font-size:.84rem;line-height:1;font-family:inherit;
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .2s,color .2s}
 .pwa-btn svg{width:17px;height:17px;flex:none}
+.pwa-btn.alt{margin:14px auto 0;background:transparent;color:var(--pr);border:1px solid var(--pr);-webkit-backdrop-filter:none;backdrop-filter:none}
+.pwa-btn.alt:hover,.pwa-btn.alt:focus-visible{background:var(--pr);color:#fff}
 .pwa-btn:hover,.pwa-btn:focus-visible{background:#fff;color:var(--pr)}
 html.pwa-can .pwa-btn{display:inline-flex}
 .pwa-st{margin:0 0 10px;padding-left:20px;line-height:1.7;text-align:left}
@@ -818,7 +820,7 @@ function pwaIOS(){var u=navigator.userAgent||'';return /iphone|ipad|ipod/i.test(
 function pwaShow(on){document.documentElement.classList.toggle('pwa-can',!!on&&!pwaStandalone());}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();PWA.ev=e;pwaShow(true);});
 window.addEventListener('appinstalled',function(){PWA.ev=null;pwaShow(false);try{if(typeof toast==='function')toast('Aplikasi berhasil dipasang','ok');}catch(_){}});
-if(!pwaStandalone()&&pwaIOS())pwaShow(true); /* iOS tidak punya event install: tampilkan petunjuk manual */
+pwaShow(true); /* tampil selama belum berjalan sebagai aplikasi terpasang; tanpa event install -> petunjuk manual */
 function pwaInstall(){
   if(PWA.ev){
     var ev=PWA.ev;PWA.ev=null;
@@ -828,7 +830,7 @@ function pwaInstall(){
   }
   var steps=pwaIOS()
     ?'<li>Ketuk tombol <b>Bagikan</b> (ikon kotak dengan panah ke atas) di Safari.</li><li>Gulir lalu pilih <b>Tambah ke Layar Utama</b>.</li><li>Ketuk <b>Tambah</b>.</li>'
-    :'<li>Buka menu browser (ikon <b>&#8942;</b> atau <b>&#8943;</b>).</li><li>Pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</li><li>Konfirmasi pemasangan.</li>';
+    :'<li>Buka menu browser (ikon <b>&#8942;</b> atau <b>&#8943;</b>).</li><li>Pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</li><li>Konfirmasi pemasangan.</li><li>Jika pilihannya tidak ada, buka situs ini lewat <b>Chrome</b> atau <b>Edge</b>.</li>';
   modal('Pasang Aplikasi','<p class="mu" style="margin:0 0 10px">Pasang aplikasi ini agar bisa dibuka langsung dari layar utama perangkat.</p><ol class="pwa-st">'+steps+'</ol>',[{t:'Mengerti',c:'pri',f:function(){closeM();}}]);
 }
 </script>
@@ -1487,6 +1489,7 @@ function vLogin(){
     (w
       ?`<form onsubmit="login(event)"><label for="ni">NISN anak</label><input id="ni" class="in" required inputmode="numeric" autocomplete="off" placeholder="Contoh: 0091234567"><p class="mu" style="margin-top:8px">Wali murid masuk dengan NISN anak.</p><button id="lb" class="btn pri w" style="margin-top:16px">Masuk sebagai Wali Murid</button></form>`
       :`<form onsubmit="login(event)"><label for="u">Username</label><input id="u" class="in" required autocomplete="username" placeholder=""><label for="p">Kata sandi</label><div class="pw"><input id="p" type="password" class="in" required autocomplete="current-password"><button type="button" id="pwb" class="pwt" onclick="togPw()" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">${ico('eye')}</button></div><button id="lb" class="btn pri w" style="margin-top:16px">Masuk</button></form>`)+
+    `<button type="button" class="pwa-btn alt" onclick="pwaInstall()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Download Aplikasi</button>`+
     `<p class="mu" style="margin-top:14px">@2026 All Rights Reserved | albustomipauzi</p></div>`;
 }
 function lmSet(m){if(S.lm===m)return;S.lm=m;render();}
