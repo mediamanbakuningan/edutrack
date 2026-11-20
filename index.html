@@ -801,6 +801,37 @@ button,.btn,.btn:hover,.btn:active,.btn.pri,.btn.pri:hover,.btn.ghost,.btn.ghost
 .ov .mc .btn.ghost,.glp-b .btn,.glp-b .btn.ghost,:root[data-theme=dark] .btn.pri,:root[data-theme=dark] .btn.pri:hover{box-shadow:none!important;filter:none;text-shadow:none!important}
 .btn:hover{filter:brightness(.97)}.btn:active{filter:brightness(.92)}
 </style>
+<style>
+.pwa-btn{display:none;align-items:center;gap:8px;height:38px;margin:14px 0 0;padding:0 16px;border-radius:999px;cursor:pointer;
+  background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.42);font:600 .84rem/1 inherit;font-family:inherit;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .2s,color .2s}
+.pwa-btn svg{width:17px;height:17px;flex:none}
+.pwa-btn:hover,.pwa-btn:focus-visible{background:#fff;color:var(--pr)}
+html.pwa-can .pwa-btn{display:inline-flex}
+.pwa-st{margin:0 0 10px;padding-left:20px;line-height:1.7;text-align:left}
+</style>
+<script>
+/* ===== Tombol "Install Aplikasi" (PWA) ===== */
+var PWA={ev:null};
+function pwaStandalone(){try{return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}catch(e){return false;}}
+function pwaIOS(){var u=navigator.userAgent||'';return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function pwaShow(on){document.documentElement.classList.toggle('pwa-can',!!on&&!pwaStandalone());}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();PWA.ev=e;pwaShow(true);});
+window.addEventListener('appinstalled',function(){PWA.ev=null;pwaShow(false);try{if(typeof toast==='function')toast('Aplikasi berhasil dipasang','ok');}catch(_){}});
+if(!pwaStandalone()&&pwaIOS())pwaShow(true); /* iOS tidak punya event install: tampilkan petunjuk manual */
+function pwaInstall(){
+  if(PWA.ev){
+    var ev=PWA.ev;PWA.ev=null;
+    ev.prompt();
+    ev.userChoice.then(function(c){if(c&&c.outcome==='accepted')pwaShow(false);}).catch(function(){});
+    return;
+  }
+  var steps=pwaIOS()
+    ?'<li>Ketuk tombol <b>Bagikan</b> (ikon kotak dengan panah ke atas) di Safari.</li><li>Gulir lalu pilih <b>Tambah ke Layar Utama</b>.</li><li>Ketuk <b>Tambah</b>.</li>'
+    :'<li>Buka menu browser (ikon <b>&#8942;</b> atau <b>&#8943;</b>).</li><li>Pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</li><li>Konfirmasi pemasangan.</li>';
+  modal('Pasang Aplikasi','<p class="mu" style="margin:0 0 10px">Pasang aplikasi ini agar bisa dibuka langsung dari layar utama perangkat.</p><ol class="pwa-st">'+steps+'</ol>',[{t:'Mengerti',c:'pri',f:function(){closeM();}}]);
+}
+</script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="etg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82ff"/><stop offset="1" stop-color="#163a9c"/></linearGradient></defs></svg>
@@ -1284,7 +1315,7 @@ function ld(d){pend=Math.max(0,pend+d);const el=$('ld');if(el)el.hidden=pend===0
 function expired(m){if(/Sesi berakhir/.test(m)){TOKEN=null;S.user=null;tokDel();closeM(true);render();}}
 // ===== Koneksi ke backend Apps Script (Web App) =====
 // Ganti dengan URL deployment Web App Anda (berakhiran /exec)
-const API_URL='https://script.google.com/macros/s/AKfycbx-i5_hYG7oWQlHjfIN0WMezABlkEMFwzWmcA4n9EE8mwJvUPkVnoU9Gzy9LuB4FJPqlA/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbwWfHmhkrbytTLnwaKLZB2bO2NCiiRJ3rHdKoRcsyVaPAO9Irwxn93p4pO6MtbPzgB3bw/exec';
 function gsCall(action,token,p){
   // text/plain = "simple request", jadi tidak memicu preflight CORS (Apps Script tidak mendukung OPTIONS)
   return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,token:token||null,p:p||{}})})
@@ -5624,7 +5655,8 @@ function heroIns(){
   const nm=S.user.r==='WALIMURID'&&WD&&WD.sw?'WALI MURID '+WD.sw.n:S.user.n;
     a.insertAdjacentHTML('afterbegin',
     `<div class="hero"><div class="hero-tx">${heroRole()}<div class="hero-top"><h2>${esc(nm)}</h2></div>`+
-    (q?`<blockquote class="hero-q">\u201C${esc(q)}\u201D</blockquote>`:'')+`</div></div>`);
+    (q?`<blockquote class="hero-q">\u201C${esc(q)}\u201D</blockquote>`:'')+
+    `<button type="button" class="pwa-btn" onclick="pwaInstall()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Download Aplikasi</button></div></div>`);
 }
 
 const logoSvg=(c)=>CFG.logo?`<span class="lg ${c||''}" aria-hidden="true"><img src="${esc(CFG.logo)}" alt=""></span>`:`<span class="lg ${c||''}" aria-hidden="true"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="url(#etg)"/><rect x="9" y="22" width="5.5" height="9" rx="2.2" fill="#fff" opacity=".6"/><rect x="17.2" y="16" width="5.5" height="15" rx="2.2" fill="#fff" opacity=".8"/><rect x="25.5" y="9" width="5.5" height="22" rx="2.2" fill="#fff"/></svg></span>`;
