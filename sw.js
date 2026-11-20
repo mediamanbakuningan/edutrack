@@ -5,7 +5,7 @@
  *  - Panggilan API ke Apps Script & semua non-GET: TIDAK disentuh (selalu langsung ke jaringan)
  * Naikkan VERSION setiap kali file shell berubah agar cache lama dibuang.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `edutrack-shell-${VERSION}`;
 const RUNTIME = `edutrack-runtime-${VERSION}`;
 
