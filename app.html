@@ -1318,7 +1318,7 @@ function ld(d){pend=Math.max(0,pend+d);const el=$('ld');if(el)el.hidden=pend===0
 function expired(m){if(/Sesi berakhir/.test(m)){TOKEN=null;S.user=null;tokDel();closeM(true);render();}}
 // ===== Koneksi ke backend Apps Script (Web App) =====
 // Ganti dengan URL deployment Web App Anda (berakhiran /exec)
-const API_URL='GANTI_DENGAN_URL_WEB_APP_/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbwWfHmhkrbytTLnwaKLZB2bO2NCiiRJ3rHdKoRcsyVaPAO9Irwxn93p4pO6MtbPzgB3bw/exec';
 function gsCall(action,token,p){
   // text/plain = "simple request", jadi tidak memicu preflight CORS (Apps Script tidak mendukung OPTIONS)
   return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,token:token||null,p:p||{}})})
