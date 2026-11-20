@@ -1,6 +1,6 @@
 // Menyajikan app.html dengan meta Open Graph (pratinjau link WhatsApp, dll.) sesuai Pengaturan aplikasi.
 const crypto = require('crypto');
-const { getCfg, appHtml } = require('./_cfg');
+const { getCfg, appHtml, apiUrl } = require('./_cfg');
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const cut = (s, n) => (s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s);
@@ -17,8 +17,22 @@ module.exports = async (req, res) => {
   const site = cfg.sek || cfg.nama;
   const docTitle = cfg.nama + (cfg.tag ? ' : ' + cfg.tag : '');
   const hasLogo = /^data:image\/(png|jpeg);base64,/.test(cfg.logo);
-  const ver = hasLogo ? crypto.createHash('md5').update(cfg.logo).digest('hex').slice(0, 8) : '';
+  const ver = hasLogo ? crypto.createHash('md5').update(cfg.logo + '|p600').digest('hex').slice(0, 8) : '';
   const img = hasLogo ? `${origin}/api/logo?v=${ver}` : `${origin}/icon-512.png`;
+
+  // Mode diagnosa: buka /?debug=1 untuk melihat apa yang dibaca fungsi dari Apps Script
+  if (String(req.url || '').includes('debug=1')) {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.end(JSON.stringify({
+      dataDariAppsScript: !!c.ok, error: c.err || null,
+      apiUrlTerisi: /^https:\/\/script\.google\.com\//.test(apiUrl()),
+      nama: cfg.nama, tag: cfg.tag, sek: cfg.sek,
+      adaLogo: hasLogo, ukuranLogoKarakter: (cfg.logo || '').length,
+      ogImage: img
+    }, null, 2));
+  }
 
   const meta = [
     `<meta name="description" content="${esc(desc)}">`,
@@ -28,6 +42,9 @@ module.exports = async (req, res) => {
     `<meta property="og:description" content="${esc(desc)}">`,
     `<meta property="og:url" content="${esc(origin + '/')}">`,
     `<meta property="og:image" content="${esc(img)}">`,
+    `<meta property="og:image:type" content="image/png">`,
+    `<meta property="og:image:width" content="${hasLogo ? 600 : 512}">`,
+    `<meta property="og:image:height" content="${hasLogo ? 600 : 512}">`,
     `<meta property="og:image:alt" content="${esc('Logo ' + cfg.nama)}">`,
     `<meta property="og:locale" content="id_ID">`,
     `<meta name="twitter:card" content="summary">`,
