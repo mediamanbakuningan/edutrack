@@ -375,7 +375,6 @@ body.has-sb{padding-left:calc(var(--sbw) + 16px)}
 .hero h2{font-size:1.55rem;font-weight:700;color:#fff;letter-spacing:-.01em;overflow-wrap:anywhere}
 .hero-tx{flex:1}
 .hero-top{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px}
-.hero-q{margin:12px 0 0;font-size:.92rem;line-height:1.6;font-style:italic;color:rgba(255,255,255,.9);max-width:680px}
 .hero-art-unused{position:relative;z-index:1;font-size:4.6rem;line-height:1;filter:drop-shadow(0 14px 14px rgba(10,30,100,.35));animation:heroFloat 4.5s ease-in-out infinite}
 @keyframes heroFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
 
@@ -426,7 +425,6 @@ tr:hover td{background:rgba(30,86,224,.04)}
   #sb .nv.on::before{left:-12px}
   .hero{flex-direction:row;padding:20px 22px;border-radius:24px;margin:4px 0 14px}
   .hero h2{font-size:1.25rem}
-  .hero-q{font-size:.82rem;margin-top:10px}
   .hero-art{font-size:3.2rem}
   .hero::after{display:none}
   #app .card{border-radius:20px}
@@ -811,6 +809,65 @@ button,.btn,.btn:hover,.btn:active,.btn.pri,.btn.pri:hover,.btn.ghost,.btn.ghost
 .pwa-btn.alt{margin-top:14px;box-shadow:none}
 html.pwa-can .pwa-btn{display:inline-flex}
 .pwa-st{margin:0 0 10px;padding-left:20px;line-height:1.7;text-align:left}
+
+/* ===== Mobile: bottom navigation, FAB menu tambahan, ikon card biru sejajar ===== */
+#mbn,#mbn-sheet,#mbn-scrim{display:none}
+@media(max-width:860px),(max-width:1024px) and (orientation:portrait){
+  #sb,#sbov,#nmenu{display:none!important}
+  body.has-sb{padding-left:0}
+  /* card biru: semua ikon dalam satu baris */
+  .hero-rc{flex-wrap:nowrap;gap:8px}
+  .hero-rc::after{display:none}
+  .hero-rc #nout{display:none}
+  .hero-rc #nakun,.hero-rc #tbtn,.hero-rc #nusul,.hero-rc #nbell,.hero-rc #ninbox{width:36px;height:36px;flex:none;margin-left:0;order:4}
+  .hero-rc #nakun{order:0}
+  .hero-rc #rchip{order:1;flex:0 1 auto;min-width:0;max-width:none;margin:0 auto 0 0;height:34px}
+  /* bottom navigation */
+  body.has-mbn{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  body.has-mbn #toasts{bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+  #mbn:not([hidden]){display:flex}
+  #mbn{position:fixed;left:0;right:0;bottom:0;z-index:70;align-items:flex-end;justify-content:space-between;gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--bd);border-radius:24px 24px 0 0;box-shadow:0 -10px 30px -18px rgba(0,0,0,.35)}
+  .mbn-g{flex:1;min-width:0;display:flex;align-items:flex-end;justify-content:space-around;gap:2px}
+  .mbn-i{position:relative;flex:1;min-width:0;max-width:78px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border:0;border-radius:14px;background:transparent;color:var(--mu);font:600 .62rem/1.2 inherit;cursor:pointer}
+  .mbn-i svg{width:24px;height:24px}
+  .mbn-i span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mbn-i.on{color:var(--pr)}
+  .mbn-i:active{transform:scale(.95)}
+  .mbn-c{flex:none;width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 0 4px;border:0;background:transparent;color:var(--mu);cursor:pointer;font:inherit}
+  .mbn-cb{position:relative;width:64px;height:64px;margin-top:-34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--grad,var(--pr));color:#fff;border:5px solid var(--card);box-shadow:0 12px 24px -10px rgba(22,58,156,.65);transition:transform .15s}
+  .mbn-cb svg{width:30px;height:30px}
+  .mbn-c:active .mbn-cb{transform:scale(.94)}
+  .mbn-c.on .mbn-cb{box-shadow:0 0 0 3px color-mix(in srgb,var(--pr) 35%,transparent),0 12px 24px -10px rgba(22,58,156,.65)}
+  .mbn-cl{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 .66rem/1.2 inherit;color:var(--tx)}
+  .mbn-c.on .mbn-cl{color:var(--pr)}
+  .mbn-fab{position:relative;flex:none;width:48px;height:48px;margin:0 2px 4px 6px;border:0;border-radius:16px;display:flex;align-items:center;justify-content:center;background:var(--grad,var(--pr));color:#fff;cursor:pointer;box-shadow:0 10px 22px -10px rgba(22,58,156,.7);transition:border-radius .25s ease,transform .15s}
+  .mbn-fab svg{width:24px;height:24px;transition:transform .28s cubic-bezier(.16,1,.3,1)}
+  .mbn-fab:active{transform:scale(.94)}
+  .mbn-fab.has-on{box-shadow:0 0 0 3px color-mix(in srgb,var(--pr) 35%,transparent),0 10px 22px -10px rgba(22,58,156,.7)}
+  body.mbn-open .mbn-fab{border-radius:50%}
+  body.mbn-open .mbn-fab svg{transform:rotate(45deg)}
+  .mbn-b{position:absolute;top:2px;right:calc(50% - 22px);min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--er);color:#fff;font:700 .6rem/17px inherit;font-style:normal;text-align:center}
+  .mbn-cb .mbn-b{top:-2px;right:-2px}
+  .mbn-fab .mbn-b{top:-5px;right:-5px}
+  .mbn-i:focus-visible,.mbn-c:focus-visible .mbn-cb,.mbn-fab:focus-visible,.mbn-s:focus-visible{outline:2px solid var(--pr);outline-offset:2px}
+  /* sheet menu tambahan */
+  body.has-mbn #mbn-scrim{display:block;position:fixed;inset:0;z-index:62;background:rgba(10,20,50,.4);opacity:0;pointer-events:none;transition:opacity .2s ease}
+  body.has-mbn.mbn-open #mbn-scrim{opacity:1;pointer-events:auto}
+  body.has-mbn #mbn-sheet{display:block;position:fixed;left:12px;right:12px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:66;max-height:min(62vh,520px);overflow-y:auto;overscroll-behavior:contain;padding:14px;background:var(--card);border:1px solid var(--bd);border-radius:22px;box-shadow:0 24px 50px -20px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(16px) scale(.98);transform-origin:bottom right;transition:opacity .2s ease,transform .25s cubic-bezier(.16,1,.3,1),visibility 0s linear .25s}
+  body.has-mbn.mbn-open #mbn-sheet{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+  .mbn-gh{margin:10px 2px 6px;font:700 .7rem/1.2 inherit;letter-spacing:.04em;text-transform:uppercase;color:var(--mu)}
+  .mbn-gh:first-child{margin-top:0}
+  .mbn-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .mbn-s{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border:1px solid var(--bd);border-radius:16px;background:var(--bg);color:var(--tx);font:600 .72rem/1.25 inherit;text-align:center;cursor:pointer}
+  .mbn-s .ic{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--pr) 14%,transparent);color:var(--pr)}
+  .mbn-s .ic svg{width:21px;height:21px}
+  .mbn-s .tx{overflow-wrap:anywhere}
+  .mbn-s.on{border-color:var(--pr)}
+  .mbn-s.out{color:var(--er)}
+  .mbn-s.out .ic{background:var(--erb);color:var(--er)}
+  .mbn-s .mbn-b{top:6px;right:8px}
+}
+@media(prefers-reduced-motion:reduce){#mbn *,#mbn-sheet,#mbn-scrim{transition:none!important}}
 </style>
 <script>
 /* ===== Install Aplikasi (PWA) ===== */
@@ -846,6 +903,9 @@ function installApp(){
 <div id="sbov" onclick="closeSb()"></div>
 <main id="app" class="wrap"><div class="splash"><svg class="spin" viewBox="0 0 48 48" fill="currentColor" role="img" aria-label="Memuat"><circle cx="24.0" cy="8.0" r="4.6" opacity="1.00"/><circle cx="12.7" cy="12.7" r="4.2" opacity="0.90"/><circle cx="8.0" cy="24.0" r="3.8" opacity="0.80"/><circle cx="12.7" cy="35.3" r="3.4" opacity="0.70"/><circle cx="24.0" cy="40.0" r="3.0" opacity="0.60"/><circle cx="35.3" cy="35.3" r="2.6" opacity="0.50"/><circle cx="40.0" cy="24.0" r="2.2" opacity="0.40"/><circle cx="35.3" cy="12.7" r="1.8" opacity="0.30"/></svg></div></main>
 <div id="tbar" hidden><button type="button" id="nmenu" onclick="openSb()" aria-label="Buka menu" title="Menu"></button><button type="button" id="tbtn" onclick="themeT()" aria-label="Ganti tema terang/gelap" title="Ganti tema terang/gelap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg></button><button type="button" id="nusul" onclick="go('usulan')" aria-label="Kritik, saran &amp; usulan" title="Kritik/Saran/Usulan" hidden></button><button type="button" id="nbell" onclick="ntOpen()" aria-label="Notifikasi"></button><button type="button" id="ninbox" onclick="go('inbox')" aria-label="Saran masuk" title="Saran masuk" hidden></button><button type="button" id="nakun" onclick="akunM()" aria-label="Akun" title="Akun"></button><button type="button" id="nout" onclick="logout()" aria-label="Keluar" title="Keluar"></button></div>
+<div id="mbn-scrim" onclick="mbnMore(false)"></div>
+<div id="mbn-sheet" role="dialog" aria-label="Menu lainnya"></div>
+<nav id="mbn" hidden aria-label="Navigasi bawah"></nav>
 <div id="modal" class="ov"><div class="mc"><div class="bt"><h3 id="m-title"></h3><button class="btn ghost sm" onclick="closeM()" aria-label="Tutup">✕</button></div><div id="m-body"></div><div id="m-foot" class="row"></div></div></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script>
@@ -1004,19 +1064,6 @@ function navItems(){
   }
   return tabsFor(u.r).map(t=>Object.assign({on:S.tab===t.k},t));
 }
-const BNAV={
-  GURU:[['dbd','Dashboard'],['dash','Tugas'],['nilai','Nilai'],['absen','Absensi'],['kesprest','Prestasi'],['perangkat','Ajar']],
-  ADMIN:[['dbd','Dashboard'],['absen','Absen'],['bksesi','BK'],['izinver','Izin']],
-  KURIKULUM:[['dbd','Dashboard'],['izinver','Izin'],['nilai','Nilai']],
-  TU:[['absen','Absen'],['izinver','Izin'],['jadwal','Jadwal'],['rekapabs','Rekap'],['dbd','Dashboard']],
-  PIMPINAN:[['dbd','Dashboard'],['izinset','Setuju'],['bksp','Surat'],['rekapabs','Rekap']],
-  ADMIN_EKSKUL:[['abseskul','Ekskul']],
-  ADMIN_KEAMANAN:[['kespelanggaran','Langgar'],['kespoin','Poin'],['dbd','Dashboard'],['absmapel','Mapel']],
-  ADMIN_BK:[['bksesi','Sesi'],['bksp','Surat']],
-  ADMIN_SARPRAS:[['saraduadm','Aduan'],['sarpinjamadm','Pinjam'],['sarinven','Inven']],
-  ADMIN_KESISWAAN:[['kesprest','Prestasi'],['keskegiatan','Kegiatan']],
-  WALIMURID:[['dash','Anak'],['wnilai','Nilai'],['wabs','Absen'],['wlvg','Langgar'],['wprs','Prestasi'],['wthf','Tahfidz']]
-};
 const inisial=n=>String(n||'').trim().split(/\s+/).slice(0,2).map(w=>(w[0]||'').toUpperCase()).join('')||'?';
 let CFG={nama:'EduTrack',tag:'Sistem Administrasi Madrasah',sek:'',logo:'',q:[],wr:''},NT=[],NTA=[],CGD=null;
 function brandHtml(n){
@@ -1125,7 +1172,7 @@ function ntDelAsk(id){confirmM('Hapus pengumuman','Pengumuman ini akan dihapus d
 function aCfg(){
   const d=cfgInit();
   setTimeout(cfgPv,0);
-  return `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan aplikasi</h2><p class="mu">Atur identitas, tampilan, kutipan, dan pengumuman. Perubahan berlaku untuk semua pengguna setelah disimpan.</p></div><button class="btn pri" onclick="cfgSave()">Simpan pengaturan</button></div>`+
+  return `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan aplikasi</h2><p class="mu">Atur identitas, tampilan, dan pengumuman. Perubahan berlaku untuk semua pengguna setelah disimpan.</p></div><button class="btn pri" onclick="cfgSave()">Simpan pengaturan</button></div>`+
   `<div class="card"><h3>Identitas aplikasi</h3><div id="cfg-pv" class="cfg-pv mt"></div>`+
     `<label for="cf-n">Nama aplikasi</label><input id="cf-n" class="in" maxlength="40" value="${esc(d.nama)}" oninput="cfgIn('nama',this.value)">`+
     `<label for="cf-t">Subjudul (halaman masuk)</label><input id="cf-t" class="in" maxlength="80" value="${esc(d.tag)}" oninput="cfgIn('tag',this.value)">`+
@@ -1133,21 +1180,59 @@ function aCfg(){
   `<div class="card mt"><h3>Logo &amp; warna</h3><div class="row" style="gap:14px;align-items:center;margin-top:10px"><div class="cfg-logo" id="cfg-lg"></div><div class="row"><label class="btn ghost sm" style="cursor:pointer">Pilih logo<input type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="cfgLogo(this)"></label><button class="btn ghost sm" id="cfg-lgd" onclick="cfgLogoDel()">Pakai logo bawaan</button></div></div>`+
     `<p class="mu mt">PNG/JPG/WebP, otomatis diperkecil (maks. 256 px). Logo tampil di sidebar, halaman masuk, beranda, dan ikon tab.</p>`+
     `<div class="row" style="margin-top:14px;align-items:center;gap:10px"><label for="cf-w" style="margin:0">Warna utama (mode terang)</label><input id="cf-w" type="color" value="${esc(d.wr||'#1e56e0')}" oninput="cfgIn('wr',this.value)" style="width:48px;height:34px;border:0;background:none;padding:0"><button class="btn ghost sm" onclick="cfgWrDel()">Kembalikan bawaan</button></div></div>`+
-  `<div class="card mt"><div class="bt" style="flex-wrap:wrap"><div><h3>Kutipan</h3><p class="mu">Tampil bergantian di beranda dan banner sapaan. Kosongkan semua bila tidak ingin menampilkan kutipan.</p></div><button class="btn ghost sm" onclick="cfgQAdd()">+ Tambah kutipan</button></div>`+
-    (d.q.length?d.q.map((x,i)=>`<div class="cfg-q"><div style="flex:1;min-width:0"><textarea class="in" rows="3" maxlength="300" placeholder="Isi kutipan" aria-label="Kutipan ${i+1}" oninput="cfgQIn(${i},'t',this.value)">${esc(x.t)}</textarea><input class="in" style="margin-top:6px" maxlength="60" placeholder="Sumber / penulis (opsional)" aria-label="Sumber kutipan ${i+1}" value="${esc(x.l||'')}" oninput="cfgQIn(${i},'l',this.value)"></div><button class="btn ghost sm" onclick="cfgQDel(${i})" aria-label="Hapus kutipan ${i+1}">${ico('trash')}</button></div>`).join(''):`<div class="note mt">Belum ada kutipan tersimpan. Jalankan fungsi <b>kutipanDefault()</b> di Code.gs sekali (lalu hapus fungsinya), atau tambah kutipan manual dengan tombol di atas.</div>`)+
-  `</div>`+
   `<div class="card mt"><div class="bt" style="flex-wrap:wrap"><div><h3>Pengumuman (isi notifikasi)</h3><p class="mu">Muncul di ikon lonceng pengguna sesuai tujuan penerima. Disimpan langsung, tidak perlu menekan Simpan pengaturan.</p></div><button class="btn pri sm" onclick="ntEdit('')">+ Buat pengumuman</button></div>`+
     (NTA.length?NTA.map(x=>`<div class="mcard" style="margin-top:10px"><div class="mc-h"><div><b>${esc(x.j)}</b> ${x.a?'':'<span class="badge b-wa">Nonaktif</span>'}<div class="mc-sub">${esc(String(x.t).slice(0,16))} · ${x.s.length?x.s.map(r=>esc(ROLE_L[r]||r)).join(', '):'Semua pengguna'}</div></div></div><div class="mbody mt">${esc(trunc(x.i,140))}</div><div class="mc-f" style="justify-content:flex-end"><span class="acts">${ib('',`ntEdit('${esc(x.id)}')`,'edit','Ubah pengumuman')}${ib('del',`ntDelAsk('${esc(x.id)}')`,'trash','Hapus pengumuman')}</span></div></div>`).join(''):`<div class="note mt">Belum ada pengumuman.</div>`)+`</div>`;
 }
-function bnavBtn(n,d){
-    const act=n.k==='_menu'?'fabT(false);openSb()':n.k==='_akun'?'fabT(false);akunM()':n.k==='_out'?'fabT(false);logout()':`fabT(false);go('${n.k}')`;
-  return `<button type="button" class="fab-i ${n.on?'on':''}${n.k==='_menu'?' fab-menu':''}${n.k==='_out'?' out':''}" style="--d:${d||0}ms" onclick="${act}" aria-label="${esc(n.l)}"${n.on?' aria-current="page"':''}><span class="fab-l">${esc(n.l)}</span><span class="fab-c">${ico(n.i)}</span></button>`;
+/* ===== Bottom navigation (mobile): menu inti di tengah + FAB menu tambahan ===== */
+const MBN={
+  GURU:{c:'absmapel',s:['dbd','dash','nilai']},
+  ADMIN:{c:'absen',s:['dbd','izinver','bksesi']},
+  KURIKULUM:{c:'absmapel',s:['dbd','izinver','nilai']},
+  TU:{c:'absen',s:['dbd','izinver','jadwal']},
+  PIMPINAN:{c:'izinset',s:['dbd','rekapabs','bksp']},
+  ADMIN_EKSKUL:{c:'abseskul',s:['dbd']},
+  ADMIN_KEAMANAN:{c:'kespelanggaran',s:['dbd','kespoin','absmapel']},
+  ADMIN_BK:{c:'bksesi',s:['dbd','bksp']},
+  ADMIN_SARPRAS:{c:'saraduadm',s:['dbd','sarpinjamadm','sarinven']},
+  ADMIN_KESISWAAN:{c:'kesprest',s:['dbd','keskegiatan']},
+  WALIMURID:{c:'wabs',s:['dash','wnilai','wlvg']}
+};
+const MBL={dbd:'Dashboard',dash:'Tugas',nilai:'Nilai',absen:'Absen Guru',absmapel:'Absen Mapel',abseskul:'Ekskul',izinver:'Izin',izinset:'Izin',bksesi:'Konseling',bksp:'Surat',jadwal:'Jadwal',rekapabs:'Rekap',kespelanggaran:'Pelanggaran',kespoin:'Poin',saraduadm:'Aduan',sarpinjamadm:'Pinjam',sarinven:'Inventaris',kesprest:'Prestasi',keskegiatan:'Kegiatan',wabs:'Absensi',wnilai:'Nilai',wlvg:'Pelanggaran'};
+function mbnMore(f){
+  const o=typeof f==='boolean'?f:!document.body.classList.contains('mbn-open');
+  document.body.classList.toggle('mbn-open',o);
+  const b=document.querySelector('#mbn .mbn-fab');if(b)b.setAttribute('aria-expanded',o?'true':'false');
 }
-function fabT(f){
-  const b=$('bnav');if(!b)return;
-  const o=typeof f==='boolean'?f:!b.classList.contains('open');
-  b.classList.toggle('open',o);
-  const m=b.querySelector('.fab-main');if(m)m.setAttribute('aria-expanded',o?'true':'false');
+function mbnGo(k){mbnMore(false);go(k);}
+function mbnRender(){
+  const el=$('mbn'),sh=$('mbn-sheet');if(!el||!sh)return;
+  const on=!!S.user;
+  document.body.classList.toggle('has-mbn',on);
+  el.hidden=!on;
+  if(!on){document.body.classList.remove('mbn-open');el.innerHTML='';sh.innerHTML='';return;}
+  const items=navItems(),by={};
+  items.forEach(n=>{by[n.k]=n;});
+  const cfg=MBN[S.user.r]||{c:'dbd',s:[]};
+  const lab=n=>(S.user.r==='WALIMURID'&&n.k==='dash')?'Anak':(MBL[n.k]||n.l);
+  const core=by[cfg.c]||by.dbd||items[0];
+  if(!core){el.innerHTML='';sh.innerHTML='';return;}
+  const side=cfg.s.map(k=>by[k]).filter(n=>n&&n!==core);
+  const used=new Set([core].concat(side));
+  const bdg=n=>n.b?`<i class="mbn-b">${n.b>99?'99+':n.b}</i>`:'';
+  const sbtn=n=>`<button type="button" class="mbn-i${n.on?' on':''}" onclick="mbnGo('${n.k}')" aria-label="${esc(n.l)}"${n.on?' aria-current="page"':''}>${ico(n.i)}<span>${esc(lab(n))}</span>${bdg(n)}</button>`;
+  const left=side.slice(0,2),right=side.slice(2);
+  const more=items.filter(n=>!used.has(n)&&n.k!=='usulan'&&n.k!=='inbox');
+  const moreOn=more.some(n=>n.on),moreB=more.reduce((a,n)=>a+(+n.b||0),0);
+  el.innerHTML=`<div class="mbn-g">${left.map(sbtn).join('')}</div>`+
+    `<button type="button" class="mbn-c${core.on?' on':''}" onclick="mbnGo('${core.k}')" aria-label="${esc(core.l)}"${core.on?' aria-current="page"':''}><span class="mbn-cb">${ico(core.i)}${bdg(core)}</span><span class="mbn-cl">${esc(lab(core))}</span></button>`+
+    `<div class="mbn-g">${right.map(sbtn).join('')}<button type="button" class="mbn-fab${moreOn?' has-on':''}" onclick="mbnMore()" aria-label="Menu lainnya" aria-expanded="${document.body.classList.contains('mbn-open')?'true':'false'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${moreB?'<i class="mbn-b">'+(moreB>99?'99+':moreB)+'</i>':''}</button></div>`;
+  const grp=[];
+  more.forEach(n=>{const g=n.g||'';let x=grp.find(y=>y.g===g);if(!x){x={g,c:[]};grp.push(x);}x.c.push(n);});
+  const tile=n=>`<button type="button" class="mbn-s${n.on?' on':''}" onclick="mbnGo('${n.k}')"${n.on?' aria-current="page"':''}><span class="ic">${ico(n.i)}</span><span class="tx">${esc(n.l)}</span>${bdg(n)}</button>`;
+  sh.innerHTML=grp.map(x=>(x.g&&grp.length>1?`<div class="mbn-gh">${esc(x.g)}</div>`:'')+`<div class="mbn-grid">${x.c.map(tile).join('')}</div>`).join('')+
+    `<div class="mbn-gh">Akun</div><div class="mbn-grid">`+
+    `<button type="button" class="mbn-s" onclick="mbnMore(false);akunM()"><span class="ic">${ico('me')}</span><span class="tx">Akun saya</span></button>`+
+    `<button type="button" class="mbn-s out" onclick="mbnMore(false);logout()"><span class="ic">${ico('out')}</span><span class="tx">Keluar</span></button></div>`;
 }
 function roleSw(){return(S.user.rs||[S.user.r]).filter(r=>r!=='WALIKELAS');}
 const NAVP={
@@ -1253,6 +1338,7 @@ function renderSb(){
   if(sb)sb.hidden=!on;
   const tbr=$('tbar');if(tbr)tbr.hidden=!on;
   document.body.classList.toggle('has-sb',on);
+  mbnRender();
   if(!on){closeSb();return;}
     let pg='';const items=navItems(),multi=new Set(items.map(n=>n.g)).size>1;
   $('nav').innerHTML=navHtml(items.filter(n=>n.k!=='usulan'));
@@ -5666,7 +5752,6 @@ function dashaiNorm(o){
   });
 }
 let HQI=-1;
-function heroQ(){const q=CFG.q||[];if(!q.length)return '';if(HQI<0||HQI>=q.length)HQI=Math.floor(Math.random()*q.length);return q[HQI].t;}
 function heroRole(){
   const rs=roleSw(),r=S.user.r,multi=rs.length>1;
   return `<div class="hero-rc"><div id="rchip" class="${multi?'multi':''}"><span class="rc-d" aria-hidden="true"></span><span class="rc-t">${esc(ROLE_L[r]||r)}</span>`+(multi
@@ -5675,11 +5760,9 @@ function heroRole(){
 }
 function heroIns(){
   const a=$('app');if(!a||!S.user||S.user.mc)return;
-  const q=heroQ();
   const nm=S.user.r==='WALIMURID'&&WD&&WD.sw?'WALI MURID '+WD.sw.n:S.user.n;
     a.insertAdjacentHTML('afterbegin',
     `<div class="hero"><div class="hero-tx">${heroRole()}<div class="hero-top"><h2>${esc(nm)}</h2></div>`+
-    (q?`<blockquote class="hero-q">\u201C${esc(q)}\u201D</blockquote>`:'')+
     `<button type="button" class="pwa-btn" onclick="installApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Install Aplikasi</button></div></div>`);
 }
 
@@ -5854,7 +5937,7 @@ function render(keep){
   if(keep!==true)window.scrollTo(0,0);
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeM();closeSb();fabT(false);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeM();closeSb();mbnMore(false);}});
 document.addEventListener('click',e=>{const m=$('modal');if(m&&e.target===m)closeM();});
 document.addEventListener('keydown',e=>{
   const t=e.target;
