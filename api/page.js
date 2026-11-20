@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
   const site = cfg.sek || cfg.nama;
   const docTitle = cfg.nama + (cfg.tag ? ' : ' + cfg.tag : '');
   const hasLogo = /^data:image\/(png|jpeg);base64,/.test(cfg.logo);
-  const ver = hasLogo ? crypto.createHash('md5').update(cfg.logo + '|p600').digest('hex').slice(0, 8) : '';
+  const ver = hasLogo ? crypto.createHash('md5').update(cfg.logo + '|p300').digest('hex').slice(0, 8) : '';
   const img = hasLogo ? `${origin}/api/logo?v=${ver}` : `${origin}/icon-512.png`;
 
   // Mode diagnosa: buka /?debug=1 untuk melihat apa yang dibaca fungsi dari Apps Script
@@ -34,8 +34,9 @@ module.exports = async (req, res) => {
     }, null, 2));
   }
 
+  // Pratinjau ringkas: hanya logo kecil + nama aplikasi (tanpa deskripsi)
   const meta = [
-    `<meta name="description" content="${esc(desc)}">`,
+   `<meta name="description" content="${esc(desc)}">`,
     `<meta property="og:type" content="website">`,
     `<meta property="og:site_name" content="${esc(site)}">`,
     `<meta property="og:title" content="${esc(title)}">`,
@@ -43,8 +44,8 @@ module.exports = async (req, res) => {
     `<meta property="og:url" content="${esc(origin + '/')}">`,
     `<meta property="og:image" content="${esc(img)}">`,
     `<meta property="og:image:type" content="image/png">`,
-    `<meta property="og:image:width" content="${hasLogo ? 600 : 512}">`,
-    `<meta property="og:image:height" content="${hasLogo ? 600 : 512}">`,
+    `<meta property="og:image:width" content="${hasLogo ? 300 : 512}">`,
+    `<meta property="og:image:height" content="${hasLogo ? 300 : 512}">`,
     `<meta property="og:image:alt" content="${esc('Logo ' + cfg.nama)}">`,
     `<meta property="og:locale" content="id_ID">`,
     `<meta name="twitter:card" content="summary">`,
