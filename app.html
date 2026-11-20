@@ -154,14 +154,18 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
 .trow label{display:block;margin:0 0 4px;font-size:.74rem;font-weight:600;color:var(--mu)}
 .trow .cbx{display:flex;align-items:center;gap:6px;margin:0 0 8px;font-weight:500;font-size:.8rem;color:var(--tx);white-space:nowrap;cursor:pointer}
 .trow .btn{align-self:end}
-#ld{position:fixed;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--pr),var(--ac),var(--pr));background-size:200% 100%;z-index:400;animation:loadingBarShimmer 1.2s linear infinite}
+#ld{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;background:rgba(15,28,63,.18);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);cursor:progress;animation:ldIn .2s ease .15s both}
+#ld[hidden]{display:none}
+#ld::after{content:"";box-sizing:border-box;width:56px;height:56px;border-radius:50%;background:var(--card);border:5px solid color-mix(in srgb,var(--pr) 20%,transparent);border-top-color:var(--pr);box-shadow:0 14px 34px -12px rgba(0,0,0,.45);animation:ldSpin .8s linear infinite}
+@media(prefers-reduced-motion:reduce){#ld::after{animation-duration:1.8s}}
 #toasts{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:20px;z-index:300}
 .toast{background:#1e293b;color:#fff;padding:12px 18px;border-radius:10px;margin-top:10px;font-size:.86rem;max-width:340px;box-shadow:0 15px 25px -5px rgba(0,0,0,.2);animation:toastSlideIn .3s cubic-bezier(0.16,1,0.3,1) forwards}
 .toast.ok{background:#059669}.toast.er{background:#dc2626}
 @keyframes fadeInBody{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUpCard{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes toastSlideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
-@keyframes loadingBarShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes ldIn{from{opacity:0}to{opacity:1}}
+@keyframes ldSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 .pak2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
@@ -885,7 +889,7 @@ function installApp(){
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="etg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82ff"/><stop offset="1" stop-color="#163a9c"/></linearGradient></defs></svg>
-<div id="ld" hidden></div>
+<div id="ld" hidden role="status" aria-label="Memuat"></div>
 <aside id="sb" hidden aria-label="Navigasi utama">
   <div class="sb-top"><span class="lg" aria-hidden="true"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="url(#etg)"/><rect x="9" y="22" width="5.5" height="9" rx="2.2" fill="#fff" opacity=".6"/><rect x="17.2" y="16" width="5.5" height="15" rx="2.2" fill="#fff" opacity=".8"/><rect x="25.5" y="9" width="5.5" height="22" rx="2.2" fill="#fff"/></svg></span><div class="sb-tt"><div class="brand">EduTrack</div><div class="mu">Laporan Kinerja &amp; absensi guru</div></div><button type="button" id="sbtg" onclick="sbMini()" aria-label="Ciutkan sidebar" title="Ciutkan sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="sbx" onclick="closeSb()" aria-label="Tutup menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <nav id="nav"></nav>
