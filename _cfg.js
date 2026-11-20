@@ -42,9 +42,9 @@ async function getCfg() {
       sek: String(d.sek || ''), logo: String(d.logo || '') } };
   } catch (e) {
     // gagal: pakai data lama bila ada, kalau tidak pakai bawaan
-    cache = { t: now, ttl: TTL_FAIL, ok: false, cfg: (cache.cfg && cache.ok) ? cache.cfg : DEF };
+    cache = { t: now, ttl: TTL_FAIL, ok: false, err: String((e && e.message) || e), cfg: (cache.cfg && cache.ok) ? cache.cfg : DEF };
   } finally { clearTimeout(tm); }
   return cache;
 }
 
-module.exports = { getCfg, appHtml, DEF };
+module.exports = { getCfg, appHtml, apiUrl, DEF };
