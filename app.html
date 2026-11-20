@@ -5031,7 +5031,7 @@ function aNilaiSw(){
 function aNilaiMp(){
   const tagKelas=m=>`<span class="tag">${m.kl&&m.kl.length?esc(m.kl.join(', ')):'Semua kelas'}</span>`;
   return`<div class="bt" style="flex-wrap:wrap"><h3>Mata pelajaran</h3><div class="row"><button class="btn ghost" onclick="impMapel()">Impor mapel (Excel)</button><button class="btn pri" onclick="mpNew()">Tambah mapel</button></div></div>`+
-  `<p class="mu" style="margin:6px 0 0">Kelas mapel mengikuti penugasan guru pengampunya (mis. Matematika: Guru A kelas 1, Guru B kelas 2 & 3). Setiap guru hanya bisa mengisi nilai & absensi pada kelas yang diampunya — perangkat ajar & bank soal ikut mengikuti. Setiap mapel & kelas yang tercatat pasti tampil bagi guru pengampunya.</p>`+
+  `<p class="mu" style="margin:6px 0 0">Kelas mapel mengikuti penugasan guru pengampunya</p>`+
   (isMob()
     ?`<div class="mcl" style="margin-top:12px">`+(MP.map(m=>`<div class="mcard">${mzone(`mpEdit('${m.id}')`,
       `<div class="mc-h"><div><b>${esc(m.n)}</b><div class="mc-sub">Pengampu: ${mpGuru(m).length?esc(mpAmpuTxt(m)):'belum diatur'}</div></div><div class="mc-more">Ubah ›</div></div><div class="mc-chips">${tagKelas(m)}</div>`)}<div class="mc-f" style="justify-content:flex-end"><span class="acts">${ib('del',`delMapel('${m.id}')`,'trash','Hapus mapel')}</span></div></div>`).join('')||'<div class="mcard"><span class="mu">Belum ada mata pelajaran.</span></div>')+`</div>`
