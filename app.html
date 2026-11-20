@@ -5180,7 +5180,7 @@ function jdOpts(k,h,useJ){
 function aNilaiJd(){
   if(JDML===null&&!JDMLB)jdLoad();
   const hasJD=Object.keys(JD||{}).length>0;
-  const intro=`<div><h3>Jadwal mapel</h3><p class="mu" style="margin:4px 0 0">Pilih kelas, lalu atur mapel tiap <b>jam ke-</b> dan hari lewat dropdown. Pilihan mengikuti tab <b>Mata pelajaran</b> (guru pengampu &amp; kelasnya)${hasJD?' dan jadwal masuk guru di <b>Jadwal absen</b>':''}. Kartu <b>Absensi per mapel</b> mengikuti jadwal ini. Jam mulai &amp; menit per JP hanya untuk keterangan waktu: guru tetap bisa mengabsen kapan saja, dan kegiatan manual (literasi, dll.) tidak memunculkan kartu absen.</p></div>`;
+  const intro=`<div><h3>Jadwal mapel</h3><p class="mu" style="margin:4px 0 0">Pilih kelas, lalu atur mapel tiap <b>jam</b> dan hari lewat dropdown.</p></div>`;
   if(JDML===null)return`<div class="card">${intro}<div class="mt">${lbar('Memuat jadwal…')}</div></div>`;
   const kls=[...new Set(kelasList().concat(JDML.map(r=>r.k)))].filter(Boolean).sort(jdNum);
   if(!kls.length)return`<div class="card">${intro}<div class="note">Belum ada kelas. Tambahkan siswa dulu di tab <b>Daftar siswa</b>, lalu atur jadwalnya di sini.</div></div>`;
