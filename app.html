@@ -157,9 +157,9 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
 #ld{position:fixed;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--pr),var(--ac),var(--pr));background-size:200% 100%;z-index:400;animation:loadingBarShimmer 1.2s linear infinite}
 #ldo{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;background:rgba(15,28,63,.18);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);cursor:progress;animation:ldIn .2s ease .15s both}
 #ldo[hidden]{display:none}
-#ldo .ldo-c{box-sizing:border-box;width:76px;height:76px;border-radius:50%;background:var(--card);color:var(--pr);display:flex;align-items:center;justify-content:center;box-shadow:0 14px 34px -12px rgba(0,0,0,.45)}
-#ldo .ldo-c svg{width:38px;height:38px;animation:ldFlip 1.8s cubic-bezier(.65,0,.35,1) infinite}
-@media(prefers-reduced-motion:reduce){#ldo .ldo-c svg{animation-duration:3.6s}}
+#ldo .ldo-c{display:flex;align-items:center;justify-content:center;color:var(--pr);filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}
+#ldo .ldo-c svg{width:56px;height:56px;animation:ldFlip 3.6s cubic-bezier(.65,0,.35,1) infinite}
+@media(prefers-reduced-motion:reduce){#ldo .ldo-c svg{animation-duration:6s}}
 #toasts{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:20px;z-index:300}
 .toast{background:#1e293b;color:#fff;padding:12px 18px;border-radius:10px;margin-top:10px;font-size:.86rem;max-width:340px;box-shadow:0 15px 25px -5px rgba(0,0,0,.2);animation:toastSlideIn .3s cubic-bezier(0.16,1,0.3,1) forwards}
 .toast.ok{background:#059669}.toast.er{background:#dc2626}
