@@ -2,7 +2,7 @@
   "id": "./index.html",
   "name": "EduTrack",
   "short_name": "EduTrack",
-  "description": "Laporan Kinerja & Absensi Guru",
+  "description": "Sistem Administrasi Madrasah",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
