@@ -36,11 +36,9 @@ module.exports = async (req, res) => {
 
   // Pratinjau ringkas: hanya logo kecil + nama aplikasi (tanpa deskripsi)
   const meta = [
-   `<meta name="description" content="${esc(desc)}">`,
     `<meta property="og:type" content="website">`,
     `<meta property="og:site_name" content="${esc(site)}">`,
     `<meta property="og:title" content="${esc(title)}">`,
-    `<meta property="og:description" content="${esc(desc)}">`,
     `<meta property="og:url" content="${esc(origin + '/')}">`,
     `<meta property="og:image" content="${esc(img)}">`,
     `<meta property="og:image:type" content="image/png">`,
@@ -50,7 +48,6 @@ module.exports = async (req, res) => {
     `<meta property="og:locale" content="id_ID">`,
     `<meta name="twitter:card" content="summary">`,
     `<meta name="twitter:title" content="${esc(title)}">`,
-    `<meta name="twitter:description" content="${esc(desc)}">`,
     `<meta name="twitter:image" content="${esc(img)}">`
   ].join('\n');
 
