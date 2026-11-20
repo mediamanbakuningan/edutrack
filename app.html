@@ -2160,6 +2160,26 @@ function sqsLoad(){
   rpc('soalStat').then(r=>{SQS=(r.info&&r.info.st)||[];SQSB=false;render(true);})
     .catch(e=>{SQSB=false;SQS=[];toast(e.message,'er');render(true);});
 }
+/* Loader bank soal: daftar jenis soal & unggahan per mapel-kelas */
+function sjLoad(){
+  if(SJL!==null||SJLB)return;
+  sjReload();
+}
+function sjReload(){
+  SJLB=true;
+  rpc('soJenisList').then(r=>{SJL=(r.info&&r.info.js)||[];SJLB=false;sjRefresh();render(true);})
+    .catch(e=>{SJLB=false;SJL=[];toast(e.message,'er');render(true);});
+}
+function suLoad(){
+  if(SULB)return;
+  const m=S.sm,k=S.sk;
+  SULB=true;
+  rpc('soUList',{m:m||'',k:k||''}).then(r=>{
+    SULB=false;
+    if(m!==S.sm||k!==S.sk)return;
+    SUL=(r.info&&r.info.su)||[];render(true);
+  }).catch(e=>{SULB=false;SUL=[];toast(e.message,'er');render(true);});
+}
 const sqsKey=(m,k)=>String(m||'').trim().toLowerCase()+'|'+String(k||'').trim().toLowerCase();
 const sqsGet=(m,k)=>(SQS||[]).find(x=>sqsKey(x.m,x.k)===sqsKey(m,k))||{u:0};
 function vSoal(){
