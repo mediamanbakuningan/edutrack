@@ -154,14 +154,12 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
 .trow label{display:block;margin:0 0 4px;font-size:.74rem;font-weight:600;color:var(--mu)}
 .trow .cbx{display:flex;align-items:center;gap:6px;margin:0 0 8px;font-weight:500;font-size:.8rem;color:var(--tx);white-space:nowrap;cursor:pointer}
 .trow .btn{align-self:end}
-#ld{position:fixed;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--pr),var(--ac),var(--pr));background-size:200% 100%;z-index:400;animation:loadingBarShimmer 1.2s linear infinite}
 #toasts{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:20px;z-index:300}
 .toast{background:#1e293b;color:#fff;padding:12px 18px;border-radius:10px;margin-top:10px;font-size:.86rem;max-width:340px;box-shadow:0 15px 25px -5px rgba(0,0,0,.2);animation:toastSlideIn .3s cubic-bezier(0.16,1,0.3,1) forwards}
 .toast.ok{background:#059669}.toast.er{background:#dc2626}
 @keyframes fadeInBody{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUpCard{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes toastSlideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
-@keyframes loadingBarShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 .pak2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
@@ -895,7 +893,6 @@ function installApp(){
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="etg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82ff"/><stop offset="1" stop-color="#163a9c"/></linearGradient></defs></svg>
-<div id="ld" hidden></div>
 <aside id="sb" hidden aria-label="Navigasi utama">
   <div class="sb-top"><span class="lg" aria-hidden="true"><svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="url(#etg)"/><rect x="9" y="22" width="5.5" height="9" rx="2.2" fill="#fff" opacity=".6"/><rect x="17.2" y="16" width="5.5" height="15" rx="2.2" fill="#fff" opacity=".8"/><rect x="25.5" y="9" width="5.5" height="22" rx="2.2" fill="#fff"/></svg></span><div class="sb-tt"><div class="brand">EduTrack</div><div class="mu">Laporan Kinerja &amp; absensi guru</div></div><button type="button" id="sbtg" onclick="sbMini()" aria-label="Ciutkan sidebar" title="Ciutkan sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="sbx" onclick="closeSb()" aria-label="Tutup menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <nav id="nav"></nav>
@@ -1401,7 +1398,7 @@ function apply(s){
   else if(!S.vp || !P.find(x=>x.k===S.vp)) S.vp=(P.find(x=>x.k===YM())||P.find(x=>x.s==='BUKA')||P[0]||{}).k||'';
 }
 function YM(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
-function ld(d){const was=pend;pend=Math.max(0,pend+d);const el=$('ld');if(el)el.hidden=pend===0;if(!was&&pend)lpStart();else if(was&&!pend)lpDone();}
+function ld(d){const was=pend;pend=Math.max(0,pend+d);if(!was&&pend)lpStart();else if(was&&!pend)lpDone();}
 /* Progress bar loading (estimasi): naik per tahap permintaan, 100% saat data selesai dimuat */
 const LP={v:0,tid:0,tm:0};
 function lpSet(v){
@@ -3016,14 +3013,14 @@ function akpLoad(){
   if(!AKPM)AKPM=YM();
   AKPB=true;const m=AKPM;
   rpc('absKelasPeringkat',{bulan:m}).then(r=>{
-    if(m!==AKPM)return;
+    if(m!==AKPM){AKPB=false;render(true);return;}
     AKP=r.info||{rows:[]};AKPB=false;render(true);
   }).catch(e=>{AKPB=false;AKP={rows:[]};toast(e.message,'er');render(true);});
 }
 function akpSetBulan(v){
   if(!v)return;
   if(v>YM()){toast('Bulan belum berjalan','er');return;}
-  AKPM=v;AKP=null;render(true);
+  AKPM=v;AKSPM=v;AKP=null;AKSP=null;render(true);
 }
 function akpBox(){
   if(!AKPM)AKPM=YM();
@@ -3044,14 +3041,14 @@ function akspLoad(){
   if(!AKSPM)AKSPM=YM();
   AKSPB=true;const m=AKSPM;
   rpc('absSiswaPeringkat',{bulan:m}).then(r=>{
-    if(m!==AKSPM)return;
+    if(m!==AKSPM){AKSPB=false;render(true);return;}
     AKSP=r.info||{rows:[]};AKSPB=false;render(true);
   }).catch(e=>{AKSPB=false;AKSP={rows:[]};toast(e.message,'er');render(true);});
 }
 function akspSetBulan(v){
   if(!v)return;
   if(v>YM()){toast('Bulan belum berjalan','er');return;}
-  AKSPM=v;AKSP=null;render(true);
+  AKSPM=v;AKPM=v;AKSP=null;AKP=null;render(true);
 }
 function akspSetKelas(v){AKSPK=v||'';render(true);}
 function akspRows(){
@@ -3060,17 +3057,37 @@ function akspRows(){
   rows.forEach((x,i)=>{if(x.pct===null){x.drank=null;return;}if(x.pct!==prev){rank=i+1;prev=x.pct;}x.drank=rank;});
   return rows;
 }
+function rkExt(rows){
+  const v=(rows||[]).filter(x=>x.pct!==null&&x.pct!==undefined);
+  if(!v.length)return null;
+  const hi=Math.max(...v.map(x=>x.pct)),lo=Math.min(...v.map(x=>x.pct));
+  const t=v.filter(x=>x.pct===hi),b=v.filter(x=>x.pct===lo);
+  return{hi:{x:t[0],n:t.length,p:hi},lo:{x:b[0],n:b.length,p:lo}};
+}
+function rankCards(clsRows,sisRows){
+  const c=rkExt(clsRows),w=rkExt(sisRows);
+  const card=(lbl,e,kind,cls)=>{
+    if(!e)return`<div class="stat"><span style="display:block;font-weight:600">${lbl}</span><b>-</b><span>Belum ada data</span></div>`;
+    const nm=cls?'Kelas '+esc(e.x.k):esc(e.x.n)+(e.x.k?' · '+esc(e.x.k):'');
+    return`<div class="stat ${kind}"><span style="display:block;font-weight:600">${lbl}</span><b>${e.p}%</b><span style="overflow-wrap:anywhere">${nm}${e.n>1?' · +'+(e.n-1)+' lainnya':''}</span></div>`;
+  };
+  return`<div class="stats" style="margin-top:12px">`+
+    card('Kelas teraktif',c&&c.hi,'ok',true)+card('Kelas termalas',c&&c.lo,'er',true)+
+    card('Siswa teraktif',w&&w.hi,'ok',false)+card('Siswa termalas',w&&w.lo,'er',false)+`</div>`;
+}
 function vAbsRank(){
   if(!AKPM)AKPM=YM();
+  AKSPM=AKPM;
   if(AKP&&AKP.bulan&&AKP.bulan!==AKPM)AKP=null;
+  if(AKSP&&AKSP.bulan&&AKSP.bulan!==AKSPM)AKSP=null;
   if(AKP===null&&!AKPB)akpLoad();
+  if(AKSP===null&&!AKSPB)akspLoad();
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking kehadiran antar kelas</h2><p class="mu">Persentase kehadiran tiap kelas.</p></div></div>`;
   const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AKPM}" max="${YM()}" aria-label="Bulan ranking" onchange="akpSetBulan(this.value)"><button class="btn ghost" onclick="absRankPdf()">Unduh PDF</button></div><span class="mu">Hanya berdasarkan pertemuan yang sudah diisi.</span></div></div>`;
-  if(AKP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
+  if(AKP===null||AKSP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
   const rows=AKP.rows||[];
   if(!rows.length||rows.every(x=>x.pct===null))return head+bar+`<div class="note">Belum ada absensi mapel pada bulan ${esc(bulanL(AKPM))}. Ranking terisi otomatis begitu guru pengampu menyimpan absensi per mapel.</div>`;
-  const top=rows.find(x=>x.rank===1);
-  const juara=top?`<div class="stats" style="margin-top:12px">${[['Juara bulan '+esc(bulanL(AKPM)),'Kelas '+esc(top.k),'ok'],['Persentase tertinggi',top.pct+'%','ok'],['Kelas ikut dinilai',rows.filter(x=>x.pct!==null).length,'']].map(([l,v,k])=>`<div class="stat ${k}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`:'';
+  const juara=rankCards(rows,(AKSP&&AKSP.rows)||[]);
   const tbl=isMob()
     ?`<div class="mcl" style="margin-top:12px">${rows.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${akpMed(x.rank)} · Kelas ${esc(x.k)}</b><div class="mc-sub">${x.siswa} siswa · Hadir ${x.H} · Bolos ${x.B} · Alpa ${x.A} · ${x.hari} hari terisi</div></div><b>${x.pct===null?'-':x.pct+'%'}</b></div></div>`).join('')}</div>`
     :`<div class="card tw" style="margin-top:12px"><table><thead><tr><th class="ctr">Rank<th class="ctr">Kelas<th class="ctr">Siswa<th class="ctr">H / I / S<th class="ctr">B<th class="ctr">A<th class="ctr">Hari<th class="ctr">%</thead><tbody>`+
@@ -3080,15 +3097,17 @@ function vAbsRank(){
 }
 function vAbsRankSiswa(){
   if(!AKSPM)AKSPM=YM();
+  AKPM=AKSPM;
   if(AKSP&&AKSP.bulan&&AKSP.bulan!==AKSPM)AKSP=null;
+  if(AKP&&AKP.bulan&&AKP.bulan!==AKPM)AKP=null;
   if(AKSP===null&&!AKSPB)akspLoad();
+  if(AKP===null&&!AKPB)akpLoad();
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking kehadiran antar siswa</h2><p class="mu">Persentase kehadiran tiap siswa.</p></div></div>`;
   const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AKSPM}" max="${YM()}" aria-label="Bulan ranking" onchange="akspSetBulan(this.value)"><select class="in" style="width:auto" aria-label="Filter kelas" onchange="akspSetKelas(this.value)"><option value="" ${AKSPK?'':'selected'}>Semua kelas</option>${kelasList().map(k=>`<option value="${esc(k)}" ${AKSPK===k?'selected':''}>Kelas ${esc(k)}</option>`).join('')}</select><button class="btn ghost" onclick="absRankSiswaPdf()">Unduh PDF</button></div><span class="mu">Persentase = hari Hadir (termasuk Izin &amp; Sakit) dibagi seluruh hari terisi — rumus sama dengan ranking antar kelas.</span></div></div>`;
-  if(AKSP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
+  if(AKSP===null||AKP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
   const rows=akspRows();
   if(!rows.length||rows.every(x=>x.pct===null))return head+bar+`<div class="note">${AKSPK?'Belum ada absensi mapel kelas '+esc(AKSPK):'Belum ada absensi mapel'} pada bulan ${esc(bulanL(AKSPM))}. Ranking terisi otomatis begitu guru pengampu menyimpan absensi per mapel.</div>`;
-  const top=rows.find(x=>x.drank===1);
-  const juara=top?`<div class="stats" style="margin-top:12px">${[['Siswa paling rajin',esc(top.n),'ok'],['Kelas · persentase',esc(top.k||'-')+' · '+top.pct+'%','ok'],['Siswa ikut dinilai',rows.filter(x=>x.pct!==null).length,'']].map(([l,v,k])=>`<div class="stat ${k}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`:'';
+  const juara=rankCards((AKP&&AKP.rows)||[],rows);
   const tbl=isMob()
     ?`<div class="mcl" style="margin-top:12px">${rows.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${akpMed(x.drank)} · ${esc(x.n)}</b><div class="mc-sub">Kelas ${esc(x.k||'-')} · Hadir ${x.H} · Bolos ${x.B} · Alpa ${x.A} · ${x.hari} hari terisi</div></div><b>${x.pct===null?'-':x.pct+'%'}</b></div></div>`).join('')}</div>`
     :`<div class="card tw" style="margin-top:12px"><table><thead><tr><th class="ctr">Rank<th class="ctr">Siswa<th class="ctr">Kelas<th class="ctr">H / I / S<th class="ctr">B<th class="ctr">A<th class="ctr">Hari<th class="ctr">%</thead><tbody>`+
