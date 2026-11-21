@@ -12,15 +12,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82ff'/%3E%3Cstop offset='1' stop-color='%23163a9c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' rx='11' fill='url(%23g)'/%3E%3Crect x='9' y='22' width='5.5' height='9' rx='2.2' fill='%23fff' opacity='.6'/%3E%3Crect x='17.2' y='16' width='5.5' height='15' rx='2.2' fill='%23fff' opacity='.8'/%3E%3Crect x='25.5' y='9' width='5.5' height='22' rx='2.2' fill='%23fff'/%3E%3C/svg%3E">
 <title>EduTrack : Sistem Administrasi Madrasah</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<script>try{var _t=localStorage.getItem('er-theme');if(_t==='dark'||_t==='light')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<meta name="color-scheme" content="light only">
+<script>document.documentElement.setAttribute('data-theme','light');try{localStorage.removeItem('er-theme');}catch(e){}</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{--nav:#00674F;--bg:#f8fafc;--card:#ffffff;--tx:#000000;--mu:#64748b;--bd:#e2e8f0;--pr:#00674F;--pr2:#005340;--ac:#d97706;--ok:#059669;--okb:#ecfdf5;--wa:#b45309;--wab:#fffbeb;--er:#dc2626;--erb:#fef2f2;--sbw:252px;--sbrail:92px}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#090d16;--card:#111827;--tx:#f1f5f9;--mu:#94a3b8;--bd:#1f293d;--pr:#2dd4bf;--pr2:#14b8a6;--ok:#34d399;--okb:#064e3b;--wa:#fbbf24;--wab:#451a03;--er:#f87171;--erb:#450a0a}}
-:root[data-theme=dark]{--bg:#090d16;--card:#111827;--tx:#f1f5f9;--mu:#94a3b8;--bd:#1f293d;--pr:#2dd4bf;--pr2:#14b8a6;--ok:#34d399;--okb:#064e3b;--wa:#fbbf24;--wab:#451a03;--er:#f87171;--erb:#450a0a}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif}
 body{background:var(--bg);color:var(--tx);line-height:1.5;font-size:14px;padding-bottom:50px;animation:fadeInBody .4s ease-out}
@@ -269,8 +268,6 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
 }
 
 :root{--sbbg:#00674F;--sbtx:#fff;--sbtx2:rgba(255,255,255,.75);--sbnv:rgba(255,255,255,.88);--sbln:rgba(255,255,255,.18);--sbho:rgba(255,255,255,.12);--sbon:rgba(255,255,255,.2);--sbontx:#fff;--lgbg:#00674F;--logobg:#fff;--logotx:#00674F}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--sbbg:var(--card);--sbtx:var(--tx);--sbtx2:var(--mu);--sbnv:var(--mu);--sbln:var(--bd);--sbho:var(--bg);--sbon:rgba(45,212,191,.13);--sbontx:var(--pr);--lgbg:var(--bg);--logobg:var(--pr);--logotx:#fff}}
-:root[data-theme=dark]{--sbbg:var(--card);--sbtx:var(--tx);--sbtx2:var(--mu);--sbnv:var(--mu);--sbln:var(--bd);--sbho:var(--bg);--sbon:rgba(45,212,191,.13);--sbontx:var(--pr);--lgbg:var(--bg);--logobg:var(--pr);--logotx:#fff}
 body:not(.has-sb){background:var(--lgbg)}
 #sb{background:var(--sbbg);border-right:1px solid var(--sbln);color:var(--sbtx)}
 .sb-top{border-bottom:1px solid var(--sbln)}
@@ -284,8 +281,8 @@ body:not(.has-sb){background:var(--lgbg)}
 .ng{color:var(--sbtx2)}
 .sb-foot{border-top:1px solid var(--sbln)}
 
-.btn.pri,:root[data-theme=dark] .btn.pri{background:#00674F;color:#fff}
-.btn.pri:hover,:root[data-theme=dark] .btn.pri:hover{background:#005340;color:#fff}
+.btn.pri{background:#00674F;color:#fff}
+.btn.pri:hover{background:#005340;color:#fff}
 
 .mp-r{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
 .mp-r .in{flex:1 1 150px;min-width:0;width:auto}
@@ -304,20 +301,6 @@ body:not(.has-sb){background:var(--lgbg)}
   --sbbg:#ffffff;--sbtx:#0f1c3f;--sbtx2:#7585a6;--sbnv:#55658a;--sbln:transparent;
   --sbho:#f3f7ff;--sbon:#e3ecff;--sbontx:#1e56e0;--lgbg:transparent;--logobg:#1e56e0;--logotx:#fff;
 }
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --pr:#7aa7ff;--pr2:#5f93f5;--bg:#0a1226;--card:#111c36;--tx:#eaf0ff;--mu:#93a4c8;--bd:#22335a;
-  --ok:#4ade9d;--okb:rgba(74,222,157,.14);--wa:#ffb066;--wab:rgba(255,176,102,.14);--er:#ff7a99;--erb:rgba(255,122,153,.14);
-  --page:linear-gradient(135deg,#08101f 0%,#0f1a35 55%,#0b1226 100%);
-  --shadow:0 12px 32px -16px rgba(0,0,0,.6);
-  --t1:rgba(122,167,255,.14);--t2:rgba(74,222,157,.12);--t3:rgba(255,176,102,.12);--t4:rgba(255,122,153,.12);
-  --sbbg:#111c36;--sbtx:#eaf0ff;--sbtx2:#93a4c8;--sbnv:#93a4c8;--sbho:#1a2848;--sbon:rgba(122,167,255,.16);--sbontx:#b5ceff;--logobg:#7aa7ff;--logotx:#111c36}}
-:root[data-theme=dark]{
-  --pr:#7aa7ff;--pr2:#5f93f5;--bg:#0a1226;--card:#111c36;--tx:#eaf0ff;--mu:#93a4c8;--bd:#22335a;
-  --ok:#4ade9d;--okb:rgba(74,222,157,.14);--wa:#ffb066;--wab:rgba(255,176,102,.14);--er:#ff7a99;--erb:rgba(255,122,153,.14);
-  --page:linear-gradient(135deg,#08101f 0%,#0f1a35 55%,#0b1226 100%);
-  --shadow:0 12px 32px -16px rgba(0,0,0,.6);
-  --t1:rgba(122,167,255,.14);--t2:rgba(74,222,157,.12);--t3:rgba(255,176,102,.12);--t4:rgba(255,122,153,.12);
-  --sbbg:#111c36;--sbtx:#eaf0ff;--sbtx2:#93a4c8;--sbnv:#93a4c8;--sbho:#1a2848;--sbon:rgba(122,167,255,.16);--sbontx:#b5ceff;--logobg:#7aa7ff;--logotx:#111c36}
 
 body,body:not(.has-sb){background:var(--page);background-attachment:fixed;color:var(--tx)}
 .wrap{max-width:1180px}
@@ -382,8 +365,8 @@ body.has-sb{padding-left:calc(var(--sbw) + 16px)}
 .btn{border-radius:12px;font-weight:600}
 .btn.ghost{background:var(--card);border:1px solid var(--bd)}
 .btn.ghost:hover{background:var(--sbho)}
-.btn.pri,:root[data-theme=dark] .btn.pri{background:var(--grad);color:#fff;box-shadow:0 10px 20px -10px rgba(30,86,224,.75)}
-.btn.pri:hover,:root[data-theme=dark] .btn.pri:hover{background:var(--grad);color:#fff;filter:brightness(1.07)}
+.btn.pri{background:var(--grad);color:#fff;box-shadow:0 10px 20px -10px rgba(30,86,224,.75)}
+.btn.pri:hover{background:var(--grad);color:#fff;filter:brightness(1.07)}
 .btn.dng{border-radius:12px}
 .in{border-radius:12px;background:var(--bg);border:1px solid var(--bd)}
 .in:focus{border-color:var(--pr);box-shadow:0 0 0 4px rgba(30,86,224,.16);background:var(--card)}
@@ -469,7 +452,7 @@ body:not(.has-sb)::before{content:"";position:fixed;inset:0;z-index:-1;pointer-e
 html{scroll-behavior:smooth}
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--pr) 35%,transparent) transparent}
 .btn{transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s,filter .2s,background .2s}
-.btn.pri,:root[data-theme=dark] .btn.pri{box-shadow:0 10px 22px -10px rgba(30,86,224,.8),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.pri{box-shadow:0 10px 22px -10px rgba(30,86,224,.8),inset 0 1px 0 rgba(255,255,255,.25)}
 .btn.pri:hover{transform:translateY(-2px);box-shadow:0 16px 28px -12px rgba(30,86,224,.85),inset 0 1px 0 rgba(255,255,255,.3)}
 .stat{transition:transform .25s,box-shadow .25s}
 .stat:hover{transform:translateY(-3px);box-shadow:0 20px 36px -22px rgba(30,86,224,.5)}
@@ -618,20 +601,6 @@ body.has-bnav #toasts{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
   --gl-scrim:rgba(14,26,60,.30);
   --gl-amb:radial-gradient(520px 420px at 12% 8%,rgba(47,107,255,.22),transparent 70%),radial-gradient(480px 460px at 92% 22%,rgba(0,200,170,.16),transparent 70%),radial-gradient(560px 480px at 70% 98%,rgba(255,138,91,.14),transparent 70%);
 }
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --gl-bg:rgba(24,38,72,.46);--gl-in:rgba(255,255,255,.07);--gl-on:rgba(122,167,255,.24);--gl-hov:rgba(255,255,255,.08);
-  --gl-bd:rgba(255,255,255,.16);--gl-hi:rgba(255,255,255,.26);--gl-lo:rgba(0,0,0,.30);
-  --gl-sheen:linear-gradient(155deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.03) 34%,rgba(255,255,255,0) 62%,rgba(255,255,255,.06) 100%);
-  --gl-sh:0 26px 60px -20px rgba(0,0,0,.75),0 3px 12px rgba(0,0,0,.3);--gl-shs:0 10px 26px -12px rgba(0,0,0,.7);
-  --gl-blur:blur(26px) saturate(170%);--gl-scrim:rgba(2,6,18,.50);
-  --gl-amb:radial-gradient(520px 420px at 12% 8%,rgba(80,130,255,.22),transparent 70%),radial-gradient(480px 460px at 92% 22%,rgba(20,200,170,.12),transparent 70%),radial-gradient(560px 480px at 70% 98%,rgba(255,130,90,.10),transparent 70%)}}
-:root[data-theme=dark]{
-  --gl-bg:rgba(24,38,72,.46);--gl-in:rgba(255,255,255,.07);--gl-on:rgba(122,167,255,.24);--gl-hov:rgba(255,255,255,.08);
-  --gl-bd:rgba(255,255,255,.16);--gl-hi:rgba(255,255,255,.26);--gl-lo:rgba(0,0,0,.30);
-  --gl-sheen:linear-gradient(155deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.03) 34%,rgba(255,255,255,0) 62%,rgba(255,255,255,.06) 100%);
-  --gl-sh:0 26px 60px -20px rgba(0,0,0,.75),0 3px 12px rgba(0,0,0,.3);--gl-shs:0 10px 26px -12px rgba(0,0,0,.7);
-  --gl-blur:blur(26px) saturate(170%);--gl-scrim:rgba(2,6,18,.50);
-  --gl-amb:radial-gradient(520px 420px at 12% 8%,rgba(80,130,255,.22),transparent 70%),radial-gradient(480px 460px at 92% 22%,rgba(20,200,170,.12),transparent 70%),radial-gradient(560px 480px at 70% 98%,rgba(255,130,90,.10),transparent 70%)}
 
 
 body.has-sb::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--gl-amb)}
@@ -730,9 +699,6 @@ body.sb-open::after{display:none}
 .glp-e .glp-in{animation:none}
 .glp-e .glp-t{font-size:.95rem;font-weight:600;color:#c92450}
 .glp-e .glp-s{margin-top:3px;font-size:.82rem}
-@media(prefers-color-scheme:dark){.glp-e .glp-t{color:#ff8da4}}
-:root[data-theme=dark] .glp-e .glp-t{color:#ff8da4}
-:root[data-theme=light] .glp-e .glp-t{color:#c92450}
 
 
 /* ===== Menu induk + sub menu (accordion) ===== */
@@ -794,7 +760,7 @@ body.has-sb.tb-in #app{padding-top:calc(10px + env(safe-area-inset-top,0px))}
 button,.btn,.btn:hover,.btn:active,.btn.pri,.btn.pri:hover,.btn.ghost,.btn.ghost:hover,.btn.dng,.btn.sm,
 .nb,.lmt-b,.lmt-b.on,#rchip,#tbtn,#nbell,#nusul,#ninbox,#nakun,#nout,#nmenu,
 #bnav .fab-main,#bnav .fab-c,#bnav .fab-l,#sb #sbtg,#sb #sbx,#sb .sb-rs,
-.ov .mc .btn.ghost,.glp-b .btn,.glp-b .btn.ghost,:root[data-theme=dark] .btn.pri,:root[data-theme=dark] .btn.pri:hover{box-shadow:none!important;filter:none;text-shadow:none!important}
+.ov .mc .btn.ghost,.glp-b .btn,.glp-b .btn.ghost{box-shadow:none!important;filter:none;text-shadow:none!important}
 .btn:hover{filter:brightness(.97)}.btn:active{filter:brightness(.92)}
 </style>
 <style>
@@ -904,6 +870,11 @@ function installApp(){
 .svp-c{width:min(380px,100%);background:var(--card,#fff);border:1px solid var(--bd,#e2e8f0);border-radius:18px;padding:20px 22px;box-shadow:0 24px 60px -20px rgba(15,23,42,.45)}
 .svp-h{font-weight:700;font-size:1rem;margin-bottom:12px}
 </style>
+<style>
+/* Tema gelap dihapus: #tbtn tinggal spacer nol-lebar agar susunan ikon kanan (margin-left:auto) tetap sama */
+#tbtn{visibility:hidden!important;width:0!important;height:0!important;min-width:0!important;padding:0!important;border:0!important;box-shadow:none!important;overflow:hidden!important;pointer-events:none!important;margin-right:-10px!important;flex:none}
+:root{color-scheme:light}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="etg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82ff"/><stop offset="1" stop-color="#163a9c"/></linearGradient></defs></svg>
@@ -913,7 +884,7 @@ function installApp(){
 </aside>
 <div id="sbov" onclick="closeSb()"></div>
 <main id="app" class="wrap"><div class="splash"><div class="lbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Memuat"><div class="lbar-t"><span class="lbar-l">Memuat…</span><b class="lbar-p">0%</b></div><div class="lbar-tr"><i class="lbar-f" style="width:0%"></i></div></div></div></main>
-<div id="tbar" hidden><button type="button" id="nmenu" onclick="openSb()" aria-label="Buka menu" title="Menu"></button><button type="button" id="tbtn" onclick="themeT()" aria-label="Ganti tema terang/gelap" title="Ganti tema terang/gelap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg></button><button type="button" id="nusul" onclick="go('usulan')" aria-label="Kritik, saran &amp; usulan" title="Kritik/Saran/Usulan" hidden></button><button type="button" id="nbell" onclick="ntOpen()" aria-label="Notifikasi"></button><button type="button" id="ninbox" onclick="go('inbox')" aria-label="Saran masuk" title="Saran masuk" hidden></button><button type="button" id="nakun" onclick="akunM()" aria-label="Akun" title="Akun"></button><button type="button" id="nout" onclick="logout()" aria-label="Keluar" title="Keluar"></button></div>
+<div id="tbar" hidden><button type="button" id="nmenu" onclick="openSb()" aria-label="Buka menu" title="Menu"></button><span id="tbtn" aria-hidden="true"></span><button type="button" id="nusul" onclick="go('usulan')" aria-label="Kritik, saran &amp; usulan" title="Kritik/Saran/Usulan" hidden></button><button type="button" id="nbell" onclick="ntOpen()" aria-label="Notifikasi"></button><button type="button" id="ninbox" onclick="go('inbox')" aria-label="Saran masuk" title="Saran masuk" hidden></button><button type="button" id="nakun" onclick="akunM()" aria-label="Akun" title="Akun"></button><button type="button" id="nout" onclick="logout()" aria-label="Keluar" title="Keluar"></button></div>
 <div id="mbn-scrim" onclick="mbnMore(false)"></div>
 <div id="mbn-sheet" role="dialog" aria-label="Menu lainnya"></div>
 <nav id="mbn" hidden aria-label="Navigasi bawah"></nav>
@@ -1522,13 +1493,6 @@ function setVp(v){
   if(S.user&&(S.user.r!=='GURU'||S.view==='absen')&&changed){
     rpc('state').then(()=>render()).catch(e=>{toast(e.message,'er');render();});
   } else render();
-}
-function themeT(){
-  const root=document.documentElement;
-  const cur=root.getAttribute('data-theme')||(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
-  const nx=cur==='dark'?'light':'dark';
-  root.setAttribute('data-theme',nx);
-  try{localStorage.setItem('er-theme',nx)}catch(_){}
 }
 function autoAkun(){const m=$('modal');if(m&&!m.classList.contains('show'))akunM();}
 
@@ -4350,8 +4314,9 @@ const canSar=()=>S.user.r==='ADMIN'||S.user.r==='ADMIN_SARPRAS';
 function sarItemLoad(after){
   if(SILSB)return;
   SILSB=true;
-  rpc('sarItemList',{}).then(r=>{SILS=(r.info&&r.info.it)||[];SILSB=false;if(after)after();})
-    .catch(e=>{SILSB=false;SILS=[];toast(e.message,'er');if(after)after();});
+  const fin=()=>{if(after)after();else render(true);};
+  rpc('sarItemList',{}).then(r=>{SILS=(r.info&&r.info.it)||[];SILSB=false;fin();})
+    .catch(e=>{SILSB=false;SILS=[];toast(e.message,'er');fin();});
 }
 const sarItemOpt=()=>{const by={};(SILS||[]).forEach(i=>{(by[i.kt]=by[i.kt]||[]).push(i);});
   return Object.keys(by).sort((a,b)=>a.localeCompare(b)).map(k=>`<optgroup label="${esc(k)}">${by[k].map(i=>`<option value="${esc(i.id)}">${esc(i.n)}${i.lk?' — '+esc(i.lk):''}</option>`).join('')}</optgroup>`).join('');};
