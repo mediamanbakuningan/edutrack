@@ -898,6 +898,11 @@ function installApp(){
 .sbar-tr{height:10px;border-radius:99px;background:color-mix(in srgb,var(--pr) 16%,transparent);overflow:hidden}
 .sbar-f{display:block;height:100%;width:0;border-radius:inherit;background:var(--pr);transition:width .25s ease}
 @media(prefers-reduced-motion:reduce){.sbar-f{transition:none}}
+/* Overlay progress untuk semua aksi simpan / ubah / tambah / hapus */
+.svp{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.35)}
+.svp[hidden]{display:none}
+.svp-c{width:min(380px,100%);background:var(--card,#fff);border:1px solid var(--bd,#e2e8f0);border-radius:18px;padding:20px 22px;box-shadow:0 24px 60px -20px rgba(15,23,42,.45)}
+.svp-h{font-weight:700;font-size:1rem;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -1434,12 +1439,45 @@ function gsCall(action,token,p){
   return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,token:token||null,p:p||{}})})
     .then(res=>{if(!res.ok)throw new Error('Koneksi gagal ('+res.status+')');lpBump(70);return res.json();}).then(d=>{lpBump(90);return d;});
 }
+const SVW={};"saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
+const SVP={v:0,t:0,n:0,h:0};
+const svLabel=a=>/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
+function svEl(){
+  let e=document.getElementById('svp');
+  if(!e){
+    e=document.createElement('div');e.id='svp';e.className='svp';e.hidden=true;
+    e.setAttribute('role','alertdialog');e.setAttribute('aria-modal','true');e.setAttribute('aria-label','Sedang menyimpan');
+    e.innerHTML='<div class="svp-c"><div class="svp-h" id="svp-t">Menyimpan data\u2026</div><div class="sbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="sbar-t"><span>Mohon tunggu, jangan menutup halaman</span><b id="svp-p">0%</b></div><div class="sbar-tr"><i id="svp-f" class="sbar-f"></i></div></div></div>';
+    document.body.appendChild(e);
+  }
+  return e;
+}
+function svSet(v){
+  v=Math.max(0,Math.min(100,v));SVP.v=v;
+  const e=svEl(),f=e.querySelector('#svp-f'),t=e.querySelector('#svp-p'),b=e.querySelector('.sbar');
+  if(f)f.style.width=v+'%';if(t)t.textContent=Math.round(v)+'%';if(b)b.setAttribute('aria-valuenow',Math.round(v));
+}
+function svStart(a){
+  clearTimeout(SVP.h);SVP.n++;
+  const e=svEl();e.querySelector('#svp-t').textContent=svLabel(a);
+  if(e.hidden){e.hidden=false;svSet(4);}else svSet(Math.min(SVP.v,30));
+  clearInterval(SVP.t);SVP.t=setInterval(()=>svSet(SVP.v+(90-SVP.v)*.08),150);
+}
+function svHide(){clearInterval(SVP.t);SVP.v=0;const e=document.getElementById('svp');if(e)e.hidden=true;}
+function svEnd(ok){
+  SVP.n=Math.max(0,SVP.n-1);
+  if(SVP.n)return;
+  clearInterval(SVP.t);
+  if(!ok){svHide();return;}
+  svSet(100);SVP.h=setTimeout(svHide,450);
+}
 function rpc(a,p){
   ld(1);
+  const sv=SVW[a]===1;if(sv)svStart(a);
   const pay=Object.assign({}, p||{}, {vp:S.vp,ar:S.ar});
   return new Promise((ok,no)=>gsCall(a,TOKEN,pay).then(
-    r=>{ld(-1);if(!r||!r.ok){const m=r&&r.error||'Terjadi kesalahan';expired(m);return no(new Error(m));}if(r.data&&r.data.user)apply(r.data);ok(r);},
-    e=>{ld(-1);no(new Error((e&&e.message)||'Koneksi gagal'));}));
+    r=>{ld(-1);if(!r||!r.ok){const m=r&&r.error||'Terjadi kesalahan';if(sv)svEnd(false);expired(m);return no(new Error(m));}if(sv)svEnd(true);if(r.data&&r.data.user)apply(r.data);ok(r);},
+    e=>{ld(-1);if(sv)svEnd(false);no(new Error((e&&e.message)||'Koneksi gagal'));}));
 }
 function run(a,p,msg,after){
   const v=S.view;
@@ -2892,32 +2930,57 @@ function thSave(){
     THL=null;THI=null;THR=null;render(true);
   }).catch(e=>toast(e.message,'er'));
 }
+function thRowHtml(g,k,lock){
+  const kl=kelasUnik(),kk=k&&kl.indexOf(k)<0?kl.concat([k]):kl;
+  return`<div class="mp-r"><select class="in th-rg" aria-label="Pengampu"><option value="">Pilih pengampu</option>${G.filter(x=>hasR(x,'GURU')).map(x=>`<option value="${esc(x.id)}" ${x.id===g?'selected':''}>${esc(x.n)}</option>`).join('')}</select>`+
+    `<select class="in th-rk" aria-label="Kelas" ${lock?'disabled':''}><option value="">Pilih kelas</option>${kk.map(x=>`<option value="${esc(x)}" ${x===k?'selected':''}>Kelas ${esc(x)}</option>`).join('')}</select>`+
+    (lock?'':`<button type="button" class="btn ghost ib del" onclick="thDelRow(this)" aria-label="Hapus baris" title="Hapus baris">${ico('trash')}</button>`)+`</div>`;
+}
+function thAddRow(){const c=$('th-rows');if(c)c.insertAdjacentHTML('beforeend',thRowHtml('',''));}
+function thDelRow(b){const r=b.closest('.mp-r'),c=r&&r.parentNode;if(!c)return;if(c.querySelectorAll('.mp-r').length<2){const g=r.querySelector('.th-rg'),k=r.querySelector('.th-rk');if(g)g.value='';if(k)k.value='';return;}r.remove();}
 function thMateriM(id){
   const ex=id?(THI||[]).find(x=>x.id===id):null;
   if(id&&!ex)return;
-  const kl=kelasUnik(),gs=G.filter(g=>hasR(g,'GURU')),sel=ex?(ex.pg||[])[0]||'':'';
+  const adaGuru=G.some(g=>hasR(g,'GURU'));
   modal(id?'Ubah materi tahfidz':'Tambah materi tahfidz',
     `<label for="th-n">Nama materi *</label><input id="th-n" class="in" maxlength="100" value="${esc(ex?ex.n:'')}" placeholder="Contoh: Nadzam Alfiyah">`+
-    `<label for="th-kl">Kelas *</label>`+(id
-      ?`<input id="th-kl" class="in" value="Kelas ${esc(ex.k)}" disabled><p class="mu" style="margin-top:4px">Kelas tidak dapat diubah; bila salah kelas, hapus lalu buat ulang.</p>`
-      :`<select id="th-kl" class="in"><option value="">— pilih kelas —</option>${kl.map(k=>`<option value="${esc(k)}" ${k===S.thk?'selected':''}>Kelas ${esc(k)}</option>`).join('')}</select>`)+
-    `<label for="th-pg">Pengampu *</label><select id="th-pg" class="in"><option value="">— pilih pengampu —</option>${gs.map(g=>`<option value="${esc(g.id)}" ${sel===g.id?'selected':''}>${esc(g.n)}</option>`).join('')}</select>`+
-    `<label for="th-k">Keterangan / target (opsional)</label><input id="th-k" class="in" maxlength="300" value="${esc(ex?ex.ket:'')}" placeholder="Contoh: Target semester ganjil">`+
+    `<label>Pengampu &amp; kelasnya *</label><p class="mu" style="margin:2px 0 6px">${id
+      ?'Pengampu dapat diganti. Kelas tidak dapat diubah; bila salah kelas, hapus lalu buat ulang.'
+      :'Pilih pengampu, lalu pilih kelasnya. Klik <b>+ Tambah</b> bila materi yang sama juga diajarkan di kelas lain (atau oleh pengampu lain) \u2014 materi akan dibuat otomatis untuk tiap kelas.'}</p>`+
+    (adaGuru
+      ?`<div id="th-rows" style="max-height:260px;overflow:auto">${id?thRowHtml((ex.pg||[])[0]||'',ex.k,true):thRowHtml('',S.thk||'')}</div>${id?'':'<button type="button" class="btn ghost" onclick="thAddRow()">+ Tambah</button>'}`
+      :'<p class="mu">Belum ada guru.</p>')+
+    `<label for="th-k" class="mt">Keterangan / target (opsional)</label><input id="th-k" class="in" maxlength="300" value="${esc(ex?ex.ket:'')}" placeholder="Contoh: Target semester ganjil">`+
     `<p class="mu mt">Satu materi untuk satu kelas dengan satu pengampu. Bila ada materi lain di kelas yang sama, tambahkan sebagai materi terpisah.</p>`,
     [CANCEL,{t:id?'Simpan perubahan':'Tambah materi',c:'pri',f:()=>thMateriSave(id)}]);
 }
 function thMateriSave(id){
-  const n=$('th-n').value.trim();
+  const n=$('th-n').value.trim(),ket=$('th-k').value.trim();
   if(!n)return toast('Nama materi wajib diisi','er');
-  const k=id?'':$('th-kl').value;
-  if(!id&&!k)return toast('Pilih kelas','er');
-  const pg=$('th-pg').value;
-  if(!pg)return toast('Pilih pengampu','er');
-  rpc('tahMateriSave',{id:id||'',n:n,ket:$('th-k').value.trim(),k:k,pg:pg}).then(()=>{
-    closeM();toast(id?'Materi diperbarui':'Materi ditambahkan','ok');
-    if(!id&&k)S.thk=k;
-    THI=null;THR=null;render(true);
-  }).catch(e=>toast(e.message,'er'));
+  const rows=[...document.querySelectorAll('#th-rows .mp-r')].map(r=>({g:r.querySelector('.th-rg').value,k:r.querySelector('.th-rk').value}));
+  if(id){
+    const pg=(rows[0]||{}).g;
+    if(!pg)return toast('Pilih pengampu','er');
+    return rpc('tahMateriSave',{id:id,n:n,ket:ket,k:'',pg:pg}).then(()=>{
+      closeM();toast('Materi diperbarui','ok');THI=null;THR=null;render(true);
+    }).catch(e=>toast(e.message,'er'));
+  }
+  if(rows.some(r=>(r.g&&!r.k)||(!r.g&&r.k)))return toast('Lengkapi pengampu dan kelas pada setiap baris','er');
+  const list=rows.filter(r=>r.g&&r.k);
+  if(!list.length)return toast('Pilih pengampu dan kelas','er');
+  const seen={};
+  for(const r of list){if(seen[r.k])return toast('Kelas '+r.k+' dipilih lebih dari sekali','er');seen[r.k]=1;}
+  let i=0;
+  const next=()=>{
+    if(i>=list.length){
+      closeM();toast(list.length>1?'Materi ditambahkan ke '+list.length+' kelas':'Materi ditambahkan','ok');
+      S.thk=list[0].k;THI=null;THR=null;render(true);return;
+    }
+    const r=list[i];
+    rpc('tahMateriSave',{id:'',n:n,ket:ket,k:r.k,pg:r.g}).then(()=>{i++;next();})
+      .catch(e=>{toast('Kelas '+r.k+': '+e.message,'er');if(i>0){S.thk=list[0].k;THI=null;THR=null;render(true);}});
+  };
+  next();
 }
 function thMateriDel(id){
   const m=(THI||[]).find(x=>x.id===id);if(!m)return;
