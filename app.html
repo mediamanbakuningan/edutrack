@@ -5259,13 +5259,15 @@ function aNilaiJd(){
       Array.from({length:n},(_,i)=>{const j=i+1;return`<tr><th class="jh" scope="row">${j}<div class="jdc-g">${jdWk(JDCFG,j,j)}</div></th>${days.map(h=>{const c=cell(h,j);return`<td class="${c.cls}" style="${c.st}">${c.html}</td>`;}).join('')}</tr>`;}).join('')+`</tbody></table></div>`;
   }
   const dirty=jdSig(d.cells)!==d.base;
+  const dirtyAll=kls.filter(kk=>{const dd=JDG[kk];return dd&&jdSig(dd.cells)!==dd.base;});
   const bar=`<div class="jd-bar"><div><label for="jd-k">Kelas</label><select id="jd-k" class="in" onchange="jdKelas(this.value)">${kls.map(x=>{const dd=JDG[x];const dt=dd&&jdSig(dd.cells)!==dd.base;return`<option value="${esc(x)}" ${x===k?'selected':''}>${esc(x)}${dt?' \u25CF belum disimpan':''}</option>`;}).join('')}</select></div>`+
     `<div><label for="jd-n">Jumlah jam / hari</label><select id="jd-n" class="in" onchange="jdN(this.value)">${Array.from({length:Math.max(JD_MAXJ,n)},(_,i)=>i+1).map(x=>`<option value="${x}" ${x===n?'selected':''} ${x<used?'disabled':''}>${x}</option>`).join('')}</select></div>`+
     `<div><label for="jd-cm">Mulai jam</label><input id="jd-cm" class="in" type="time" value="${esc(JDCFG.mulai)}" onchange="jdCfgSet()"></div><div><label for="jd-cn">Menit / 1 JP</label><input id="jd-cn" class="in" type="number" min="5" max="180" value="${JDCFG.menit}" style="min-width:90px;width:90px" onchange="jdCfgSet()"></div>${JDCD?`<div><button class="btn ghost" ${JDCSAV?'disabled':''} onclick="jdCfgSave()">Simpan pengaturan jam</button></div>`:''}`+
-    `<div><button class="btn ghost" onclick="jdManModal()">\u270F Isi manual\u2026</button></div>`+
+    `<div><button class="btn ghost" onclick="jdManModal()">\u270F Istirahat &amp; kegiatan\u2026</button></div>`+
+    `<label class="jd-ck"><input type="checkbox" ${jdSaOn()?'checked':''} onchange="jdSaT(this.checked)"> Istirahat &amp; kegiatan berlaku untuk semua kelas</label>`+
     `<label class="jd-ck"><input type="checkbox" ${warnOn?'checked':''} onchange="jdWarnT(this.checked)"> Peringatan bentrok jadwal</label>`+
     (hasJD?`<label class="jd-ck"><input type="checkbox" ${useJ?'checked':''} onchange="jdMasukT(this.checked)"> Hanya guru yang masuk hari itu (Jadwal absen)</label>`:'')+
-    `<div class="row" style="margin-left:auto"><button class="btn ghost" onclick="jdPdf()">Unduh PDF</button><button class="btn ghost" ${dirty?'':'disabled'} onclick="jdReset()">Batalkan</button><button id="jd-save" class="btn pri" ${dirty?'':'disabled'} onclick="jdSave()">Simpan jadwal ${esc(k)}</button></div></div>`;
+    `<div class="row" style="margin-left:auto"><button class="btn ghost" onclick="jdPdf()">Unduh PDF</button><button class="btn ghost" ${dirty?'':'disabled'} onclick="jdReset()">Batalkan</button><button id="jd-save" class="btn pri" ${dirty?'':'disabled'} onclick="jdSave()">Simpan jadwal ${esc(k)}</button>${dirtyAll.length>1?`<button class="btn pri" onclick="jdSaveAll()">Simpan semua kelas (${dirtyAll.length})</button>`:''}</div></div>`;
   const noOpt=days.every(h=>!optsBy[h].length)
     ?`<div class="note">Belum ada mapel yang bisa dipilih untuk kelas ${esc(k)}. Pastikan mapel dan guru pengampunya (beserta kelasnya) sudah diatur di tab <b>Mata pelajaran</b>${useJ?', dan guru punya hari masuk di Jadwal absen (atau hilangkan centang \u201CHanya guru yang masuk\u201D)':''}.</div>`:'';
   const auto=d.auto&&dirty?`<div class="note">${d.auto} jadwal lama belum punya jam ke-, jadi ditempatkan otomatis berurutan pada tiap hari. Periksa dulu, ubah bila perlu, lalu klik <b>Simpan jadwal</b>.</div>`:'';
@@ -5375,9 +5377,17 @@ function jdPdf(){
     name:'jadwal-mapel-'+safe(k)+'.pdf'});
   toast('PDF jadwal mapel diunduh','ok');
 }
+const jdSaOn=()=>S.jdsa!==false;
+function jdSaT(b){S.jdsa=!!b;render(true);}
+const jdKlsAll=()=>[...new Set(kelasList().concat((JDML||[]).map(r=>r.k)))].filter(Boolean).sort(jdNum);
 function jdSet(h,j,v){
   if(v==='__MAN__'){render(true);jdManModal(h,j);return;}
-  const d=jdDraft(S.jdk),c=h+'|'+j;if(v)d.cells[c]=v;else delete d.cells[c];render(true);
+  const k=S.jdk,c=h+'|'+j,d=jdDraft(k),prev=d.cells[c]||'';
+  if(jdSaOn()&&(jdKh(v)||(!v&&jdKh(prev)))){
+    /* istirahat / kegiatan tambahan sama untuk semua kelas: terapkan (atau hapus) di jam yang sama pada semua kelas */
+    jdKlsAll().forEach(kk=>{const dd=jdDraft(kk);if(v)dd.cells[c]=v;else if(kk===k||jdKh(dd.cells[c]))delete dd.cells[c];});
+  }else{if(v)d.cells[c]=v;else delete d.cells[c];}
+  render(true);
 }
 function jdCfgSet(){
   const a=$('jd-cm'),b=$('jd-cn');if(!a||!b)return;
@@ -5392,6 +5402,7 @@ function jdCfgSave(){
     JDCSAV=false;JDCD=false;if(r.info)JDCFG={mulai:r.info.mulai,menit:r.info.menit};toast('Pengaturan jam tersimpan','ok');render(true);
   }).catch(e=>{JDCSAV=false;toast(e.message,'er');render(true);});
 }
+function jdManT(){const t=$('jm-t'),w=$('jm-nw');if(t&&w)w.hidden=t.value==='ist';}
 function jdManPv(){
   const a=+($('jm-a')||{}).value,b=+($('jm-b')||{}).value,e=$('jm-pv');if(!e)return;
   e.textContent=(a&&b&&b>=a)?'Jam ke-'+(a===b?a:a+'\u2013'+b)+' \u00B7 '+jdWk(JDCFG,a,b)+' ('+JDCFG.menit+' menit per JP, mulai '+JDCFG.mulai+')':'Jam akhir harus sama atau setelah jam awal';
@@ -5403,23 +5414,26 @@ function jdManModal(h,j){
   (JDML||[]).forEach(r=>{if(String(r.mi||'').indexOf(JD_MAN)===0)names[jdManNama(r.mi)]=1;});
   const h0=h||1,j0=j||1,jn=Array.from({length:JD_MAXJ},(_,i)=>i+1);
   const opt=(x,sel)=>`<option value="${x}"${x===sel?' selected':''}>${x}</option>`;
-  modal('Isi jadwal manual \u2013 kelas '+k,
+  modal('Istirahat & kegiatan tambahan',
+    `<label for="jm-t">Jenis</label><select id="jm-t" class="in" onchange="jdManT()"><option value="man">Kegiatan tambahan (literasi, apel, dll)</option><option value="ist">\u2615 Istirahat</option></select>`+
     `<p class="mu">Isi jam-jam tertentu dengan kegiatan non-mapel seperti literasi, apel, atau pembiasaan. Jam mulai-selesai dihitung dari pengaturan <b>mulai jam</b> dan <b>menit per JP</b>. Kegiatan ini tidak mewajibkan absensi.</p>`+
-    `<label for="jm-n">Nama kegiatan</label><input id="jm-n" class="in" list="jm-dl" maxlength="40" placeholder="Contoh: Literasi"><datalist id="jm-dl">${Object.keys(names).sort(jdNum).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`+
+    `<div id="jm-nw"><label for="jm-n">Nama kegiatan</label><input id="jm-n" class="in" list="jm-dl" maxlength="40" placeholder="Contoh: Literasi"></div><datalist id="jm-dl">${Object.keys(names).sort(jdNum).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`+
     `<label for="jm-h">Hari</label><select id="jm-h" class="in"><option value="0">Semua hari (Senin\u2013Sabtu)</option>${[1,2,3,4,5,6,7].map(x=>`<option value="${x}"${x===h0?' selected':''}>${JD_HARI[x]}</option>`).join('')}</select>`+
     `<div class="row" style="gap:10px;margin-top:6px"><div style="flex:1"><label for="jm-a">Dari jam ke-</label><select id="jm-a" class="in" onchange="jdManPv()">${jn.map(x=>opt(x,j0)).join('')}</select></div><div style="flex:1"><label for="jm-b">Sampai jam ke-</label><select id="jm-b" class="in" onchange="jdManPv()">${jn.map(x=>opt(x,j0)).join('')}</select></div></div>`+
-    `<p id="jm-pv" class="mu mt"></p><p class="mu">Sel pada rentang itu yang sudah terisi akan diganti. Perubahan baru tersimpan setelah klik <b>Simpan jadwal</b>.</p>`,
+    `<p id="jm-pv" class="mu mt"></p><label class="jd-ck" style="margin-top:8px"><input type="checkbox" id="jm-all" ${jdSaOn()?'checked':''}> Terapkan ke <b>semua kelas</b> (${jdKlsAll().length} kelas)</label><p class="mu">Sel pada rentang itu yang sudah terisi akan diganti, termasuk mapel di kelas lain bila dicentang semua kelas. Perubahan baru tersimpan setelah klik <b>Simpan jadwal</b> / <b>Simpan semua kelas</b>.</p>`,
   [CANCEL,{t:'Terapkan',c:'pri',f:()=>{
+    const tp=$('jm-t').value,all=$('jm-all').checked;
     const nm=($('jm-n').value||'').replace(/[:|\r\n\t]+/g,' ').replace(/\s+/g,' ').trim().slice(0,40);
     const a=+$('jm-a').value,b=+$('jm-b').value,hh=+$('jm-h').value;
-    if(!nm)return toast('Nama kegiatan wajib diisi','er');
+    if(tp==='man'&&!nm)return toast('Nama kegiatan wajib diisi','er');
     if(!(b>=a))return toast('Jam akhir harus sama atau setelah jam awal','er');
-    const v=JD_MAN+nm+'::',days=hh?[hh]:[1,2,3,4,5,6];
-    days.forEach(x=>{for(let i=a;i<=b;i++)d.cells[x+'|'+i]=v;});
+    const v=tp==='ist'?JD_IST:JD_MAN+nm+'::',days=hh?[hh]:[1,2,3,4,5,6];
+    S.jdsa=all;
+    (all?jdKlsAll():[k]).forEach(kk=>{const dd=jdDraft(kk);days.forEach(x=>{for(let i=a;i<=b;i++)dd.cells[x+'|'+i]=v;});});
     S.jdn=Math.max(S.jdn||8,b);
     closeM();render(true);
   }}]);
-  jdManPv();
+  jdManT();jdManPv();
 }
 function jdKelas(k){S.jdk=k;render(true);}
 function jdN(n){S.jdn=+n;render(true);}
@@ -5427,6 +5441,27 @@ function jdMasukT(b){S.jdm=!!b;render(true);}
 function jdWarnT(b){try{localStorage.setItem('er-jdbk',b?'1':'0');}catch(_){}render(true);toast('Peringatan bentrok '+(b?'diaktifkan':'dinonaktifkan'),'ok');}
 function jdDay(h){S.jdh=+h;render(true);}
 function jdReset(){const k=S.jdk;confirmM('Batalkan perubahan','Perubahan jadwal kelas '+k+' yang belum disimpan akan dibuang. Lanjutkan?',()=>{delete JDG[k];render(true);});}
+function jdItems(k){
+  const d=jdDraft(k),want={};
+  Object.keys(d.cells).forEach(c=>{const p=c.split('|'),q=d.cells[c].split('::'),key=p[0]+'::'+q[0]+'::'+q[1];(want[key]=want[key]||[]).push(+p[1]);});
+  return Object.keys(want).map(key=>{const p=key.split('::');return{guruId:p[2],mapelId:p[1],hari:+p[0],jam:jamFmt(want[key])};});
+}
+function jdSaveAll(){
+  if(JDSAV)return;
+  const ks=jdKlsAll().filter(kk=>{const dd=JDG[kk];return dd&&jdSig(dd.cells)!==dd.base;});
+  if(!ks.length)return;
+  confirmM('Simpan semua kelas','Jadwal '+ks.length+' kelas ('+ks.join(', ')+') akan disimpan. Lanjutkan?',()=>{
+    JDSAV=true;toast('Menyimpan jadwal '+ks.length+' kelas\u2026');
+    let i=0;
+    const next=()=>{
+      if(i>=ks.length){JDSAV=false;JDML=null;toast('Jadwal '+ks.length+' kelas tersimpan','ok');jdLoad();return;}
+      const kk=ks[i];
+      rpc('jadwalMapelKelas',{kelas:kk,items:jdItems(kk)}).then(()=>{delete JDG[kk];i++;next();})
+        .catch(e=>{JDSAV=false;JDML=null;toast('Kelas '+kk+' gagal disimpan: '+e.message,'er');jdLoad();});
+    };
+    next();
+  });
+}
 function jdSave(){
   if(JDSAV)return;
   const k=S.jdk,d=jdDraft(k),want={};
