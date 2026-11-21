@@ -6011,5 +6011,76 @@ if(TOKEN){
 /* Service Worker bersifat opsional: hanya didaftarkan bila sw.js ada */
 if('serviceWorker' in navigator){fetch('sw.js',{method:'HEAD'}).then(function(r){if(r.ok)navigator.serviceWorker.register('sw.js');}).catch(function(){});}
 </script>
+<style>
+/* Tombol Update aplikasi: muncul otomatis hanya bila ada versi baru */
+#upd-btn[hidden]{display:none!important}
+#upd-btn{position:fixed;left:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:9999;display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border:0;border-radius:999px;cursor:pointer;background:var(--pr,#1e56e0);color:#fff;font:700 .88rem/1 inherit;font-family:inherit;box-shadow:0 12px 28px -8px rgba(30,86,224,.65);transition:transform .2s}
+#upd-btn:hover,#upd-btn:focus-visible{transform:translateY(-2px)}
+#upd-btn:disabled{opacity:.75;cursor:progress}
+#upd-btn svg{width:17px;height:17px;flex:none}
+#upd-btn .upd-dot{width:8px;height:8px;border-radius:50%;background:#fde047;animation:updPulse 1.4s ease-in-out infinite}
+@keyframes updPulse{0%,100%{box-shadow:0 0 0 0 rgba(253,224,71,.7)}50%{box-shadow:0 0 0 7px rgba(253,224,71,0)}}
+@media(max-width:860px){#upd-btn{left:50%;right:auto;bottom:auto;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%)}#upd-btn:hover,#upd-btn:focus-visible{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){#upd-btn .upd-dot{animation:none}#upd-btn{transition:none}}
+</style>
+<button type="button" id="upd-btn" hidden aria-live="polite"><span class="upd-dot" aria-hidden="true"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg><span id="upd-t">Update tersedia · Perbarui</span></button>
+<script>
+/* ===== Deteksi pembaruan aplikasi (HTML/JS/CSS, sw.js, manifest.json) =====
+   Membandingkan kode yang SEDANG berjalan dengan salinan terbaru di server (tanpa cache).
+   Bila berbeda, tombol "Update tersedia" muncul. Klik = bersihkan cache lama lalu muat ulang. */
+(function(){
+  var BTN=document.getElementById('upd-btn'),TXT=document.getElementById('upd-t');
+  if(!BTN)return;
+  var found=false,busy=false,last=0;
+  function h(s){var x=5381,i=s.length;while(i)x=(x*33)^s.charCodeAt(--i);return(x>>>0).toString(36)+'.'+s.length;}
+  function sig(d){var o='';d.querySelectorAll('script:not([src]),style:not(#cfg-css)').forEach(function(n){o+=n.textContent;});return h(o);}
+  var base=sig(document);
+  function lget(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function lset(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function bust(u){return u+(u.indexOf('?')<0?'?':'&')+'_u='+Date.now();}
+  function ext(){
+    return Promise.all(['sw.js','manifest.json'].map(function(f){
+      return fetch(bust(f),{cache:'no-store'}).then(function(r){
+        var t=r.headers.get('content-type')||'';
+        if(!r.ok||/html/i.test(t))return '-';
+        return r.text().then(h);
+      }).catch(function(){return '-';});
+    })).then(function(a){return a.join('|');});
+  }
+  function show(){found=true;BTN.hidden=false;}
+  function check(force){
+    if(found||busy||navigator.onLine===false)return;
+    var n=Date.now();if(!force&&n-last<60000)return;last=n;
+    fetch(bust(location.pathname+location.search),{cache:'no-store'})
+      .then(function(r){return r.ok?r.text():Promise.reject();})
+      .then(function(t){
+        var changed=sig(new DOMParser().parseFromString(t,'text/html'))!==base;
+        return ext().then(function(e){
+          var old=lget('er-upd-ext');
+          if(old===null)lset('er-upd-ext',e);else if(old!==e)changed=true;
+          if(changed)show();
+        });
+      }).catch(function(){});
+    try{if(navigator.serviceWorker)navigator.serviceWorker.getRegistration().then(function(r){if(r)r.update().catch(function(){});}).catch(function(){});}catch(e){}
+  }
+  function apply(){
+    if(busy)return;
+    if(!confirm('Muat ulang aplikasi untuk menerapkan pembaruan?\n\nPastikan data yang sedang Anda isi sudah disimpan.'))return;
+    busy=true;BTN.disabled=true;TXT.textContent='Memperbarui…';
+    var t=[];
+    try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)t.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister();}));}));}catch(e){}
+    try{if(window.caches&&caches.keys)t.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));}));}catch(e){}
+    Promise.all(t.map(function(p){return p.catch(function(){});}))
+      .then(ext).then(function(e){lset('er-upd-ext',e);})
+      .then(function(){return fetch(location.pathname+location.search,{cache:'reload'}).catch(function(){});})
+      .then(function(){location.reload();});
+  }
+  BTN.addEventListener('click',apply);
+  setTimeout(function(){check(true);},4000);
+  setInterval(function(){check(true);},300000);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')check(false);});
+  window.addEventListener('online',function(){check(true);});
+})();
+</script>
 </body>
 </html>
