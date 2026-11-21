@@ -1592,12 +1592,6 @@ function savePdf(o){
     styles:{font:'times',fontSize:o.fs||9,cellPadding:o.cp==null?2:o.cp,overflow:'linebreak',valign:'top',lineColor:[150,150,150],lineWidth:.2,textColor:[0,0,0]},
     headStyles:{font:'times',fontStyle:'bold',fillColor:[230,230,230],textColor:[0,0,0],fontSize:o.fs||9,halign:'center',valign:'middle'},columnStyles:cs,
     didParseCell:d=>{if(d.section==='head')d.cell.styles.halign='center';}});
-  if(o.note){
-    let yy=doc.lastAutoTable.finalY+6;
-    if(yy>H-24){doc.addPage();yy=14;}
-    doc.setFont('times','normal');doc.setFontSize(9);doc.setTextColor(71,85,105);
-    doc.text(doc.splitTextToSize(o.note,W-20),10,yy);
-  }
   doc.save(o.name);
 }
 
@@ -2641,7 +2635,7 @@ function absMapelPdf(){
   const ctr=[0].concat(dts.map((t,j)=>2+j)).concat([dts.length+2,dts.length+3,dts.length+4,dts.length+5,dts.length+6]);
   const oleh=(AMR.dates||[]).map(t=>+t.slice(8,10)+': '+(AMR.oleh[t]||'-')).join(', ');
   savePdf({land:true,title:'Rekap Absensi Siswa — '+S.am+' Kelas '+S.ak,
-    sub:'Bulan '+bulanL(bulan)+' · Kode: .=Hadir, I=Izin, S=Sakit, A=Alpa · kolom kosong = belum ada absensi · Dicetak '+today(),
+    sub:'Bulan '+bulanL(bulan),
     head:['No','Siswa'].concat(dts.map(t=>String(+t.slice(8,10)))).concat(['H','I','S','A','%']),
     body:(AMR.rows||[]).map((x,i)=>[i+1,x.n].concat(dts.map(t=>absPdfCell(x.cells[t]))).concat([x.c.Hadir,x.c.Izin,x.c.Sakit,x.c.Alpa,x.pct===null?'-':x.pct+'%'])),
     widths:[7,40].concat(dts.map(()=>per)).concat([11,11,11,11,14]),
@@ -2785,7 +2779,7 @@ function absEkskulPdf(){
   const oleh=(AXR.dates||[]).map(t=>+t.slice(8,10)+': '+(AXR.oleh[t]||'-')).join(', ');
   const jadwal=nm&&+nm.h>=1&&+nm.h<=7?'; hari '+hariNm(nm.h):(generik?'; jadwal pertemuan belum diatur':'');
   savePdf({land:land,title:'Rekap Absensi Ekstrakurikuler — '+nama,
-    sub:'Bulan '+bulanL(bulan)+' · Kode: .=Hadir, I=Izin, S=Sakit, A=Alpa · kolom kosong = belum ada absensi · Dicetak '+today(),
+    sub:'Bulan '+bulanL(bulan),
     head:['No','Anggota','Kelas'].concat(dts.map(t=>generik?t:String(+t.slice(8,10)))).concat(['H','I','S','A','%']),
     body:(AXR.rows||[]).map((x,i)=>[i+1,x.n,x.k||'-'].concat(dts.map(t=>generik?'':absPdfCell(x.cells[t]))).concat([x.c.Hadir,x.c.Izin,x.c.Sakit,x.c.Alpa,x.pct===null?'-':x.pct+'%'])),
     widths:[7,40,18].concat(dts.map(()=>per)).concat([11,11,11,11,14]),
@@ -2936,7 +2930,7 @@ function thPdf(){
   const per=Math.max(16,Math.min(50,(avail-fixed)/n));
   const pc=x=>x?x.b+(x.tg?' ('+x.tg+')':''):'-';
   savePdf({land:land,title:'Rekap Tahfidz Kelas '+THR.kelas,
-    sub:'Isi sel = batas hafalan terakhir (tanggal setoran) · - = belum ada catatan · Dicetak '+today(),
+    
     head:['No','Siswa'].concat(ms.map(m=>m.n)),
     body:THR.rows.map((r,i)=>[i+1,r.n].concat(ms.map(m=>pc(r.c[m.id])))),
     widths:[8,46].concat(ms.map(()=>per)),
@@ -3151,7 +3145,7 @@ function absRankPdf(){
   if(AKP===null){akpLoad();return toast('Menyiapkan ranking… klik "Unduh PDF" lagi beberapa saat','er');}
   const bulan=AKPM||YM(),rows=AKP.rows||[];
   savePdf({land:false,title:'Ranking Kehadiran Antar Kelas',
-    sub:'Bulan '+bulanL(bulan)+' · Persentase = hari-siswa Hadir (termasuk Izin & Sakit) / seluruh hari-siswa terisi · Dicetak '+today(),
+    sub:'Bulan '+bulanL(bulan),
     cards:rkItems(rows,true),cardBulan:rkBln(bulan),
     head:['Rank','Kelas','Siswa','H / I / S','Bolos','Alpa','Hari','% Hadir'],
     body:rows.map(x=>[x.rank==null?'-':x.rank,String(x.k),x.siswa,x.H,x.B,x.A,x.hari,x.pct===null?'-':x.pct+'%']),
@@ -3166,7 +3160,7 @@ function absRankSiswaPdf(){
   if(AKSP===null){akspLoad();return toast('Menyiapkan ranking… klik "Unduh PDF" lagi beberapa saat','er');}
   const bulan=AKSPM||YM(),fl=AKSPK,rows=akspRows();
   savePdf({land:false,title:'Ranking Kehadiran Antar Siswa'+(fl?' — Kelas '+fl:''),
-    sub:'Bulan '+bulanL(bulan)+(fl?' · Peringkat di dalam kelas '+fl:' · Semua kelas (peringkat sekolah)')+' · Dicetak '+today(),
+    sub:'Bulan '+bulanL(bulan),
     cards:rkItems(AKSP.rows||[],false),cardBulan:rkBln(bulan),
     head:['Rank','Nama siswa','Kelas','H / I / S','Bolos','Alpa','Hari','% Hadir'],
     body:rows.map(x=>[x.drank==null?'-':x.drank,x.n,x.k||'-',x.H,x.B,x.A,x.hari,x.pct===null?'-':x.pct+'%']),
@@ -3247,7 +3241,7 @@ function absKelasPdf(){
   const per=Math.max(4,(257-104)/dts.length);
   const ctr=[0].concat(dts.map((t,j)=>2+j)).concat([dts.length+2,dts.length+3,dts.length+4,dts.length+5]);
   savePdf({land:true,title:'Rekap Absensi Kelas '+S.akc,
-    sub:'Bulan '+bulanL(bulan)+' · H / I / S = Hadir (termasuk Izin & Sakit), B = Bolos, A = Alpa',
+    sub:'Bulan '+bulanL(bulan),
     head:['No','Siswa'].concat(dts.map(t=>String(+t.slice(8,10)))).concat(['H / I / S','B','A','%']),
     body:(AKR.rows||[]).map((x,i)=>[i+1,x.n].concat(dts.map(t=>absKPdfCell(x.cells[t]))).concat([akrCnt(x).H,akrCnt(x).B,akrCnt(x).A,akrCnt(x).pct===null?'-':akrCnt(x).pct+'%'])),
     widths:[7,40].concat(dts.map(()=>per)).concat([17,11,11,14]),
@@ -3398,7 +3392,7 @@ function rkPdf(k){
   const widths=[8,38].concat(Array(nNum).fill(pa?14:13),[18,60,20]);
   const ctr=[0].concat(Array.from({length:nNum+1},(_,i)=>i+2),[nNum+4]);
   const gr=D.gr,c=s=>gr.filter(x=>x.s===s).length;
-  savePdf({land:true,fs:8,title:pa?'Rekap Perangkat Ajar Guru':'Rekap Soal Guru',sub:'Per '+tglL(today()),
+  savePdf({land:true,fs:8,title:pa?'Rekap Perangkat Ajar Guru':'Rekap Soal Guru',
     head:head,body:body,widths:widths,ctr:ctr,
     note:`Lengkap: ${c('LENGKAP')} · Sebagian: ${c('SEBAGIAN')} · Belum ada: ${c('BELUM')} · Tanpa mapel: ${c('TANPA')}. Status Lengkap bila setiap mapel & kelas yang diampu sudah memiliki ${pa?'perangkat ajar':'unggahan soal'}.`,
     name:(pa?'rekap-perangkat-ajar-':'rekap-soal-')+today()+'.pdf'});
@@ -3746,7 +3740,7 @@ function unduhKred(){
       const def=PWD[rsOf(g)[0]]||'123456';
       body.push([++no,g.n,g.u,rsOf(g).map(r=>ROLE_L[r]||r).join(', '),g.sd==='admin'?'(ditetapkan admin)':def]);
     });
-    savePdf({land:false,title:'Lembar Username & Sandi Awal',sub:'Dicetak '+today()+' | Rahasiakan lembar ini; bagikan hanya kepada yang bersangkutan.',
+    savePdf({land:false,title:'Lembar Username & Sandi Awal',
       head:['No','Nama','Username','Peran','Sandi awal'],body,widths:[10,66,40,34,40],
       note:'Catatan: sandi awal disarankan diganti setelah login. Untuk user yang sudah mengganti sandinya sendiri, jalankan Reset sandi massal agar sandi awal di lembar ini berlaku.',
       name:'kredensial-user-'+today()+'.pdf'});
@@ -3921,7 +3915,7 @@ function expAbsen(){
   const gr=G.filter(g=>hasR(g,'GURU'));
   if(!gr.length)return toast('Belum ada guru.','er');
   const body=gr.map((g,i)=>{const r=recapG(g);return[i+1,g.n,jdL(JD[g.id]),r.n,r.c.Hadir,r.c.Izin,r.c.Sakit,r.c.Alpa,r.pc===null?'-':r.pc+'%'];});
-  savePdf({land:false,title:'Rekap Absensi Guru - '+per().l,sub:'Dihitung sesuai jadwal masuk sampai '+tglL(today()),
+  savePdf({land:false,title:'Rekap Absensi Guru - '+per().l,
     head:['No','Guru','Jadwal','Wajib','Hadir','Izin','Sakit','Alpa','% Hadir'],body,
     widths:[8,50,36,15,15,14,14,14,18],
     note:'Wajib = jumlah hari terjadwal sampai hari ini. % Hadir = Hadir / Wajib.',
@@ -5028,7 +5022,7 @@ function nilaiPdf(){
   const per=Math.min(22,Math.max(11,(W-9-40-16)/cols.length));
   const safe=s=>String(s).replace(/[\\\/:*?"<>|]+/g,'-').trim();
   savePdf({land:land,title:'Daftar Nilai Siswa',
-    sub:'Kelas '+S.nk+' · '+m.n+(mpGuru(m).length?' · Pengampu: '+mpGuruN(m):'')+' · Semester '+(NS||'-')+' · Skala '+skalaTxt(nj().filter(j=>!S.njv||j.k===S.njv))+' · Dicetak '+today(),
+    sub:'Semester '+(NS||'-'),
     head:['No','Siswa'].concat(cols.map(c=>c.h)).concat(['Rata-rata']),body:body,
     widths:[9,40].concat(cols.map(()=>per)).concat([16]),
     note:'Jenis penilaian yang tampil: '+nj().filter(j=>!S.njv||j.k===S.njv).map(j=>j.l+' ×'+j.n).join(', ')+'. Skala nilai '+skalaTxt(nj().filter(j=>!S.njv||j.k===S.njv))+'. Tanda - berarti belum ada nilai.',
@@ -5347,7 +5341,7 @@ function jdAllPdf(){
   });
   if(!body.length)return toast('Jadwal masih kosong.','er');
   const cw=Math.floor((277-20)/kls.length);
-  savePdf({land:true,title:'Jadwal Mata Pelajaran Semua Kelas',sub:'Semester '+(NS||'-')+' · Dicetak '+today(),
+  savePdf({land:true,title:'Jadwal Mata Pelajaran Semua Kelas',sub:'Semester '+(NS||'-'),
     head:['Jam ke-'].concat(kls),body:body,widths:[20].concat(kls.map(()=>cw)),ctr:[0],
     fs:kls.length>10?6.5:kls.length>6?7.5:9,cp:1.5,
     note:'Sel kosong berarti tidak ada pelajaran pada jam tersebut.',name:'jadwal-mapel-semua-kelas.pdf'});
@@ -5374,7 +5368,7 @@ function jdPdf(){
   const cw=Math.floor((277-22)/days.length);
   const safe=x=>String(x).replace(/[\\\/:*?"<>|]+/g,'-').trim();
   savePdf({land:true,title:'Jadwal Mata Pelajaran Kelas '+k,
-    sub:'Semester '+(NS||'-')+' · Dicetak '+today(),
+    sub:'Semester '+(NS||'-'),
     head:['Jam ke-'].concat(days.map(h=>JD_HARI[h])),body:body,
     widths:[22].concat(days.map(()=>cw)),ctr:[0],fs:9.5,cp:2.5,
     note:'Sel kosong berarti tidak ada pelajaran pada jam tersebut.',
