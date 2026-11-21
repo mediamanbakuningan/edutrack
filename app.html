@@ -890,6 +890,15 @@ function installApp(){
   try{toast("Gunakan menu browser \u2192 'Tambahkan ke Layar Utama'.");}catch(e){}
 }
 </script>
+<style>
+/* Progress bar menyimpan (modal terkunci) */
+.sbar{width:100%;margin:6px auto 0}
+.sbar-t{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:.86rem;font-weight:600;color:var(--mu)}
+.sbar-t b{font-variant-numeric:tabular-nums;color:var(--pr);font-weight:700}
+.sbar-tr{height:10px;border-radius:99px;background:color-mix(in srgb,var(--pr) 16%,transparent);overflow:hidden}
+.sbar-f{display:block;height:100%;width:0;border-radius:inherit;background:var(--pr);transition:width .25s ease}
+@media(prefers-reduced-motion:reduce){.sbar-f{transition:none}}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="etg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82ff"/><stop offset="1" stop-color="#163a9c"/></linearGradient></defs></svg>
@@ -5446,33 +5455,52 @@ function jdItems(k){
   Object.keys(d.cells).forEach(c=>{const p=c.split('|'),q=d.cells[c].split('::'),key=p[0]+'::'+q[0]+'::'+q[1];(want[key]=want[key]||[]).push(+p[1]);});
   return Object.keys(want).map(key=>{const p=key.split('::');return{guruId:p[2],mapelId:p[1],hari:+p[0],jam:jamFmt(want[key])};});
 }
+const JDPG={v:0,t:0};
+function jdPgOpen(title,label){
+  clearInterval(JDPG.t);JDPG.v=0;
+  modal(title,`<div class="sbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-live="polite"><div class="sbar-t"><span id="sbar-l">${esc(label)}</span><b id="sbar-p">0%</b></div><div class="sbar-tr"><i id="sbar-f" class="sbar-f"></i></div></div><p class="mu mt">Mohon tunggu, jangan menutup halaman ini.</p>`,[],true);
+  requestAnimationFrame(()=>jdPgSet(4));
+}
+function jdPgSet(v,label){
+  v=Math.max(0,Math.min(100,v));JDPG.v=v;
+  const f=$('sbar-f'),p=$('sbar-p'),l=$('sbar-l'),b=document.querySelector('.sbar');
+  if(f)f.style.width=v+'%';if(p)p.textContent=Math.round(v)+'%';if(l&&label)l.textContent=label;if(b)b.setAttribute('aria-valuenow',Math.round(v));
+}
+/* naik perlahan menuju target selama permintaan berjalan (estimasi), lalu dipastikan penuh saat selesai */
+function jdPgGo(target){clearInterval(JDPG.t);JDPG.t=setInterval(()=>jdPgSet(JDPG.v+(target-JDPG.v)*.08),150);}
+function jdPgEnd(ok,after){
+  clearInterval(JDPG.t);
+  if(!ok){closeM(true);if(after)after();return;}
+  jdPgSet(100);setTimeout(()=>{closeM(true);if(after)after();},450);
+}
 function jdSaveAll(){
   if(JDSAV)return;
   const ks=jdKlsAll().filter(kk=>{const dd=JDG[kk];return dd&&jdSig(dd.cells)!==dd.base;});
   if(!ks.length)return;
   confirmM('Simpan semua kelas','Jadwal '+ks.length+' kelas ('+ks.join(', ')+') akan disimpan. Lanjutkan?',()=>{
-    JDSAV=true;toast('Menyimpan jadwal '+ks.length+' kelas\u2026');
-    let i=0;
+    JDSAV=true;
+    const n=ks.length;let i=0;
+    jdPgOpen('Menyimpan jadwal','Menyimpan kelas '+ks[0]+' (1 dari '+n+')');
     const next=()=>{
-      if(i>=ks.length){JDSAV=false;JDML=null;toast('Jadwal '+ks.length+' kelas tersimpan','ok');jdLoad();return;}
+      if(i>=n){JDSAV=false;JDML=null;jdPgEnd(true,()=>{toast('Jadwal '+n+' kelas tersimpan','ok');jdLoad();});return;}
       const kk=ks[i];
+      jdPgSet(i/n*100,'Menyimpan kelas '+kk+' ('+(i+1)+' dari '+n+')');
+      jdPgGo((i+.9)/n*100);
       rpc('jadwalMapelKelas',{kelas:kk,items:jdItems(kk)}).then(()=>{delete JDG[kk];i++;next();})
-        .catch(e=>{JDSAV=false;JDML=null;toast('Kelas '+kk+' gagal disimpan: '+e.message,'er');jdLoad();});
+        .catch(e=>{JDSAV=false;JDML=null;jdPgEnd(false,()=>{toast('Kelas '+kk+' gagal disimpan: '+e.message,'er');jdLoad();});});
     };
     next();
   });
 }
 function jdSave(){
   if(JDSAV)return;
-  const k=S.jdk,d=jdDraft(k),want={};
-  Object.keys(d.cells).forEach(c=>{const p=c.split('|'),q=d.cells[c].split('::'),key=p[0]+'::'+q[0]+'::'+q[1];(want[key]=want[key]||[]).push(+p[1]);});
-  const items=Object.keys(want).map(key=>{const p=key.split('::');return{guruId:p[2],mapelId:p[1],hari:+p[0],jam:jamFmt(want[key])};});
+  const k=S.jdk,items=jdItems(k);
   const go=()=>{
     JDSAV=true;
-    const b=$('jd-save');if(b){b.disabled=true;b.textContent='Menyimpan\u2026';}
+    jdPgOpen('Menyimpan jadwal','Menyimpan jadwal kelas '+k+'\u2026');jdPgGo(90);
     rpc('jadwalMapelKelas',{kelas:k,items:items}).then(()=>{
-      JDSAV=false;delete JDG[k];JDML=null;toast('Jadwal kelas '+k+' tersimpan','ok');jdLoad();
-    }).catch(e=>{JDSAV=false;toast(e.message,'er');render(true);});
+      JDSAV=false;delete JDG[k];JDML=null;jdPgEnd(true,()=>{toast('Jadwal kelas '+k+' tersimpan','ok');jdLoad();});
+    }).catch(e=>{JDSAV=false;jdPgEnd(false,()=>{toast(e.message,'er');render(true);});});
   };
   const msg=[];
   if(jdWarnOn()&&JDNC>0)msg.push(JDNC+' jam bentrok: guru yang sama tercatat mengajar di dua kelas pada jam yang sama.');
