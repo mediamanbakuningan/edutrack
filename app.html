@@ -1569,7 +1569,26 @@ function savePdf(o){
     if(sum>0&&Math.abs(sum-avail)>0.5){const k=avail/sum;(o.widths||[]).forEach((w,i)=>{cs[i]=Object.assign(cs[i]||{},{cellWidth:w*k});});}
   }
   (o.ctr||[]).forEach(i=>{cs[i]=Object.assign(cs[i]||{},{halign:'center'});});
-  doc.autoTable({startY:y+4,head:[o.head],body:o.body,theme:'grid',margin:{left:10,right:10,bottom:14},
+  let ty=y+4;
+  if(o.cards&&o.cards.length){
+    const n=o.cards.length,gap=5,cw=(W-20-gap*(n-1))/n,ch=29,cy=y+6;
+    o.cards.forEach((c,i)=>{
+      const cx=10+i*(cw+gap),col=c.none?[100,116,139]:(c.kind==='ok'?[22,163,74]:[220,38,38]);
+      doc.setDrawColor(col[0],col[1],col[2]);doc.setLineWidth(.4);doc.roundedRect(cx,cy,cw,ch,1.5,1.5,'S');
+      doc.setFillColor(col[0],col[1],col[2]);doc.rect(cx,cy,2,ch,'F');
+      doc.setFont('times','bold');doc.setFontSize(8.5);doc.setTextColor(col[0],col[1],col[2]);doc.text(c.lbl,cx+5,cy+5);
+      doc.setFont('times','normal');doc.setFontSize(8);doc.setTextColor(71,85,105);doc.text(c.sub+(o.cardBulan?' · '+o.cardBulan:''),cx+5,cy+9.5);
+      if(c.none){doc.setFont('times','italic');doc.setFontSize(10);doc.setTextColor(71,85,105);doc.text('Belum ada data',cx+5,cy+18);return;}
+      doc.setFont('times','bold');doc.setFontSize(10.5);doc.setTextColor(0,0,0);
+      doc.text(doc.splitTextToSize(c.nm,cw-8).slice(0,2),cx+5,cy+15,{lineHeightFactor:1.15});
+      doc.setFont('times','bold');doc.setFontSize(12);doc.setTextColor(col[0],col[1],col[2]);doc.text(c.p+'%',cx+5,cy+ch-2.5);
+      const pw=doc.getTextWidth(c.p+'%');
+      doc.setFont('times','normal');doc.setFontSize(8);doc.setTextColor(71,85,105);doc.text(c.info,cx+5+pw+3.5,cy+ch-2.5);
+    });
+    doc.setTextColor(0,0,0);doc.setDrawColor(150,150,150);
+    ty=cy+ch+5;
+  }
+  doc.autoTable({startY:ty,head:[o.head],body:o.body,theme:'grid',margin:{left:10,right:10,bottom:14},
     styles:{font:'times',fontSize:o.fs||9,cellPadding:o.cp==null?2:o.cp,overflow:'linebreak',valign:'top',lineColor:[150,150,150],lineWidth:.2,textColor:[0,0,0]},
     headStyles:{font:'times',fontStyle:'bold',fillColor:[230,230,230],textColor:[0,0,0],fontSize:o.fs||9,halign:'center',valign:'middle'},columnStyles:cs,
     didParseCell:d=>{if(d.section==='head')d.cell.styles.halign='center';}});
@@ -3063,21 +3082,29 @@ function rkExt(rows){
   const hi=Math.max(...v.map(x=>x.pct)),lo=Math.min(...v.map(x=>x.pct));
   return{hi:{l:v.filter(x=>x.pct===hi),p:hi},lo:hi===lo?{same:true,p:hi}:{l:v.filter(x=>x.pct===lo),p:lo}};
 }
-/* 4 kartu penghargaan BULANAN (mengikuti bulan yang dipilih). Selalu dihitung dari seluruh sekolah,
-   tidak terpengaruh filter kelas pada tab siswa. */
-function rankCards(clsRows,sisRows,bulan){
-  const c=rkExt(clsRows),w=rkExt(sisRows);
-  const bl=bulan?bulanL(bulan)+(bulan===YM()?' (sementara)':''):'';
-  const card=(lbl,sub,e,kind,cls)=>{
-    const head=`<span style="display:block;font-weight:700;letter-spacing:.05em;font-size:.72rem">${lbl}</span><span style="display:block;margin-bottom:8px">${sub} · ${esc(bl)}</span>`;
-    if(!e)return`<div class="stat">${head}<b>-</b><span>Belum ada data</span></div>`;
-    if(e.same)return`<div class="stat ${kind}">${head}<div style="font-weight:700;font-size:1rem;line-height:1.25;margin-bottom:6px">Semua ${cls?'kelas':'siswa'} sama</div><b>${e.p}%</b><span>kehadiran</span></div>`;
-    const L=e.l,nm=L.slice(0,3).map(x=>cls?'Kelas '+esc(x.k):esc(x.n)+(x.k?' ('+esc(x.k)+')':'')).join(', ')+(L.length>3?' dan '+(L.length-3)+' lainnya':'');
-    return`<div class="stat ${kind}">${head}<div style="font-weight:700;font-size:1rem;line-height:1.25;overflow-wrap:anywhere;margin-bottom:6px">${nm}</div><b>${e.p}%</b><span>kehadiran${L.length>1?' · seri '+L.length+' '+(cls?'kelas':'siswa'):''}</span></div>`;
+/* Kartu penghargaan BULANAN (mengikuti bulan yang dipilih). Tab kelas: CLASS OF THE MONTH + LOWEST CLASS.
+   Tab siswa: STAR STUDENT + LOWEST STUDENT (selalu se-sekolah, tidak terpengaruh filter kelas). Data sama dipakai untuk PDF. */
+function rkBln(bulan){return bulan?bulanL(bulan)+(bulan===YM()?' (sementara)':''):'';}
+function rkItems(rows,cls){
+  const e=rkExt(rows);
+  const mk=(lbl,sub,x,kind)=>{
+    if(!x)return{lbl:lbl,sub:sub,kind:kind,none:true};
+    if(x.same)return{lbl:lbl,sub:sub,kind:kind,nm:'Semua '+(cls?'kelas':'siswa')+' sama',p:x.p,info:'kehadiran'};
+    const L=x.l,nm=L.slice(0,3).map(y=>cls?'Kelas '+y.k:y.n+(y.k?' ('+y.k+')':'')).join(', ')+(L.length>3?' dan '+(L.length-3)+' lainnya':'');
+    return{lbl:lbl,sub:sub,kind:kind,nm:nm,p:x.p,info:'kehadiran'+(L.length>1?' · seri '+L.length+' '+(cls?'kelas':'siswa'):'')};
   };
-  return`<div class="stats" style="margin-top:12px">`+
-    card('CLASS OF THE MONTH','Kelas teraktif',c&&c.hi,'ok',true)+card('LOWEST CLASS','Kelas termalas',c&&c.lo,'er',true)+
-    card('STAR STUDENT','Siswa teraktif',w&&w.hi,'ok',false)+card('LOWEST STUDENT','Siswa termalas',w&&w.lo,'er',false)+`</div>`;
+  return cls
+    ?[mk('CLASS OF THE MONTH','Kelas teraktif',e&&e.hi,'ok'),mk('LOWEST CLASS','Kelas termalas',e&&e.lo,'er')]
+    :[mk('STAR STUDENT','Siswa teraktif',e&&e.hi,'ok'),mk('LOWEST STUDENT','Siswa termalas',e&&e.lo,'er')];
+}
+function rankCards(rows,cls,bulan){
+  const bl=rkBln(bulan);
+  const card=c=>{
+    const head=`<span style="display:block;font-weight:700;letter-spacing:.05em;font-size:.72rem">${c.lbl}</span><span style="display:block;margin-bottom:8px">${c.sub} · ${esc(bl)}</span>`;
+    if(c.none)return`<div class="stat">${head}<b>-</b><span>Belum ada data</span></div>`;
+    return`<div class="stat ${c.kind}">${head}<div style="font-weight:700;font-size:1rem;line-height:1.25;overflow-wrap:anywhere;margin-bottom:6px">${esc(c.nm)}</div><b>${c.p}%</b><span>${esc(c.info)}</span></div>`;
+  };
+  return`<div class="stats" style="margin-top:12px">`+rkItems(rows,cls).map(card).join('')+`</div>`;
 }
 function vAbsRank(){
   if(!AKPM)AKPM=YM();
@@ -3091,7 +3118,7 @@ function vAbsRank(){
   if(AKP===null||AKSP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
   const rows=AKP.rows||[];
   if(!rows.length||rows.every(x=>x.pct===null))return head+bar+`<div class="note">Belum ada absensi mapel pada bulan ${esc(bulanL(AKPM))}. Ranking terisi otomatis begitu guru pengampu menyimpan absensi per mapel.</div>`;
-  const juara=rankCards(rows,(AKSP&&AKSP.rows)||[],AKPM);
+  const juara=rankCards(rows,true,AKPM);
   const tbl=isMob()
     ?`<div class="mcl" style="margin-top:12px">${rows.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${akpMed(x.rank)} · Kelas ${esc(x.k)}</b><div class="mc-sub">${x.siswa} siswa · Hadir ${x.H} · Bolos ${x.B} · Alpa ${x.A} · ${x.hari} hari terisi</div></div><b>${x.pct===null?'-':x.pct+'%'}</b></div></div>`).join('')}</div>`
     :`<div class="card tw" style="margin-top:12px"><table><thead><tr><th class="ctr">Rank<th class="ctr">Kelas<th class="ctr">Siswa<th class="ctr">H / I / S<th class="ctr">B<th class="ctr">A<th class="ctr">Hari<th class="ctr">%</thead><tbody>`+
@@ -3111,7 +3138,7 @@ function vAbsRankSiswa(){
   if(AKSP===null||AKP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
   const rows=akspRows();
   if(!rows.length||rows.every(x=>x.pct===null))return head+bar+`<div class="note">${AKSPK?'Belum ada absensi mapel kelas '+esc(AKSPK):'Belum ada absensi mapel'} pada bulan ${esc(bulanL(AKSPM))}. Ranking terisi otomatis begitu guru pengampu menyimpan absensi per mapel.</div>`;
-  const juara=rankCards((AKP&&AKP.rows)||[],(AKSP&&AKSP.rows)||[],AKSPM);
+  const juara=rankCards((AKSP&&AKSP.rows)||[],false,AKSPM);
   const tbl=isMob()
     ?`<div class="mcl" style="margin-top:12px">${rows.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${akpMed(x.drank)} · ${esc(x.n)}</b><div class="mc-sub">Kelas ${esc(x.k||'-')} · Hadir ${x.H} · Bolos ${x.B} · Alpa ${x.A} · ${x.hari} hari terisi</div></div><b>${x.pct===null?'-':x.pct+'%'}</b></div></div>`).join('')}</div>`
     :`<div class="card tw" style="margin-top:12px"><table><thead><tr><th class="ctr">Rank<th class="ctr">Siswa<th class="ctr">Kelas<th class="ctr">H / I / S<th class="ctr">B<th class="ctr">A<th class="ctr">Hari<th class="ctr">%</thead><tbody>`+
@@ -3125,6 +3152,7 @@ function absRankPdf(){
   const bulan=AKPM||YM(),rows=AKP.rows||[];
   savePdf({land:false,title:'Ranking Kehadiran Antar Kelas',
     sub:'Bulan '+bulanL(bulan)+' · Persentase = hari-siswa Hadir (termasuk Izin & Sakit) / seluruh hari-siswa terisi · Dicetak '+today(),
+    cards:rkItems(rows,true),cardBulan:rkBln(bulan),
     head:['Rank','Kelas','Siswa','H / I / S','Bolos','Alpa','Hari','% Hadir'],
     body:rows.map(x=>[x.rank==null?'-':x.rank,String(x.k),x.siswa,x.H,x.B,x.A,x.hari,x.pct===null?'-':x.pct+'%']),
     widths:[18,28,22,28,20,20,16,20],
@@ -3139,6 +3167,7 @@ function absRankSiswaPdf(){
   const bulan=AKSPM||YM(),fl=AKSPK,rows=akspRows();
   savePdf({land:false,title:'Ranking Kehadiran Antar Siswa'+(fl?' — Kelas '+fl:''),
     sub:'Bulan '+bulanL(bulan)+(fl?' · Peringkat di dalam kelas '+fl:' · Semua kelas (peringkat sekolah)')+' · Dicetak '+today(),
+    cards:rkItems(AKSP.rows||[],false),cardBulan:rkBln(bulan),
     head:['Rank','Nama siswa','Kelas','H / I / S','Bolos','Alpa','Hari','% Hadir'],
     body:rows.map(x=>[x.drank==null?'-':x.drank,x.n,x.k||'-',x.H,x.B,x.A,x.hari,x.pct===null?'-':x.pct+'%']),
     widths:[16,58,22,26,18,18,14,18],
