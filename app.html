@@ -1348,7 +1348,7 @@ function go(k){
   cancelPend();if(k!=='kop')KED=null;
   if(k==='perangkat')PAL=null;
     if(k==='soal'){SUL=null;SQS=null;}
-  if(k==='dbd'){S.dt='lap';AGR=null;AGRB=false;S.agq='';AKL=null;AKR=null;S.akc='';AKP=null;AKPB=false;AKSP=null;AKSPB=false;PRK=null;PRKB=false;SRK=null;SRKB=false;S.rkq='';S.rks='';RLP=null;RLPB=false;}
+  if(k==='dbd'){S.dt='lap';AGR=null;AGRB=false;AKL=null;AKR=null;S.akc='';AKP=null;AKPB=false;AKSP=null;AKSPB=false;PRK=null;PRKB=false;SRK=null;SRKB=false;S.rkq='';S.rks='';RLP=null;RLPB=false;}
   if(k==='absmapel'){AML=null;AMR=null;AMK=null;S.amd='';}
   if(k==='abseskul'){AXS=null;AXL=null;AXR=null;}
   if(k==='tahfidz')thReset();
@@ -3208,11 +3208,9 @@ function agrSetBulan(v){
   if(v>YM()){toast('Bulan belum berjalan','er');return;}
   AGRM=v;AGR=null;render(true);
 }
-const agrRefresh=()=>{const e=$('agr-b');if(e)e.innerHTML=agrBody();};
 function agrBody(){
-  const q=String(S.agq||'').trim().toLowerCase();
-  const rows=((AGR&&AGR.rows)||[]).filter(x=>!q||(x.n+' '+(x.un||'')).toLowerCase().indexOf(q)>=0);
-  if(!rows.length)return`<div class="card mu" style="margin-top:12px">${q?'Tidak ada guru yang cocok dengan pencarian.':'Belum ada guru terdaftar.'}</div>`;
+  const rows=(AGR&&AGR.rows)||[];
+  if(!rows.length)return`<div class="card mu" style="margin-top:12px">Belum ada guru yang memenuhi syarat ranking (punya jadwal absensi mapel, perangkat ajar, soal, dan nilai).</div>`;
   return`<div class="mcl" style="margin-top:12px">${rows.map(x=>{
     const k=x.skor===null?'':x.skor>=80?'ok':x.skor>=60?'wa':'er';
     const tags=Object.keys(AGR_LBL).filter(c=>x.comp[c].p!==null).map(c=>`<span class="tag">${esc(AGR_LBL[c])}: ${x.comp[c].p}%</span>`).join('');
@@ -3226,8 +3224,8 @@ function vRankGuru(){
   if(!AGRM)AGRM=YM();
   if(AGR&&AGR.bulan&&AGR.bulan!==AGRM)AGR=null;
   if(AGR===null&&!AGRB)agrLoad();
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking antar guru</h2><p class="mu">Keaktifan guru bulan ${esc(bulanL(AGRM))} dari laporan kinerja, kehadiran, absensi mapel, perangkat ajar, bank soal, input nilai, dan kontribusi lain.</p></div></div>`;
-  const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AGRM}" max="${YM()}" aria-label="Bulan ranking" onchange="agrSetBulan(this.value)"><input class="in" style="max-width:200px" placeholder="Cari nama guru" aria-label="Cari nama guru" value="${esc(S.agq||'')}" oninput="S.agq=this.value;agrRefresh()"><button class="btn ghost" onclick="agrRumus()">Cara penilaian</button>${canDbdPdf()?'<button class="btn ghost" onclick="agrPdf()">Unduh PDF</button>':''}</div><span class="mu">Skor 0–100. Ranking sama bila skor sama.</span></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking antar guru</h2><p class="mu">${(AGR&&AGR.top)||10} guru terbaik bulan ${esc(bulanL(AGRM))} berdasarkan keaktifan: laporan kinerja, kehadiran, absensi mapel, perangkat ajar, bank soal, input nilai, dan kontribusi lain.</p></div></div>`;
+  const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AGRM}" max="${YM()}" aria-label="Bulan ranking" onchange="agrSetBulan(this.value)"><button class="btn ghost" onclick="agrRumus()">Cara penilaian</button>${canDbdPdf()?'<button class="btn ghost" onclick="agrPdf()">Unduh PDF</button>':''}</div><span class="mu">Skor 0–100. Skor sama diurutkan dari kehadiran guru.${AGR&&AGR.peserta!=null?' Ranking diikuti '+AGR.peserta+' dari '+AGR.guru+' guru; hanya guru yang punya semua kewajiban (absensi mapel, perangkat ajar, soal, nilai) yang dinilai.':''}</span></div></div>`;
   if(AGR===null)return head+bar+`<div class="card mu" style="margin-top:12px">${lbar('Memuat ranking…')}</div>`;
   return head+bar+`<div id="agr-b">${agrBody()}</div>`;
 }
@@ -3236,7 +3234,8 @@ function agrRumus(){
   modal('Cara penilaian ranking guru',
     `<p class="mu" style="margin-top:0">Skor = <b>${100-mx}%</b> capaian kewajiban + hingga <b>${mx} poin</b> kontribusi tambahan.</p>`+
     `<h4>Capaian kewajiban (bobot)</h4>`+Object.keys(AGR_LBL).map(c=>kv(AGR_LBL[c]+' · '+(b[c]||0)+'%',esc(({lap:'Tugas laporan terkirim pada bulan itu dibanding tugas yang diberikan.',hadir:'Hari hadir dibanding hari terjadwal sampai hari ini (sama dengan rekap absen guru).',mapel:'Pertemuan terjadwal yang absensi siswanya diisi guru itu sendiri.',pa:'Mapel-kelas yang diampu dan sudah ada perangkat ajarnya (akumulatif, tidak per bulan).',soal:'Mapel-kelas yang diampu dan sudah ada unggahan soal (akumulatif).',nilai:'Mapel-kelas yang diampu dan sudah ada nilai pada semester berjalan'+(AGR&&AGR.sem?' ('+AGR.sem+')':'')+'.'})[c]))).join('')+
-    `<p class="mu mt">Komponen yang tidak berlaku bagi seorang guru (misalnya tanpa jadwal mapel) dilewati, dan bobot sisanya disesuaikan agar tetap adil.</p>`+
+    `<p class="mu mt">Ranking hanya berlaku bagi guru yang memiliki <b>semua</b> kewajiban absensi mapel (jadwal mapel), perangkat ajar, soal, dan nilai (mapel-kelas ampu). Guru yang tidak memiliki salah satunya tidak diikutkan. Hanya ${(AGR&&AGR.top)||10} guru terbaik yang ditampilkan.</p>`+
+    `<h4 class="mt">Jika skor sama</h4><p class="mu">Urutan ditentukan oleh persentase kehadiran guru; bila masih sama, laporan kinerja, lalu absensi mapel, lalu urutan abjad nama. Tidak ada peringkat kembar.</p>`+
     `<h4 class="mt">Kontribusi tambahan (maks. ${mx} poin)</h4><p class="mu">1 poin per aktivitas bulan itu: ${Object.keys(AGR_KON).map(k=>AGR_KON[k].toLowerCase()).join(', ')}.</p>`,
     [{t:'Tutup',c:'ghost',f:()=>closeM()}]);
 }
@@ -3257,11 +3256,11 @@ function agrPdf(){
   const bulan=AGR.bulan||AGRM||YM(),rows=AGR.rows||[];
   if(!rows.length)return toast('Belum ada guru untuk diunduh.','er');
   const cs=Object.keys(AGR_LBL),pc=x=>x===null?'-':x+'%';
-  savePdf({land:true,fs:8,title:'Ranking Keaktifan Guru',sub:'Bulan '+bulanL(bulan),
+  savePdf({land:true,fs:8,title:'Ranking Keaktifan Guru — '+(AGR.top||10)+' Terbaik',sub:'Bulan '+bulanL(bulan),
     head:['Rank','Nama Guru','Skor'].concat(cs.map(c=>AGR_LBL[c]),['Kontribusi']),
     body:rows.map(x=>[x.rank===null?'-':x.rank,x.n,x.skor===null?'-':x.skor].concat(cs.map(c=>pc(x.comp[c].p)),['+'+x.bonus])),
     widths:[14,52,16].concat(cs.map(()=>25),[20]),ctr:[0,2,3,4,5,6,7,8,9],
-    note:'Skor = '+(100-(AGR.bmax||10))+'% capaian kewajiban (bobot: '+cs.map(c=>AGR_LBL[c]+' '+((AGR.bobot||{})[c]||0)+'%').join(', ')+') + maks. '+(AGR.bmax||10)+' poin kontribusi tambahan. Komponen yang tidak berlaku bagi guru dilewati. Perangkat ajar, soal, dan nilai bersifat akumulatif.',
+    note:'Skor = '+(100-(AGR.bmax||10))+'% capaian kewajiban (bobot: '+cs.map(c=>AGR_LBL[c]+' '+((AGR.bobot||{})[c]||0)+'%').join(', ')+') + maks. '+(AGR.bmax||10)+' poin kontribusi tambahan. Skor sama diurutkan dari kehadiran guru, lalu laporan, absensi mapel, dan abjad (tidak ada peringkat kembar). Hanya guru yang memiliki semua kewajiban (absensi mapel, perangkat ajar, soal, nilai) yang diikutkan. Perangkat ajar, soal, dan nilai bersifat akumulatif.',
     name:'ranking-guru-'+bulan+'.pdf'});
   toast('PDF ranking guru diunduh','ok');
 }
@@ -3395,7 +3394,7 @@ function dbdTab(k){
   if(k==='ak'){AKL=null;AKR=null;S.akc='';}
   if(k==='rk'){AKP=null;AKPB=false;}
   if(k==='rs'){AKSP=null;AKSPB=false;}
-  if(k==='rg'){AGR=null;AGRB=false;S.agq='';}
+  if(k==='rg'){AGR=null;AGRB=false;}
   render(true);
 }
 function vDbd(){
