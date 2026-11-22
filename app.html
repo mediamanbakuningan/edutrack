@@ -2059,6 +2059,17 @@ run('kirimUsulan',{tujuan:t,isi:i,periode:S.vp},'Usulan terkirim',()=>{S.view='d
 
 const PA_EXT=['pdf','doc','docx','xls','xlsx','ppt','pptx','jpg','jpeg','png','txt'];
 const PA_MAXF=5,PA_MAXB=5*1024*1024,PA_TOT=15*1024*1024;
+/* Pilihan kelas ganda (centang) untuk form unggah perangkat ajar & soal */
+const klSel=v=>String(v||'').split(',').map(s=>s.trim()).filter(Boolean);
+function klBoxes(p,ks,sel){
+  if(!ks||!ks.length)return'<p class="mu" style="margin:4px 0">(belum ada kelas)</p>';
+  const all=ks.length>1?`<label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:600;cursor:pointer;flex-basis:100%"><input type="checkbox" id="${p}-kall" onchange="klAll('${p}',this.checked)" ${ks.every(k=>sel.indexOf(k)>=0)?'checked':''}>Pilih semua kelas</label>`:'';
+  return all+ks.map(k=>`<label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:500;cursor:pointer"><input type="checkbox" class="${p}-kc" value="${esc(k)}" onchange="klSync('${p}')" ${sel.indexOf(k)>=0?'checked':''}>${esc(k)}</label>`).join('');
+}
+const klRead=p=>[...document.querySelectorAll('.'+p+'-kc:checked')].map(e=>e.value);
+function klAll(p,on){document.querySelectorAll('.'+p+'-kc').forEach(e=>{e.checked=on;});}
+function klSync(p){const a=document.querySelectorAll('.'+p+'-kc'),c=$(p+'-kall');if(c)c.checked=a.length>0&&[...a].every(e=>e.checked);}
+
 const timeShow=u=>esc(String(u||'').replace('T',' ').slice(0,16));
 const isPAAdm=()=>S.user.r==='ADMIN'||S.user.r==='KURIKULUM';
 const screator=g=>S.user.r==='GURU'?'':(g===S.user.id?'Anda':gname(g));
@@ -2159,15 +2170,15 @@ function paFormAmpu(ex){
   const cur=ex?ex.mp:S.pm;
   const selM=mp.indexOf(cur)>=0?cur:(mp[0]||'');
   const a=(AMP||[]).find(x=>x.m===selM),ks=a?a.ks:[];
-  const curK=ex?ex.kl:S.pk;
+  const curK=klSel(ex?ex.kl:S.pk);
   return{
     mp:mp.map(m=>`<option value="${esc(m)}" ${m===selM?'selected':''}>${esc(m)}</option>`).join('')||'<option value="">(belum ada mapel yang diampu)</option>',
-    kl:ks.map(k=>`<option value="${esc(k)}" ${k===curK?'selected':''}>${esc(k)}</option>`).join('')||'<option value="">(belum ada kelas)</option>'
+    kl:klBoxes('pa',ks,curK)
   };
 }
 function paFormKelas(){
   const m=$('pa-mp')?$('pa-mp').value:'',a=(AMP||[]).find(x=>x.m===m),e=$('pa-kl');
-  if(e)e.innerHTML=(a&&a.ks.length?a.ks.map(k=>`<option value="${esc(k)}" ${k===S.pk?'selected':''}>${esc(k)}</option>`).join(''):'<option value="">(belum ada kelas)</option>');
+  if(e){const c=klRead('pa');e.innerHTML=klBoxes('pa',a?a.ks:[],c.length?c:[S.pk]);}
 }
 function paM(id){
   if(!PJL||!PJL.length){jenisReload();return toast(PJL&&!PJL.length?'Daftar jenis perangkat ajar masih kosong. Minta Admin mengisinya lewat tombol "Kelola jenis".':'Memuat jenis perangkat ajar…');}
@@ -2179,7 +2190,7 @@ function paM(id){
   modal(id?'Ubah perangkat ajar':'Unggah perangkat ajar',
     `<label for="pa-jenis">Jenis perangkat ajar *</label><select id="pa-jenis" class="in">${PJL.map(j=>`<option value="${esc(j.n)}" ${(ex?ex.jn:S.pj)===j.n?'selected':''}>${esc(j.n)}</option>`).join('')}</select>`+
     `<label for="pa-mp">Mata pelajaran *</label><select id="pa-mp" class="in" onchange="paFormKelas()">${amp.mp}</select>`+
-    `<label for="pa-kl">Kelas *</label><select id="pa-kl" class="in">${amp.kl}</select>`+
+    `<label>Kelas * <span class="mu" style="font-weight:400">(boleh pilih lebih dari satu bila berkasnya sama)</span></label><div id="pa-kl" class="in" style="display:flex;flex-wrap:wrap;gap:8px 16px;height:auto;max-height:180px;overflow:auto">${amp.kl}</div>`+
     `<label for="pa-j">Judul *</label><input id="pa-j" class="in" value="${esc(ex?ex.t:'')}" placeholder="Contoh: Modul Ajar SPLDV Pertemuan 1">`+
     `<label for="pa-k">Keterangan singkat</label><textarea id="pa-k" class="in" rows="2" placeholder="Mis. Semester ganjil · capaian pembelajaran…">${esc(ex?(ex.k||''):'')}</textarea>`+
     `<h4>Berkas (maks. ${PA_MAXF}, 5 MB per berkas, total 15 MB)</h4><div id="pa-files">${paFilesHTML(ex)}</div>`+
@@ -2224,9 +2235,9 @@ function paDelNew(i){
 const paKeepDel=id=>{PA_KEEP=PA_KEEP.filter(x=>x!==id);paRefresh();};
 function paSave(){
   const j=$('pa-j').value.trim(),k=$('pa-k').value.trim();
-  const jenis=$('pa-jenis')?$('pa-jenis').value:'',mp=$('pa-mp')?$('pa-mp').value:'',kl=$('pa-kl')?$('pa-kl').value:'';
+  const jenis=$('pa-jenis')?$('pa-jenis').value:'',mp=$('pa-mp')?$('pa-mp').value:'',kl=klRead('pa');
   if(!jenis)return toast('Pilih jenis perangkat ajar','er');
-  if(!mp||!kl)return toast('Pilih mata pelajaran dan kelas','er');
+  if(!mp||!kl.length)return toast('Pilih mata pelajaran dan minimal satu kelas','er');
   if(!j)return toast('Judul wajib diisi','er');
   if(PAF_BUSY||PAF.some(f=>f.st==='up'))return toast('Tunggu sebentar, berkas masih diunggah','er');
   if(PAF.some(f=>f.st==='err'))return toast('Ada berkas yang gagal diunggah. Hapus lalu pilih ulang berkasnya.','er');
@@ -2353,7 +2364,7 @@ function suM(id){
   modal(id?'Ubah unggahan soal':'Unggah soal',
     `<label for="su-jenis">Jenis soal *</label><select id="su-jenis" class="in">${SJL.map(j=>`<option value="${esc(j.n)}" ${(ex?ex.jn:(S.suj||''))===j.n?'selected':''}>${esc(j.n)}</option>`).join('')}</select>`+
     `<label for="su-mp">Mata pelajaran *</label><select id="su-mp" class="in" onchange="suFormKelas()">${amp.mp}</select>`+
-    `<label for="su-kl">Kelas *</label><select id="su-kl" class="in">${amp.kl}</select>`+
+    `<label>Kelas * <span class="mu" style="font-weight:400">(boleh pilih lebih dari satu bila berkasnya sama)</span></label><div id="su-kl" class="in" style="display:flex;flex-wrap:wrap;gap:8px 16px;height:auto;max-height:180px;overflow:auto">${amp.kl}</div>`+
     `<label for="su-j">Judul *</label><input id="su-j" class="in" value="${esc(ex?ex.t:'')}" placeholder="Contoh: Soal PTS Ganjil Matematika Kelas 8">`+
     `<label for="su-k">Keterangan singkat</label><textarea id="su-k" class="in" rows="2" placeholder="Mis. Semester ganjil · kisi-kisi terlampir…">${esc(ex?(ex.k||''):'')}</textarea>`+
     `<h4>Berkas soal (maks. ${PA_MAXF}, 5 MB per berkas, total 15 MB)</h4><div id="su-files">${suFilesHTML(ex)}</div>`+
@@ -2366,15 +2377,15 @@ function suFormAmpu(ex){
   const cur=ex?ex.mp:S.sm;
   const selM=mp.indexOf(cur)>=0?cur:(mp[0]||'');
   const a=(AMP||[]).find(x=>x.m===selM),ks=a?a.ks:[];
-  const curK=ex?ex.kl:S.sk;
+  const curK=klSel(ex?ex.kl:S.sk);
   return{
     mp:mp.map(m=>`<option value="${esc(m)}" ${m===selM?'selected':''}>${esc(m)}</option>`).join('')||'<option value="">(belum ada mapel yang diampu)</option>',
-    kl:ks.map(k=>`<option value="${esc(k)}" ${k===curK?'selected':''}>${esc(k)}</option>`).join('')||'<option value="">(belum ada kelas)</option>'
+    kl:klBoxes('su',ks,curK)
   };
 }
 function suFormKelas(){
   const m=$('su-mp')?$('su-mp').value:'',a=(AMP||[]).find(x=>x.m===m),e=$('su-kl');
-  if(e)e.innerHTML=(a&&a.ks.length?a.ks.map(k=>`<option value="${esc(k)}" ${k===S.sk?'selected':''}>${esc(k)}</option>`).join(''):'<option value="">(belum ada kelas)</option>');
+  if(e){const c=klRead('su');e.innerHTML=klBoxes('su',a?a.ks:[],c.length?c:[S.sk]);}
 }
 function suFilesHTML(ex){
   const lama=((ex&&ex.f)||[]).filter(f=>SU_KEEP.indexOf(f.id)>=0).map(f=>`<div class="att-i">${ico('clip')}<span class="att-n" title="${esc(f.n)}">${esc(f.n)}</span><span class="mu nw">${fmtSize(f.s)}</span><button type="button" class="btn ghost sm" onclick="suDl('${esc(ex.id)}','${esc(f.id)}')">Unduh</button><button type="button" class="btn ghost sm" aria-label="Hapus berkas" title="Dihapus saat soal disimpan" onclick="suKeepDel('${esc(f.id)}')">✕</button></div>`).join('');
@@ -2420,9 +2431,9 @@ function suDelNew(i){
 const suKeepDel=id=>{SU_KEEP=SU_KEEP.filter(x=>x!==id);suRefresh();};
 function suSave(){
   const j=$('su-j').value.trim(),k=$('su-k').value.trim();
-  const jenis=$('su-jenis')?$('su-jenis').value:'',mp=$('su-mp')?$('su-mp').value:'',kl=$('su-kl')?$('su-kl').value:'';
+  const jenis=$('su-jenis')?$('su-jenis').value:'',mp=$('su-mp')?$('su-mp').value:'',kl=klRead('su');
   if(!jenis)return toast('Pilih jenis soal','er');
-  if(!mp||!kl)return toast('Pilih mata pelajaran dan kelas','er');
+  if(!mp||!kl.length)return toast('Pilih mata pelajaran dan minimal satu kelas','er');
   if(!j)return toast('Judul wajib diisi','er');
   if(SUF_BUSY||SUF.some(f=>f.st==='up'))return toast('Tunggu sebentar, berkas masih diunggah','er');
   if(SUF.some(f=>f.st==='err'))return toast('Ada berkas yang gagal diunggah. Hapus lalu pilih ulang berkasnya.','er');
