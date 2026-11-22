@@ -1159,7 +1159,7 @@ function ntDelAsk(id){confirmM('Hapus pengumuman','Pengumuman ini akan dihapus d
 function aCfg(){
   const d=cfgInit();
   setTimeout(cfgPv,0);
-  return `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan aplikasi</h2><p class="mu">Atur identitas, tampilan, dan pengumuman. Perubahan berlaku untuk semua pengguna setelah disimpan.</p></div><button class="btn pri" onclick="cfgSave()">Simpan pengaturan</button></div>`+
+  return `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan aplikasi</h2></div><button class="btn pri" onclick="cfgSave()">Simpan pengaturan</button></div>`+
   `<div class="card"><h3>Identitas aplikasi</h3><div id="cfg-pv" class="cfg-pv mt"></div>`+
     `<label for="cf-n">Nama aplikasi</label><input id="cf-n" class="in" maxlength="40" value="${esc(d.nama)}" oninput="cfgIn('nama',this.value)">`+
     `<label for="cf-t">Subjudul (halaman masuk)</label><input id="cf-t" class="in" maxlength="80" value="${esc(d.tag)}" oninput="cfgIn('tag',this.value)">`+
@@ -1167,7 +1167,7 @@ function aCfg(){
   `<div class="card mt"><h3>Logo &amp; warna</h3><div class="row" style="gap:14px;align-items:center;margin-top:10px"><div class="cfg-logo" id="cfg-lg"></div><div class="row"><label class="btn ghost sm" style="cursor:pointer">Pilih logo<input type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="cfgLogo(this)"></label><button class="btn ghost sm" id="cfg-lgd" onclick="cfgLogoDel()">Pakai logo bawaan</button></div></div>`+
     `<p class="mu mt">PNG/JPG/WebP, otomatis diperkecil (maks. 256 px). Logo tampil di sidebar, halaman masuk, beranda, dan ikon tab.</p>`+
     `<div class="row" style="margin-top:14px;align-items:center;gap:10px"><label for="cf-w" style="margin:0">Warna utama (mode terang)</label><input id="cf-w" type="color" value="${esc(d.wr||'#1e56e0')}" oninput="cfgIn('wr',this.value)" style="width:48px;height:34px;border:0;background:none;padding:0"><button class="btn ghost sm" onclick="cfgWrDel()">Kembalikan bawaan</button></div></div>`+
-  `<div class="card mt"><div class="bt" style="flex-wrap:wrap"><div><h3>Pengumuman (isi notifikasi)</h3><p class="mu">Muncul di ikon lonceng pengguna sesuai tujuan penerima. Disimpan langsung, tidak perlu menekan Simpan pengaturan.</p></div><button class="btn pri sm" onclick="ntEdit('')">+ Buat pengumuman</button></div>`+
+  `<div class="card mt"><div class="bt" style="flex-wrap:wrap"><div><h3>Pengumuman (isi notifikasi)</h3></div><button class="btn pri sm" onclick="ntEdit('')">+ Buat pengumuman</button></div>`+
     (NTA.length?NTA.map(x=>`<div class="mcard" style="margin-top:10px"><div class="mc-h"><div><b>${esc(x.j)}</b> ${x.a?'':'<span class="badge b-wa">Nonaktif</span>'}<div class="mc-sub">${esc(String(x.t).slice(0,16))} · ${x.s.length?x.s.map(r=>esc(ROLE_L[r]||r)).join(', '):'Semua pengguna'}</div></div></div><div class="mbody mt">${esc(trunc(x.i,140))}</div><div class="mc-f" style="justify-content:flex-end"><span class="acts">${ib('',`ntEdit('${esc(x.id)}')`,'edit','Ubah pengumuman')}${ib('del',`ntDelAsk('${esc(x.id)}')`,'trash','Hapus pengumuman')}</span></div></div>`).join(''):`<div class="note mt">Belum ada pengumuman.</div>`)+`</div>`;
 }
 /* ===== Bottom navigation (mobile): menu inti di tengah + FAB menu tambahan ===== */
@@ -1985,7 +1985,7 @@ function vGuru(){
 }
 function vInbox(){
   const list=U.filter(u=>u.p===S.vp).reverse();INB=list;
-  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h2>Kritik/Saran/Usulan masuk</h2><p class="mu">Usulan anonim untuk tugas Anda.</p></div>${perSel()}</div>`+
+  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h2>Kritik/Saran/Usulan masuk</h2></div>${perSel()}</div>`+
   (isMob()
     ?`<div class="mcl" style="margin-top:12px">`+(list.map((u,i)=>mcard(`inboxDet(${i})`,
       `<div class="mc-h"><span class="tag">${esc(u.t)}</span><span class="mu nw">${esc(u.at)}</span></div><div class="mc-sub">${esc(trunc(u.i,90))}</div><div class="mc-more" style="text-align:right;margin-top:8px">Lihat detail ›</div>`)).join('')||'<div class="mcard"><span class="mu">Belum ada Kritik/Saran/Usulan untuk tugas Anda pada periode ini.</span></div>')+`</div>`
@@ -2024,8 +2024,7 @@ function vForm(){
   const g=S.user.id,l=L[K(S.vp,g,t.id)],d=l?.d||{},ro=locked(S.vp,g),dis=ro?'disabled':'',fs=tp(t);
   const f=fs.length?fs.map(x=>fld(x,d[x.key],dis,ro)).join(''):'<div class="note">Template isian untuk tugas ini belum diatur. Hubungi admin kurikulum.</div>';
   return `<button class="btn ghost" onclick="leaveForm()">← Kembali</button>`+
-    `<div class="card"><div class="bt" style="flex-wrap:wrap"><h2>${esc(t.n)}</h2>${bd(st(S.vp,g,t.id))}</div>`+
-    `<p class="mu">${esc(t.c)} · ${esc(per().l)}</p>`+
+    `<div class="card"><div class="bt" style="flex-wrap:wrap"><h2>${esc(t.n)} · ${esc(per().l)}</h2>${bd(st(S.vp,g,t.id))}</div>`+
     (l?.c?`<div class="note">Catatan revisi dari admin: ${esc(l.c)}</div>`:'')+
     (ro?'<div class="note">Formulir terkunci, hanya bisa dilihat.</div>':'')+
     `<div id="ff">${f}</div>`+
@@ -2056,7 +2055,7 @@ function save(s){
   run('saveLaporan',{periode:S.vp,tugasId:t.id,status:s,data:d,pend:PF.map(f=>f.id),keep:KEEP.slice()},s==='DRAFT'?'Draft tersimpan':'Laporan terkirim',()=>{S.view='dash';PF=[];KEEP=[];}).finally(()=>{SAVING=false;});
 }
 function vUsulan(){
-  return`<div class="card"><h2>Kritik/Saran/Usulan</h2><p class="mu">Identitas Anda tidak disimpan.</p><label for="ut">Tujuan</label><select id="ut" class="in">${tujuanOpts('')}</select><label for="ui">Isi usulan</label><textarea id="ui" class="in" rows="5" placeholder="Tulis masukan Anda dengan jelas (min. 10 karakter)"></textarea><button class="btn pri" style="margin-top:16px" onclick="sendU()">Kirim usulan</button></div>`;
+  return`<div class="card"><h2>Kritik/Saran/Usulan</h2><label for="ut">Tujuan</label><select id="ut" class="in">${tujuanOpts('')}</select><label for="ui">Isi usulan</label><textarea id="ui" class="in" rows="5" placeholder="Tulis masukan Anda dengan jelas (min. 10 karakter)"></textarea><button class="btn pri" style="margin-top:16px" onclick="sendU()">Kirim usulan</button></div>`;
 }
 function sendU(){const t=$('ut').value,i=$('ui').value.trim();if(!t||i.length<10)return toast('Pilih tujuan dan tulis usulan minimal 10 karakter','er');
 run('kirimUsulan',{tujuan:t,isi:i,periode:S.vp},'Usulan terkirim',()=>{S.view='dash';});}
@@ -2118,7 +2117,7 @@ const paGuruFilterHTML=()=>S.user.r==='GURU'?'':`<select class="in" style="width
 function vPerangkat(){
   ampLoad();jenisLoad();
   if(!S.pm||!S.pk){
-    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar</h2><p class="mu">${S.user.r==='GURU'?'Pilih mapel & kelas yang Anda ampu.':'Pilih mapel & kelas untuk memantau perangkat ajar seluruh guru.'}</p></div></div>`+
+    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar</h2></div></div>`+
       ampuCards('perangkat');
   }
   if(PAL===null&&!PALB)paLoad();
@@ -2136,14 +2135,14 @@ function paFoldersHTML(){
   const folders=nama.length?`<div class="mcl">${nama.map((j,i)=>`<div class="mcard tap" role="button" tabindex="0" onclick="paOpenJ(${i})"><div class="mc-h"><div><b>${ico('box')} ${esc(j)}</b><div class="mc-sub">${counts[j]||0} dokumen</div></div><div class="mc-more">Buka ›</div></div></div>`).join('')}</div>`
     :`<div class="card mu">${adm?'Belum ada jenis perangkat ajar. Klik "Kelola jenis" untuk menambahkannya.':'Belum ada jenis perangkat ajar. Minta Admin menambahkan jenis melalui menu Perangkat ajar (Kelola jenis).'}</div>`;
   return`<button class="btn ghost" onclick="ampuBack('perangkat')">← Mapel & kelas lain</button>`+
-    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar: ${esc(S.pm)}</h2><p class="mu">Kelas ${esc(S.pk)} · ${items.length} dokumen${S.pg?' · guru: '+esc(gname(S.pg)):''}. Pilih folder jenis untuk membuka isinya.</p></div>`+
+    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar: ${esc(S.pm)} · Kelas ${esc(S.pk)}${S.pg?' · '+esc(gname(S.pg)):''}</h2></div>`+
     `<div class="row">${paGuruFilterHTML()}${adm?`<button class="btn ghost" onclick="jenisM()">Kelola jenis</button>`:''}</div></div>`+folders;
 }
 const paOpenJ=i=>{const j=PAJN[i];if(j===undefined)return;S.pj=j;S.paq='';render();};
 function paFolderList(){
   if(PAL===null&&!PALB)paLoad();
   return`<button class="btn ghost" onclick="S.pj='';render(true)">← Semua folder jenis</button>`+
-    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${esc(S.pj)}</h2><p class="mu"><b>${esc(S.pm)}</b> · Kelas ${esc(S.pk)}${S.pg?' · guru: '+esc(gname(S.pg)):''} · hanya guru pembuat dan admin yang dapat melihat.</p></div>`+
+    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${esc(S.pj)}: ${esc(S.pm)} · Kelas ${esc(S.pk)}${S.pg?' · '+esc(gname(S.pg)):''}</h2></div>`+
     `<div class="row">${paGuruFilterHTML()}${S.user.r==='GURU'?`<button class="btn pri" onclick="paM()">+ Unggah perangkat ajar</button>`:''}</div></div>`+
     `<div class="row" style="margin-bottom:10px"><input class="in" style="max-width:220px" placeholder="Cari judul/keterangan" aria-label="Cari perangkat ajar" value="${esc(S.paq||'')}" oninput="S.paq=this.value;paRefreshList()"></div>`+
     (PAL===null?`<div class="card mu">${lbar('Memuat…')}</div>`:`<div id="pa-list">${paFolderListBody()}</div>`);
@@ -2329,9 +2328,9 @@ function vSoal(){
   const guru=S.user.r==='GURU';
   if(!S.sm||!S.sk){
     sqsLoad();
-    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal</h2><p class="mu">${guru?'Unggah berkas soal (PDF/Word/Excel/PPT/gambar) per mapel & kelas yang Anda ampu.':'Pantau unggahan soal seluruh guru per mapel & kelas.'} Status <b>Sudah</b> berarti sudah ada unggahan soal.</p></div></div>`+ampuCards('soal');
+    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal</h2></div></div>`+ampuCards('soal');
   }
-  const ctx=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal: ${esc(S.sm)}</h2><p class="mu">Kelas ${esc(S.sk)}${guru?'':' · semua guru'} · hanya guru pembuat dan admin yang dapat melihat.</p></div><button class="btn ghost" onclick="ampuBack('soal')">← Mapel & kelas lain</button></div>`;
+  const ctx=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal: ${esc(S.sm)} · Kelas ${esc(S.sk)}</h2></div><button class="btn ghost" onclick="ampuBack('soal')">← Mapel & kelas lain</button></div>`;
   return ctx+vSoalUnggah();
 }
 function vSoalUnggah(){
@@ -2519,7 +2518,7 @@ function vAbsMapel(){
   const mp=MP.find(x=>x.id===S.ami),ro=!absCan();
   const tabs=`<div class="dnav" style="margin:12px 0"><button class="btn ${S.at!=='rekap'?'pri':'ghost'}" onclick="S.at='isi';render(true)">Isi absensi</button><button class="btn ${S.at==='rekap'?'pri':'ghost'}" onclick="S.at='rekap';render(true)">Rekap bulanan</button></div>`;
   return`<button class="btn ghost" onclick="absBack()">← Mapel &amp; kelas lain</button>`+
-    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi siswa: ${esc(S.am)}</h2><p class="mu">Kelas ${esc(S.ak)}${mp&&mpGuru(mp).length?' · pengampu: '+esc(mpGuruN(mp,S.user.id)):''}${ro?' · Anda hanya dapat melihat':''}. Status: Hadir, Izin, Sakit, Alpa — menimpa isi sebelumnya pada tanggal yang sama.</p></div></div>`+tabs+
+    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi siswa: ${esc(S.am)} · Kelas ${esc(S.ak)}</h2></div></div>`+tabs+
     (S.at==='rekap'?absRekapBody():absIsiBody(ro));
 }
 const amkKey=()=>S.amd||today();
@@ -2544,7 +2543,7 @@ function absMapelCards(){
   if(!S.amd)S.amd=t0;
   if(AMK&&AMK.key!==amkKey())AMK=null;
   if(AMK===null&&!AMKB&&!AMKE)amkLoad();
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi per mapel</h2><p class="mu">${S.user.r==='GURU'?'Pilih tanggal, lalu buka mapel & kelas yang berjadwal pada hari itu untuk mencatat kehadiran siswa.':'Pilih tanggal, lalu pilih mapel & kelas yang berjadwal pada hari itu untuk '+(S.user.r==='ADMIN'?'mengisi atau melihat':'melihat')+' absensi siswa.'}</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi per mapel</h2></div></div>`;
   const day=`<div class="card" style="padding:14px 20px"><div class="bt" style="flex-wrap:wrap"><div class="dnav"><button class="btn ghost ib" onclick="absShiftD(-1)" aria-label="Hari sebelumnya">‹</button><input type="date" class="in" value="${S.amd}" max="${t0}" aria-label="Tanggal absensi" onchange="absSetTglD(this.value)"><button class="btn ghost ib" onclick="absShiftD(1)" aria-label="Hari berikutnya">›</button></div><span class="mu"><b>${esc(tglL(S.amd))}</b></span></div></div>`;
   if(AMK===null)return head+day+`<div class="card mu">${lbar('Memuat jadwal…')}</div>`;
   const kartuBtn=c=>`<div class="mcard tap" role="button" tabindex="0" onclick="absGo(${AMPC.indexOf(c)})"><div class="mc-h"><div><b>${esc(c.m)}</b><div class="mc-sub">Kelas ${esc(c.k)}${c.j?' · '+esc(jamLbl(c.j)):''}${c.t?' ('+esc(c.t)+')':''}${c.gn?' · '+esc(c.gn):''}</div></div><div class="mc-more">Buka absensi ›</div></div></div>`;
@@ -2693,7 +2692,7 @@ function axsLoad(){
 }
 function absEkskulCards(){
   const adm=S.user.r==='ADMIN'||S.user.r==='ADMIN_EKSKUL';
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi ekstrakurikuler</h2><p class="mu">${S.user.r==='GURU'?'Catat kehadiran anggota eskul.':'Pilih ekstrakurikuler untuk '+(adm?'mengisi absensi & mengelola datanya.':'melihat absensinya.')}</p></div>${adm?`<button class="btn pri" onclick="ekM('')">+ Tambah ekskul</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi ekstrakurikuler</h2></div>${adm?`<button class="btn pri" onclick="ekM('')">+ Tambah ekskul</button>`:''}</div>`;
   if(!AXS.length)return head+`<div class="note">${adm?'Belum ada ekstrakurikuler. Klik "+ Tambah ekskul" untuk membuat yang pertama.':S.user.r==='GURU'?'Belum ada ekstrakurikuler yang Anda bina. Hubungi Admin Operator agar Anda ditunjuk sebagai pembina.':'Belum ada ekstrakurikuler terdaftar.'}</div>`;
   return head+`<div class="mcl">${AXS.map(x=>{
     const can=absEkskulCan(x),ph=S.user.r!=='GURU'?((x.ph||[]).map(id=>gname(id)).filter(Boolean).join(', ')||'-'):'';
@@ -2846,7 +2845,7 @@ function vTahfidz(){
   if(THI===null)return`<div class="card mu">${lbar('Memuat…')}</div>`;
   const kl=kelasUnik();
   if(!S.thk||kl.indexOf(S.thk)<0){S.thk=kl[0]||'';S.thm='';}
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Tahfidz</h2><p class="mu">Materi hafalan diatur per kelas karena setiap kelas berbeda. ${mgr?'Tambahkan materi tiap kelas, lalu catat batas hafalan (nadzam/ayat) siswa.':'Anda hanya dapat melihat catatan hafalan siswa.'}</p></div>${mgr&&kl.length?`<button class="btn pri" onclick="thMateriM('')">+ Tambah materi</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Tahfidz</h2></div>${mgr&&kl.length?`<button class="btn pri" onclick="thMateriM('')">+ Tambah materi</button>`:''}</div>`;
   if(!kl.length)return head+`<div class="note">Belum ada data siswa. Tambahkan siswa dan kelas terlebih dahulu di menu Kelola penilaian.</div>`;
   if(S.thm){
     const m=THI.find(x=>x.id===S.thm);
@@ -2880,7 +2879,7 @@ function thMateriView(m){
   const back=`<button class="btn ghost" onclick="thBack()">← Materi kelas ${esc(m.k)}</button>`;
   if(!THL||THL.id!==m.id){if(!THLB)thLoadM(m.id);return back+`<div class="card mu" style="margin-top:12px">${lbar('Memuat…')}</div>`;}
   const rows=THL.rows;
-  const hdr=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${esc(m.n)}</h2><p class="mu">Kelas ${esc(m.k)} · ${rows.length} siswa${pg?' · pengampu: '+esc(pg):''}${m.ket?' · '+esc(m.ket):''}${mgr?'':' · hanya lihat'}</p></div>${mgr&&rows.length?`<button class="btn pri" onclick="thSave()">Simpan setoran</button>`:''}</div>`;
+  const hdr=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${esc(m.n)} · Kelas ${esc(m.k)}</h2></div>${mgr&&rows.length?`<button class="btn pri" onclick="thSave()">Simpan setoran</button>`:''}</div>`;
   if(!rows.length)return back+hdr+`<div class="note">Kelas ini belum punya siswa.</div>`;
   const tgl=mgr?`<div class="card"><label for="th-tgl" style="margin-top:0">Tanggal setoran (berlaku untuk semua siswa yang diubah)</label><input id="th-tgl" class="in" type="date" style="max-width:220px" max="${today()}" value="${esc(S.thtg||today())}" onchange="S.thtg=this.value"></div>`:'';
   const body=rows.map((r,i)=>{
@@ -3068,7 +3067,7 @@ function aklLoad(){
 }
 function absKelasCards(){
   const wk=S.user.r==='GURU'||S.user.r==='WALIKELAS';
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi kelas</h2><p class="mu">Rekap harian kelas yang terisi OTOMATIS dari absensi per mapel — tidak diisi manual. Siswa dianggap Hadir bila seluruh mapel yang mengisi pada hari itu mencatat Hadir/Izin/Sakit; jika satu saja mapel mencatat Alpa, siswa tercatat Bolos.</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi kelas</h2></div></div>`;
   if(!AKL.length)return head+`<div class="note">${wk?'Belum ada kelas siswa.':'Belum ada kelas siswa. Tambahkan data kelas &amp; siswa terlebih dahulu di menu Kelola penilaian.'}</div>`;
   return head+`<div class="mcl">${AKL.map((k,i)=>`<div class="mcard tap" role="button" tabindex="0" onclick="absKelasGo(${i})"><div class="mc-h"><div><b>Kelas ${esc(k)}</b><div class="mc-sub">Rekap otomatis dari absensi mapel</div></div><div class="mc-more">Buka rekap ›</div></div></div>`).join('')}</div>`;
 }
@@ -3093,7 +3092,7 @@ function akpBox(){
   if(!AKPM)AKPM=YM();
   if(AKP&&AKP.bulan&&AKP.bulan!==AKPM)AKP=null;
   if(AKP===null&&!AKPB)akpLoad();
-  const bar=`<div class=\"bt\" style=\"flex-wrap:wrap;margin:16px 0 8px\"><div><h2>Peringkat kehadiran kelas</h2><p class=\"mu\">Persentase = hari-siswa Hadir (termasuk Izin &amp; Sakit) dibagi seluruh hari-siswa yang terisi pada bulan ${esc(bulanL(AKPM))}.</p></div><div class=\"row\"><input type=\"month\" class=\"in\" style=\"width:auto\" value=\"${AKPM}\" max=\"${YM()}\" aria-label=\"Bulan peringkat\" onchange=\"akpSetBulan(this.value)\"><button class=\"btn ghost\" onclick=\"dbdTab('rk')\">Tab Ranking antar kelas ›</button></div></div>`;
+  const bar=`<div class=\"bt\" style=\"flex-wrap:wrap;margin:16px 0 8px\"><div><h2>Peringkat kehadiran kelas</h2></div><div class=\"row\"><input type=\"month\" class=\"in\" style=\"width:auto\" value=\"${AKPM}\" max=\"${YM()}\" aria-label=\"Bulan peringkat\" onchange=\"akpSetBulan(this.value)\"><button class=\"btn ghost\" onclick=\"dbdTab('rk')\">Tab Ranking antar kelas ›</button></div></div>`;
   if(AKP===null)return bar+`<div class=\"card mu\">${lbar('Memuat peringkat…')}</div>`;
   const rows=AKP.rows||[];
   if(!rows.length||rows.every(x=>x.pct===null))return bar+`<div class=\"note\">Belum ada absensi mapel pada bulan ${esc(bulanL(AKPM))}.</div>`;
@@ -3148,7 +3147,7 @@ function rkItems(rows,cls){
 function rankCards(rows,cls,bulan){
   const bl=rkBln(bulan);
   const card=c=>{
-    const head=`<span style="display:block;font-weight:700;letter-spacing:.05em;font-size:.72rem">${c.lbl}</span><span style="display:block;margin-bottom:8px">${c.sub} · ${esc(bl)}</span>`;
+    const head=`<span style="display:block;font-weight:700;letter-spacing:.05em;font-size:.72rem">${c.lbl}</span><span style="display:block;margin-bottom:8px">${c.sub}</span>`;
     if(c.none)return`<div class="stat">${head}<b>-</b><span>Belum ada data</span></div>`;
     return`<div class="stat ${c.kind}">${head}<div style="font-weight:700;font-size:1rem;line-height:1.25;overflow-wrap:anywhere;margin-bottom:6px">${esc(c.nm)}</div><b>${c.p}%</b><span>${esc(c.info)}</span></div>`;
   };
@@ -3161,7 +3160,7 @@ function vAbsRank(){
   if(AKSP&&AKSP.bulan&&AKSP.bulan!==AKSPM)AKSP=null;
   if(AKP===null&&!AKPB)akpLoad();
   if(AKSP===null&&!AKSPB)akspLoad();
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking kehadiran antar kelas</h2><p class="mu">Persentase kehadiran tiap kelas.</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking kehadiran antar kelas</h2></div></div>`;
   const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AKPM}" max="${YM()}" aria-label="Bulan ranking" onchange="akpSetBulan(this.value)">${canDbdPdf()?'<button class="btn ghost" onclick="absRankPdf()">Unduh PDF</button>':''}</div><span class="mu">Hanya berdasarkan pertemuan yang sudah diisi.</span></div></div>`;
   if(AKP===null||AKSP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
   const rows=AKP.rows||[];
@@ -3181,7 +3180,7 @@ function vAbsRankSiswa(){
   if(AKP&&AKP.bulan&&AKP.bulan!==AKPM)AKP=null;
   if(AKSP===null&&!AKSPB)akspLoad();
   if(AKP===null&&!AKPB)akpLoad();
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking kehadiran antar siswa</h2><p class="mu">Persentase kehadiran tiap siswa.</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking kehadiran antar siswa</h2></div></div>`;
   const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AKSPM}" max="${YM()}" aria-label="Bulan ranking" onchange="akspSetBulan(this.value)"><select class="in" style="width:auto" aria-label="Filter kelas" onchange="akspSetKelas(this.value)"><option value="" ${AKSPK?'':'selected'}>Semua kelas</option>${kelasList().map(k=>`<option value="${esc(k)}" ${AKSPK===k?'selected':''}>Kelas ${esc(k)}</option>`).join('')}</select>${canDbdPdf()?'<button class="btn ghost" onclick="absRankSiswaPdf()">Unduh PDF</button>':''}</div><span class="mu">Persentase = hari Hadir (termasuk Izin &amp; Sakit) dibagi seluruh hari terisi — rumus sama dengan ranking antar kelas.</span></div></div>`;
   if(AKSP===null||AKP===null)return head+bar+`<div class="card mu">${lbar('Memuat ranking…')}</div>`;
   const rows=akspRows();
@@ -3229,7 +3228,7 @@ function vRankGuru(){
   if(!AGRM)AGRM=YM();
   if(AGR&&AGR.bulan&&AGR.bulan!==AGRM)AGR=null;
   if(AGR===null&&!AGRB)agrLoad();
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking antar guru</h2><p class="mu">${(AGR&&AGR.top)||10} guru terbaik bulan ${esc(bulanL(AGRM))} berdasarkan keaktifan: laporan kinerja, kehadiran, absensi mapel, perangkat ajar, bank soal, dan input nilai.</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking antar guru</h2></div></div>`;
   const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AGRM}" max="${YM()}" aria-label="Bulan ranking" onchange="agrSetBulan(this.value)"><button class="btn ghost" onclick="agrRumus()">Cara penilaian</button>${canDbdPdf()?'<button class="btn ghost" onclick="agrPdf()">Unduh PDF</button>':''}</div><span class="mu">Skor 0–100. Skor sama diurutkan dari kehadiran guru.${AGR&&AGR.peserta!=null?' Ranking diikuti '+AGR.peserta+' dari '+AGR.guru+' guru; hanya guru yang punya semua kewajiban (absensi mapel, perangkat ajar, soal, nilai) yang dinilai.':''}</span></div></div>`;
   if(AGR===null)return head+bar+`<div class="card mu" style="margin-top:12px">${lbar('Memuat ranking…')}</div>`;
   return head+bar+`<div id="agr-b">${agrBody()}</div>`;
@@ -3323,7 +3322,7 @@ function absKelasBody(){
   if(AKR&&(AKR.key!==akrKey()))AKR=null;
   if(AKR===null&&!AKRB)akrLoad();
   const head=`<button class="btn ghost" onclick="absKelasBack()">← Kelas lain</button>`+
-    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi kelas: ${esc(S.akc)}</h2><p class="mu">Terisi otomatis dari absensi per mapel. Alpa bila seluruh mapel mencatat Alpa; bila ada mapel yang mencatat hadir tetapi mapel lain Alpa, dicatat Bolos. Hari yang belum ada mapel mengisi tidak dinilai.</p></div></div>`;
+    `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi kelas: ${esc(S.akc)}</h2></div></div>`;
   const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${S.akb}" max="${YM()}" aria-label="Bulan rekap" onchange="absKelasSetBulan(this.value)">${canDbdPdf()?'<button class="btn ghost" onclick="absKelasPdf()">Unduh PDF</button>':''}</div><span class="mu">Klik tanggal di bawah untuk detail per siswa · .=Hadir, B=Bolos, A=Alpa, -=belum dinilai.</span></div></div>`;
   if(AKR===null)return head+bar+`<div class="card mu">${lbar('Memuat rekap…')}</div>`;
   const dts=AKR.dates||[];
@@ -3426,7 +3425,7 @@ function vRekapLap(){
   const sel=RLP.ps.length?`<select class="in" style="width:auto" aria-label="Pilih bulan" onchange="rlPick(this.value)">${RLP.ps.map(p=>`<option value="${esc(p.k)}" ${p.k===RLP.per?'selected':''}>${esc(p.l)}</option>`).join('')}</select>`:'';
   const stats=`<div class="stats">${[['Total guru',gr.length,''],['Lengkap',c('LENGKAP'),'ok'],['Sebagian',c('SEBAGIAN'),'wa'],['Belum isi',c('BELUM'),'er']].map(([l,v,k])=>`<div class="stat ${k}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
   const list=gr.length?`<div class="mcl">${gr.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${esc(x.n)}</b><div class="mc-sub">${x.c}/${x.tot} tugas terkirim</div></div>${bd(x.s)}</div>${x.tot?`<div class="prog sm" style="margin:10px 0 0"><i style="width:${Math.round(x.c/x.tot*100)}%"></i></div>`:''}<div class="mc-f"><span class="mu">${RLP.pl?esc(RLP.pl):''}</span><span class="acts"><button class="btn ghost sm" onclick="rlDet('${esc(x.id)}')">Detail</button></span></div></div>`).join('')}</div>`:'<div class="card mu">Belum ada guru terdaftar.</div>';
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Rekap laporan</h2><p class="mu">Status pengisian laporan kinerja seluruh guru${RLP.pl?' · '+esc(RLP.pl):''}.</p></div><div class="row">${sel}<button class="btn ghost" onclick="RLP=null;rlLoad(S.rlp);render(true)">Muat ulang</button></div></div>`+stats+list;
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Rekap laporan</h2></div><div class="row">${sel}<button class="btn ghost" onclick="RLP=null;rlLoad(S.rlp);render(true)">Muat ulang</button></div></div>`+stats+list;
 }
 
 function rlDet(id){
@@ -3485,7 +3484,7 @@ function rkBody(k){
 function rkView(k){
   const pa=k==='pa',D=rkData(k);
   if(D===null&&!(pa?PRKB:SRKB))setTimeout(()=>{if(rkData(k)===null)rkLoad(k);},0);
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${pa?'Rekap perangkat ajar':'Rekap soal'}</h2><p class="mu">${pa?'Pantau pengumpulan perangkat ajar seluruh guru per jenis dan per mapel &amp; kelas yang diampu.':'Pantau unggahan soal seluruh guru per mapel &amp; kelas yang diampu.'} Status Lengkap berarti setiap mapel &amp; kelas yang diampu sudah memiliki ${pa?'perangkat ajar':'unggahan soal'}.</p></div><div class="row"><button class="btn ghost" onclick="rkReload('${k}')">Muat ulang</button>${canDbdPdf()?`<button class="btn ghost" onclick="rkPdf('${k}')">Unduh PDF</button>`:''}</div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${pa?'Rekap perangkat ajar':'Rekap soal'}</h2></div><div class="row"><button class="btn ghost" onclick="rkReload('${k}')">Muat ulang</button>${canDbdPdf()?`<button class="btn ghost" onclick="rkPdf('${k}')">Unduh PDF</button>`:''}</div></div>`;
   if(D===null)return head+`<div class="card mu">${lbar('Memuat rekap…')}</div>`;
   const gr=D.gr,c=s=>gr.filter(x=>x.s===s).length,tanpa=c('TANPA');
   const sts=[['Total guru',gr.length,''],['Lengkap',c('LENGKAP'),'ok'],['Sebagian',c('SEBAGIAN'),'wa'],['Belum ada',c('BELUM'),'er']]
@@ -3671,7 +3670,7 @@ function exp(){
 function aUsulan(){
   const l=U.filter(u=>u.p===S.vp&&(!S.fu||u.t===S.fu)).reverse();USL=l;
   return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><h2>Kritik/Saran/Usulan</h2><div class="row">${perSel()}${tujuanFilterSel()}</div></div>`+
-  `<p class="mu">Identitas pengirim tidak disimpan.</p>`+
+  ``+
   (isMob()
     ?`<div class="mcl">`+(l.map((u,i)=>mcard(`usulanDet(${i})`,
       `<div class="mc-h"><div>${usulanTujuanHTML(u)}</div><span class="mu nw">${esc(u.at)}</span></div><div class="mc-sub">${esc(trunc(u.i,90))}</div><div class="mc-more" style="text-align:right;margin-top:8px">Lihat detail ›</div>`)).join('')||'<div class="mcard"><span class="mu">Belum ada usulan pada periode ini.</span></div>')+`</div>`
@@ -3694,7 +3693,7 @@ function usulanDet(i){
 
 function aTugas(){
   const gList=G.filter(x=>hasR(x,'GURU'));
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Master tugas (per guru)</h2><p class="mu">Atur tugas tiap guru.</p></div><input class="in" style="max-width:260px" placeholder="Cari guru" aria-label="Cari guru" value="${esc(S.qt)}" oninput="filterTugas(this.value)"></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Master tugas (per guru)</h2></div><input class="in" style="max-width:260px" placeholder="Cari guru" aria-label="Cari guru" value="${esc(S.qt)}" oninput="filterTugas(this.value)"></div>`+
     `<div id="tg-list">${gList.length?gList.map(g=>guruCardHTML(g)).join(''):'<div class="card mu">Belum ada guru. Tambahkan guru di menu "Master user" terlebih dahulu.</div>'}</div>`+
     `<p id="tg-empty" class="mu" hidden>Tidak ada guru yang cocok dengan pencarian.</p>`;
 }
@@ -3951,7 +3950,7 @@ function impM(){
 const tk=ci=>Object.keys(TPL)[ci];
 function aTpl(){
   const keys=Object.keys(TPL);
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Template isian</h2><p class="mu">Atur isian formulir tiap template.</p></div><div class="row"><input class="in" style="max-width:220px" placeholder="Cari template" aria-label="Cari template" value="${esc(S.qk)}" oninput="filterTpl(this.value)"><button class="btn pri" onclick="kModal()">Tambah template</button></div></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Template isian</h2></div><div class="row"><input class="in" style="max-width:220px" placeholder="Cari template" aria-label="Cari template" value="${esc(S.qk)}" oninput="filterTpl(this.value)"><button class="btn pri" onclick="kModal()">Tambah template</button></div></div>`+
     `<div id="tp-list">${keys.map((k,ci)=>tplCardHTML(ci)).join('')||'<div class="card mu">Belum ada template.</div>'}</div>`+
     `<p id="tp-empty" class="mu" hidden>Tidak ada template yang cocok dengan pencarian.</p>`;
 }
@@ -4124,7 +4123,7 @@ function vRekapAbsDbd(){
   if(RAG&&RAG.bulan&&RAG.bulan!==RAGM)RAG=null;
   if(RAG===null&&!RAGB)ragLoad();
   const adm=S.user.r==='ADMIN';
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Rekap absen guru</h2><p class="mu">Rekap kehadiran guru bulan ${esc(bulanL(RAGM))}. Wajib = hari terjadwal sampai hari ini.</p></div><div class="row"><input type="month" class="in" style="width:auto" value="${RAGM}" max="${YM()}" aria-label="Bulan rekap" onchange="ragSetBulan(this.value)">${adm?'<button class="btn ghost" onclick="expAbsen()">Unduh PDF</button>':''}</div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Rekap absen guru</h2></div><div class="row"><input type="month" class="in" style="width:auto" value="${RAGM}" max="${YM()}" aria-label="Bulan rekap" onchange="ragSetBulan(this.value)">${adm?'<button class="btn ghost" onclick="expAbsen()">Unduh PDF</button>':''}</div></div>`;
   if(RAG===null)return head+`<div class="card mu">${lbar('Memuat rekap…')}</div>`;
   return head+ragTable(RAG.rows||[]);
 }
@@ -4147,7 +4146,7 @@ function saveAbs(){
 }
 function aJadwal(){
   const gr=G.filter(x=>hasR(x,'GURU'));
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Jadwal masuk guru</h2><p class="mu">${isMob()?'Ketuk kartu guru untuk mengatur hari masuknya (tersimpan per guru).':'Centang hari masuk tiap guru.'}</p></div>${isMob()?'':'<button class="btn pri" onclick="saveJadwal()">Simpan jadwal</button>'}</div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Jadwal masuk guru</h2></div>${isMob()?'':'<button class="btn pri" onclick="saveJadwal()">Simpan jadwal</button>'}</div>`+
   (isMob()
     ?`<div class="mcl">`+(gr.map(g=>{const j=(JD[g.id]||[]).slice().sort((a,b)=>a-b);return mcard(`jadwalDet('${g.id}')`,
       `<div class="mc-h"><div><b>${esc(g.n)}</b><div class="mc-sub">${j.length?j.length+'× per minggu':'Belum diatur'}</div></div></div>`+(j.length?`<div class="mc-chips">${j.map(n=>`<span class="tag">${HR3[n-1]}</span>`).join('')}</div>`:'')+`<div class="mc-more" style="text-align:right;margin-top:8px">Atur ›</div>`);}).join('')||'<div class="mcard"><span class="mu">Belum ada guru. Tambahkan guru di menu Master user.</span></div>')+`</div>`
@@ -4198,7 +4197,7 @@ const izinLama=(ms,ss)=>{try{return Math.round((pd(ss)-pd(ms))/86400000)+1;}catc
 const izinAbsLbl=j=>IZN_ABS_LBL[j]||'Izin';
 
 function vIzin(){
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ajukan izin</h2><p class="mu">Ajukan Izin, Sakit, Cuti, atau Tugas Dinas. Alur izin : Guru - Kurikulum / TU - Pimpinan.</p></div><button class="btn pri" onclick="izinBaruM()">+ Ajukan izin</button></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ajukan izin</h2></div><button class="btn pri" onclick="izinBaruM()">+ Ajukan izin</button></div>`+
     (IZ.length?`<div class="mcl">${IZ.map(izinCardGuru).join('')}</div>`:`<div class="card mu">Belum ada pengajuan izin. Klik "+ Ajukan izin" untuk membuat pengajuan pertama.</div>`);
 }
 function izinCardGuru(x){
@@ -4240,7 +4239,7 @@ function vIzinAdmin(){
   if(IZL===null&&!IZLB)izinLoad();
   const iz=IZL||[],pendSt=mode==='verif'?'MENUNGGU':'DIVERIFIKASI',tab=S.iztab||'aksi';
   const pend=iz.filter(x=>x.st===pendSt),riw=iz.filter(x=>x.st!==pendSt),list=tab==='aksi'?pend:riw;
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${mode==='verif'?'Verifikasi izin guru':'Persetujuan izin guru'}</h2><p class="mu">${mode==='verif'?'Periksa pengajuan izin guru lalu verifikasi atau tolak. Pengajuan terverifikasi diteruskan ke Pimpinan untuk persetujuan akhir.':'Beri persetujuan akhir atas pengajuan yang sudah diverifikasi Admin Kurikulum/Tata Usaha. Menyetujui akan otomatis mencatat absensi guru pada rentang tanggalnya.'}</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${mode==='verif'?'Verifikasi izin guru':'Persetujuan izin guru'}</h2></div></div>`;
   const tabs=`<div class="dnav" style="margin:12px 0"><button class="btn ${tab==='aksi'?'pri':'ghost'}" onclick="S.iztab='aksi';render(true)">${mode==='verif'?'Menunggu verifikasi':'Menunggu persetujuan'} (${pend.length})</button><button class="btn ${tab==='riwayat'?'pri':'ghost'}" onclick="S.iztab='riwayat';render(true)">Riwayat &amp; semua (${riw.length})</button></div>`;
   if(IZL===null)return head+tabs+`<div class="card mu">${lbar('Memuat…')}</div>`;
   return head+tabs+izinListHTML(list,mode,tab);
@@ -4306,9 +4305,9 @@ function vBKSP(){
   const ro=S.user.r==='PIMPINAN';
   if(SPGL===null&&!SPGLB)spLoad(()=>render(true));
   const d=SPGL||{},el=d.el||[],sp=d.sp||[],th=d.th||50,lgd=d.lg||[];
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Surat perjanjian siswa</h2><p class="mu">${ro?'Arsip surat perjanjian siswa yang dibuat Admin Bimbingan Konseling (read-only).':`Surat perjanjian dibuat saat total poin pelanggaran siswa mencapai <b>${th} poin</b> (tahap panggilan orang tua; 100+ = skorsing). Surat berisi daftar pelanggaran, butir perjanjian &amp; kolom tanda tangan siswa, orang tua/wali, petugas BK dan kepala madrasah, lalu tersimpan sebagai PDF berkop.`}</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Surat perjanjian siswa</h2></div></div>`;
   if(SPGL===null)return head+`<div class="card mu">${lbar('Memuat…')}</div>`;
-  const kandidat=!canBK()?'':(el.length?`<div class="card"><h3 style="margin:0 0 8px">Siswa mencapai ambang ${th} poin (${el.length})</h3><p class="mu" style="margin-top:0">Klik "Buat surat" untuk mengarsipkan surat perjanjian siswa lalu mengunduh PDF-nya.</p><div class="mcl">${el.map(x=>{const nl=lgd.filter(l=>l.sid===x.sid).length;return`<div class="dnav" style="justify-content:space-between;align-items:center;margin:6px 0;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;flex-wrap:wrap;gap:6px"><span><b>${esc(x.sn)}</b> <span class="tag">Kelas ${esc(x.k||'-')}</span> <span class="badge b-er">${x.p} poin</span> <span class="mu">· ${nl} pelanggaran</span></span><button class="btn pri sm" onclick="spBuat('${esc(x.sid)}')">Buat surat &amp; unduh PDF</button></div>`;}).join('')}</div></div>`:`<div class="card mu">Belum ada siswa yang mencapai ambang ${th} poin.</div>`);
+  const kandidat=!canBK()?'':(el.length?`<div class="card"><h3 style="margin:0 0 8px">Siswa mencapai ambang ${th} poin (${el.length})</h3><div class="mcl">${el.map(x=>{const nl=lgd.filter(l=>l.sid===x.sid).length;return`<div class="dnav" style="justify-content:space-between;align-items:center;margin:6px 0;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;flex-wrap:wrap;gap:6px"><span><b>${esc(x.sn)}</b> <span class="tag">Kelas ${esc(x.k||'-')}</span> <span class="badge b-er">${x.p} poin</span> <span class="mu">· ${nl} pelanggaran</span></span><button class="btn pri sm" onclick="spBuat('${esc(x.sid)}')">Buat surat &amp; unduh PDF</button></div>`;}).join('')}</div></div>`:`<div class="card mu">Belum ada siswa yang mencapai ambang ${th} poin.</div>`);
   const arsip=sp.length?`<div class="mcl">${sp.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${esc(x.sn)}</b> <span class="tag">Kelas ${esc(x.k||'-')}</span><div class="mc-sub"><span class="tag">${esc(x.p)} poin</span> · dibuat ${esc(tglS(x.t))} · oleh ${esc(x.ol)}</div></div></div><div class="mc-f" style="justify-content:flex-end"><button class="btn ghost sm" onclick="spPdf('${esc(x.s)}','${esc(x.id)}')">Unduh ulang</button>${canBK()?`<button class="btn dng sm" style="color:var(--er)" onclick="spDel('${esc(x.id)}')">Hapus</button>`:''}</div></div>`).join('')}</div>`:`<div class="card mu">Belum ada surat perjanjian yang dibuat.</div>`;
   return head+kandidat+`<h3 style="margin:16px 0 8px">Arsip surat perjanjian</h3>`+arsip;
 }
@@ -4322,7 +4321,7 @@ function bksLoad(){
 function vBKSesi(){
   if(BKSL===null&&!BKSLB)bksLoad();
   const ses=BKSL||[];
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Sesi konseling</h2><p class="mu">${S.user.r==='PIMPINAN'?'Riwayat sesi konseling yang dicatat Admin Bimbingan Konseling (read-only).':'Catat sesi konseling yang Anda lakukan — pribadi, kelompok, klasikal, atau karier. Penanganan siswa bermasalah cukup lewat laporan pelanggaran (grup Keamanan) dan sesi konseling di sini.'}</p></div>${canBK()?`<button class="btn pri" onclick="bksM()">+ Catat sesi</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Sesi konseling</h2></div>${canBK()?`<button class="btn pri" onclick="bksM()">+ Catat sesi</button>`:''}</div>`;
   if(BKSL===null)return head+`<div class="card mu">${lbar('Memuat…')}</div>`;
   if(!ses.length)return head+`<div class="card mu">Belum ada catatan sesi konseling.${canBK()?' Klik "+ Catat sesi" untuk mencatat sesi pertama.':''}</div>`;
   const part=x=>x.jn==='Klasikal'?'Kelas '+(x.k||'-'):(x.sn||'-');
@@ -4466,7 +4465,7 @@ const sarItemOpt=()=>{const by={};(SILS||[]).forEach(i=>{(by[i.kt]=by[i.kt]||[])
   return Object.keys(by).sort((a,b)=>a.localeCompare(b)).map(k=>`<optgroup label="${esc(k)}">${by[k].map(i=>`<option value="${esc(i.id)}">${esc(i.n)}${i.lk?' — '+esc(i.lk):''}</option>`).join('')}</optgroup>`).join('');};
 
 function vSarAduanGuru(){
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Lapor kerusakan sarana</h2><p class="mu">Laporkan kerusakan sarana/prasarana madrasah (kursi, meja, proyektor, ruangan, dan lainnya).</p></div><button class="btn pri" onclick="sarAduanBaruM()">+ Lapor kerusakan</button></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Lapor kerusakan sarana</h2></div><button class="btn pri" onclick="sarAduanBaruM()">+ Lapor kerusakan</button></div>`+
     (SPA.length?`<div class="mcl">${SPA.map(sarAduanCardGuru).join('')}</div>`:`<div class="card mu">Belum ada pengaduan. Klik "+ Lapor kerusakan" untuk melaporkan sarana yang rusak.</div>`);
 }
 function sarAduanCardGuru(x){
@@ -4499,7 +4498,7 @@ function sarAduanBatalF(id){
 }
 
 function vSarPinjamGuru(){
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pinjam sarana</h2><p class="mu">Ajukan peminjaman sarana madrasah (proyektor, tenda, ruangan, dan lainnya).</p></div><button class="btn pri" onclick="sarPinjamBaruM()">+ Ajukan pinjam</button></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pinjam sarana</h2></div><button class="btn pri" onclick="sarPinjamBaruM()">+ Ajukan pinjam</button></div>`+
     (SPP.length?`<div class="mcl">${SPP.map(sarPinjamCardGuru).join('')}</div>`:`<div class="card mu">Belum ada pengajuan peminjaman. Klik "+ Ajukan pinjam" untuk membuat pengajuan pertama.</div>`);
 }
 function sarPinjamCardGuru(x){
@@ -4546,7 +4545,7 @@ function vSarAduanAdmin(){
   const ad=SALS||[],tab=S.sat||'baru';
   const n={baru:ad.filter(x=>x.st==='BARU').length,proses:ad.filter(x=>x.st==='DIPROSES').length,selesai:ad.filter(x=>x.st==='SELESAI').length};
   const list=ad.filter(x=>x.st===(tab==='baru'?'BARU':tab==='proses'?'DIPROSES':'SELESAI'));
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaduan kerusakan sarana</h2><p class="mu">${ro?'Pantau pengaduan kerusakan sarana dari seluruh guru beserta penanganannya oleh Admin Sarana Prasarana.':'Periksa laporan kerusakan sarana, catat tindak lanjut penanganan, lalu tutup pengaduan dengan hasil penanganannya. Anda juga bisa menambahkan pengaduan langsung.'}</p></div>${canSar()?`<button class="btn pri" onclick="sarAduanBaruM()">+ Tambah pengaduan</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaduan kerusakan sarana</h2></div>${canSar()?`<button class="btn pri" onclick="sarAduanBaruM()">+ Tambah pengaduan</button>`:''}</div>`;
   const tabs=`<div class="dnav" style="margin:12px 0"><button class="btn ${tab==='baru'?'pri':'ghost'}" onclick="S.sat='baru';render(true)">Menunggu ditangani (${n.baru})</button><button class="btn ${tab==='proses'?'pri':'ghost'}" onclick="S.sat='proses';render(true)">Sedang ditangani (${n.proses})</button><button class="btn ${tab==='selesai'?'pri':'ghost'}" onclick="S.sat='selesai';render(true)">Selesai (${n.selesai})</button></div>`;
   if(SALS===null)return head+tabs+`<div class="card mu">${lbar('Memuat…')}</div>`;
   return head+tabs+sarAduanListHTML(list);
@@ -4619,7 +4618,7 @@ function vSarPinjamAdmin(){
   const pj=SPLS||[],tab=S.spt||'menunggu';
   const n={menunggu:pj.filter(x=>x.st==='MENUNGGU').length,disetujui:pj.filter(x=>x.st==='DISETUJUI').length,dipinjam:pj.filter(x=>x.st==='DIPINJAM').length,riwayat:pj.filter(x=>x.st==='DIKEMBALIKAN'||x.st==='DITOLAK').length};
   const list=pj.filter(x=>tab==='riwayat'?(x.st==='DIKEMBALIKAN'||x.st==='DITOLAK'):x.st==={menunggu:'MENUNGGU',disetujui:'DISETUJUI',dipinjam:'DIPINJAM'}[tab]);
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Peminjaman sarana</h2><p class="mu">${ro?'Pantau pengajuan peminjaman sarana guru beserta status pengembaliannya.':'Periksa pengajuan peminjaman, setujui atau tolak dengan alasan, lalu tandai saat sarana diserahkan dan saat diterima kembali. Anda juga bisa mengajukan peminjaman langsung.'}</p></div>${canSar()?`<button class="btn pri" onclick="sarPinjamBaruM()">+ Ajukan peminjaman</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Peminjaman sarana</h2></div>${canSar()?`<button class="btn pri" onclick="sarPinjamBaruM()">+ Ajukan peminjaman</button>`:''}</div>`;
   const tabs=`<div class="dnav" style="margin:12px 0;flex-wrap:wrap"><button class="btn ${tab==='menunggu'?'pri':'ghost'}" onclick="S.spt='menunggu';render(true)">Menunggu (${n.menunggu})</button><button class="btn ${tab==='disetujui'?'pri':'ghost'}" onclick="S.spt='disetujui';render(true)">Siap diambil (${n.disetujui})</button><button class="btn ${tab==='dipinjam'?'pri':'ghost'}" onclick="S.spt='dipinjam';render(true)">Sedang dipinjam (${n.dipinjam})</button><button class="btn ${tab==='riwayat'?'pri':'ghost'}" onclick="S.spt='riwayat';render(true)">Riwayat (${n.riwayat})</button></div>`;
   if(SPLS===null)return head+tabs+`<div class="card mu">${lbar('Memuat…')}</div>`;
   return head+tabs+sarPinjamListHTML(list);
@@ -4697,7 +4696,7 @@ function vSarInven(){
   const kt=S.srkat&&kts.indexOf(S.srkat)>=0?S.srkat:'';
   const list=kt?it.filter(x=>x.kt===kt):it;
   const nRusak=it.filter(x=>x.kd&&x.kd!=='Baik').length;
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Inventaris sarana</h2><p class="mu">${ro?'Daftar sarana & prasarana madrasah (read-only).':'Master data sarana & prasarana — menjadi pilihan pada form pengaduan kerusakan & peminjaman guru.'}${nRusak?` Saat ini <b>${nRusak}</b> sarana berkondisi rusak.`:''}</p></div>${canSar()?`<button class="btn pri" onclick="sarItemM()">+ Tambah sarana</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Inventaris sarana</h2>${nRusak?`<p class="mu">Saat ini <b>${nRusak}</b> sarana berkondisi rusak.</p>`:''}</div>${canSar()?`<button class="btn pri" onclick="sarItemM()">+ Tambah sarana</button>`:''}</div>`;
   const fil=`<div class="row" style="margin:12px 0"><select class="in" aria-label="Filter kategori" onchange="S.srkat=this.value;render(true)"><option value="">Semua kategori (${it.length})</option>${kts.map(k=>`<option value="${esc(k)}" ${k===kt?'selected':''}>${esc(k)} (${it.filter(x=>x.kt===k).length})</option>`).join('')}</select></div>`;
   if(SILS===null)return head+fil+`<div class="card mu">${lbar('Memuat…')}</div>`;
   if(!list.length)return head+fil+`<div class="card mu">Belum ada sarana pada kategori ini.${canSar()?' Klik "+ Tambah sarana" untuk menambahkan.':''}</div>`;
@@ -4806,7 +4805,7 @@ function vKesLanggarAdmin(){
   const lg=KSPL||[],tab=S.kltab||'baru';
   const n={baru:lg.filter(x=>x.st==='BARU').length,proses:lg.filter(x=>x.st==='DIPROSES').length,selesai:lg.filter(x=>x.st==='SELESAI').length};
   const list=lg.filter(x=>x.st===(tab==='baru'?'BARU':tab==='proses'?'DIPROSES':'SELESAI'));
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pelanggaran siswa</h2><p class="mu">${ro?'Pantau laporan pelanggaran tata tertib siswa dari seluruh guru beserta penanganannya oleh Admin Keamanan.':'Periksa laporan pelanggaran siswa, tetapkan sanksi/tindak lanjut, lalu tutup laporan dengan hasil penanganannya. Anda juga bisa menambahkan laporan langsung dan mengatur daftar jenis pelanggaran & poin.'}</p></div>${canKes()?`<div class="row"><button class="btn ghost" onclick="kesJenisM()">Jenis &amp; poin</button><button class="btn pri" onclick="kesLanggarM()">+ Tambah pelanggaran</button></div>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pelanggaran siswa</h2></div>${canKes()?`<div class="row"><button class="btn ghost" onclick="kesJenisM()">Jenis &amp; poin</button><button class="btn pri" onclick="kesLanggarM()">+ Tambah pelanggaran</button></div>`:''}</div>`;
   const tabs=`<div class="dnav" style="margin:12px 0"><button class="btn ${tab==='baru'?'pri':'ghost'}" onclick="S.kltab='baru';render(true)">Menunggu diproses (${n.baru})</button><button class="btn ${tab==='proses'?'pri':'ghost'}" onclick="S.kltab='proses';render(true)">Sedang diproses (${n.proses})</button><button class="btn ${tab==='selesai'?'pri':'ghost'}" onclick="S.kltab='selesai';render(true)">Selesai (${n.selesai})</button></div>`;
   if(KSPL===null)return head+tabs+`<div class="card mu">${lbar('Memuat…')}</div>`;
   return head+tabs+kesLanggarListHTML(list);
@@ -4910,7 +4909,7 @@ function kesPrestLoad(){
 }
 function vKesPrest(){
   const wk=waliKelasSaya(),boleh=kesBolehPrest();
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Prestasi siswa</h2><p class="mu">${wk?'Catat prestasi siswa kelas binaan Anda ('+esc(wk)+'). Prestasi juga tampil di profil siswa pada menu Rekap poin siswa.':'Kelola catatan prestasi siswa semua kelas; pimpinan hanya memantau. Prestasi juga tampil di profil siswa pada menu Rekap poin siswa.'}</p></div>${boleh?`<button class="btn pri" onclick="kesPrestM()">+ Catat prestasi</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Prestasi siswa</h2></div>${boleh?`<button class="btn pri" onclick="kesPrestM()">+ Catat prestasi</button>`:''}</div>`;
   if(KPLS===null&&!KPLSB){kesPrestLoad();return head+`<div class="card mu">${lbar('Memuat…')}</div>`;}
   if(KPLSB)return head+`<div class="card mu">${lbar('Memuat…')}</div>`;
   const pr=KPLS||[],kf=S.kpf||'',semua=!wk;
@@ -4977,7 +4976,7 @@ function kesPrestDelF(id){
 
 function vKesPoin(){
   const ro=S.user.r==='PIMPINAN';
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Rekap poin siswa</h2><p class="mu">${ro?'Rekapitulasi akumulasi poin pelanggaran dan prestasi per siswa dari laporan seluruh guru (read-only).':'Akumulasi poin pelanggaran per siswa dari seluruh laporan guru, beserta prestasi yang tercatat. Tingkat poin bersifat informasi: 25+ teguran, 50+ panggilan orang tua, 100+ skorsing.'}</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Rekap poin siswa</h2></div></div>`;
   if((KSPL===null&&!KSPLB)||(KPLS===null&&!KPLSB)){if(KSPL===null&&!KSPLB)kesLanggarLoad();if(KPLS===null&&!KPLSB)kesPrestLoad();return head+`<div class="card mu">${lbar('Memuat…')}</div>`;}
   if(KSPLB||KPLSB)return head+`<div class="card mu">${lbar('Memuat…')}</div>`;
   const lg=KSPL||[],pr=KPLS||[];
@@ -5022,7 +5021,7 @@ function vKesKeg(){
   const kg=KEGLS||[];
   const bulanIni=YM();
   const nBulan=kg.filter(x=>String(x.t).slice(0,7)===bulanIni).length;
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Kegiatan siswa</h2><p class="mu">${ro?'Pantau catatan kegiatan kesiswaan madrasah (read-only).':'Catat kegiatan kesiswaan madrasah — ekstrakurikuler, kepramukaan, lomba, bakti sosial, perayaan hari besar, dan lainnya. Bersama Prestasi siswa, kegiatan adalah ruang lingkup menu Kesiswaan; pelanggaran & rekap poin berada di grup Keamanan.'}</p></div>${boleh?`<button class="btn pri" onclick="kesKegM()">+ Catat kegiatan</button>`:''}</div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Kegiatan siswa</h2></div>${boleh?`<button class="btn pri" onclick="kesKegM()">+ Catat kegiatan</button>`:''}</div>`;
   const stt=`<div class="stats">${[['Total kegiatan',kg.length,''],['Bulan ini ('+bulanL(bulanIni)+')',nBulan,'ok'],['Jenis tercatat',new Set(kg.map(x=>x.j)).size,'wa']].map(([l,v,k])=>`<div class="stat ${k}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
   if(KEGLS===null)return head+stt+`<div class="card mu">${lbar('Memuat…')}</div>`;
   const jf=S.kegj||'';
@@ -5112,7 +5111,7 @@ function vNilai(){
   else if(NLK!==S.nm+'|'+S.nk)body='<div class="mt">'+lbar('Memuat nilai…')+'</div>';
   else body=nilaiTable(m,ro);
   const jSel=(m&&S.nk)?`<select class="in" style="width:auto" aria-label="Jenis penilaian" onchange="nilSelJ(this)"><option value="" ${S.njv?'':'selected'}>Semua penilaian</option>${nj().map(j=>`<option value="${esc(j.k)}" ${S.njv===j.k?'selected':''}>${esc(j.l)} (${j.n})</option>`).join('')}</select>`:'';
-  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h2>Penilaian siswa</h2><p class="mu">Semester aktif: <b>${esc(NS||'-')}</b>${ro?' · hanya lihat':''}</p></div>`+
+  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h2>Penilaian siswa · ${esc(NS||'-')}</h2></div>`+
     `<div class="row"><select class="in" style="width:auto" aria-label="Mata pelajaran" onchange="nilSel('nm',this)"><option value="">${gur?'Pilih mapel yang diampu':'Pilih mapel'}</option>${mpAll.map(x=>`<option value="${esc(x.id)}" ${x.id===S.nm?'selected':''}>${esc(x.n)}</option>`).join('')}</select>`+
     `<select class="in" style="width:auto" aria-label="Kelas" onchange="nilSel('nk',this)" ${m?'':'disabled'}><option value="">Pilih kelas</option>${kl.map(k=>`<option value="${esc(k)}" ${k===S.nk?'selected':''}>${esc(k)}</option>`).join('')}</select>${jSel}</div></div>${body}</div>`;
 }
@@ -5214,12 +5213,12 @@ function nilaiPdf(){
 const NT_TABS=[['sem','Semester aktif'],['sw','Daftar siswa'],['mp','Mata pelajaran'],['jd','Jadwal mapel'],['jn','Jenis penilaian']];
 function aNilaiMgr(){
   if(!NT_TABS.some(t=>t[0]===S.nt))S.nt='sem';
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Kelola penilaian</h2><p class="mu">Berlaku untuk semua guru. Setiap guru hanya bisa mengisi nilai pada mata pelajaran yang ia ampu, pada kelas yang diampunya.</p></div></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Kelola penilaian</h2></div></div>`+
   `<div class="dnav" style="margin-bottom:6px">${NT_TABS.map(t=>`<button class="btn ${S.nt===t[0]?'pri':'ghost'}" onclick="S.nt='${t[0]}';render(true)">${t[1]}</button>`).join('')}</div>`+
   (S.nt==='sem'?aNilaiSem():S.nt==='sw'?aNilaiSw():S.nt==='mp'?aNilaiMp():S.nt==='jd'?aNilaiJd():aNilaiJn());
 }
 function aNilaiSem(){
-  return`<div class="card"><h3>Semester aktif</h3><p class="mu">Nilai disimpan per semester. Ganti label saat semester baru; data semester lama tetap tersimpan di sheet.</p><div class="row mt"><input id="ns" class="in" style="max-width:260px" value="${esc(NS)}" placeholder="2026/2027 Ganjil" aria-label="Semester aktif"><button class="btn pri" onclick="saveSem()">Simpan</button></div></div>`;
+  return`<div class="card"><h3>Semester aktif</h3><div class="row mt"><input id="ns" class="in" style="max-width:260px" value="${esc(NS)}" placeholder="2026/2027 Ganjil" aria-label="Semester aktif"><button class="btn pri" onclick="saveSem()">Simpan</button></div></div>`;
 }
 function saveSem(){run('setSemester',{sem:$('ns').value.trim()},'Semester aktif disimpan',()=>{NLK='';});}
 function aNilaiSw(){
@@ -5388,7 +5387,7 @@ function jdOpts(k,h,useJ){
 function aNilaiJd(){
   if(JDML===null&&!JDMLB)jdLoad();
   const hasJD=Object.keys(JD||{}).length>0;
-  const intro=`<div><h3>Jadwal mapel</h3><p class="mu" style="margin:4px 0 0">Pilih kelas, lalu atur mapel tiap <b>jam</b> dan hari lewat dropdown.</p></div>`;
+  const intro=`<div><h3>Jadwal mapel</h3></div>`;
   if(JDML===null)return`<div class="card">${intro}<div class="mt">${lbar('Memuat jadwal…')}</div></div>`;
   const kls=[...new Set(kelasList().concat(JDML.map(r=>r.k)))].filter(Boolean).sort(jdNum);
   if(!kls.length)return`<div class="card">${intro}<div class="note">Belum ada kelas. Tambahkan siswa dulu di tab <b>Daftar siswa</b>, lalu atur jadwalnya di sini.</div></div>`;
@@ -5502,7 +5501,7 @@ function jdAllView(kls){
     }).join('');
     return`<h3 style="margin-top:18px">${JD_HARI[h]}</h3><div class="jdg-wrap"><table class="jdg" style="min-width:${88+kls.length*120}px"><thead><tr><th class="jh">Jam ke-</th>${kls.map(k=>`<th>${esc(k)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }).join('');
-  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h3>Semua jadwal mapel</h3><p class="mu" style="margin:4px 0 0">Seluruh hari dan seluruh kelas dalam satu halaman (hanya untuk dilihat). Untuk mengubah jadwal, pilih <b>Atur per kelas</b>.</p></div><div class="row"><button class="btn ghost" onclick="jdAllPdf()">Unduh PDF</button></div></div>${jdTog('all')}`+
+  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h3>Semua jadwal mapel</h3></div><div class="row"><button class="btn ghost" onclick="jdAllPdf()">Unduh PDF</button></div></div>${jdTog('all')}`+
     (dirty.length?`<div class="note">Tampilan ini memuat perubahan yang belum disimpan pada kelas ${esc(dirty.join(', '))}.</div>`:'')+
     `<div class="stats"><div class="stat"><b>${kls.length}</b><span>Kelas</span></div><div class="stat"><b>${total}</b><span>Jam pelajaran terisi</span></div>${warn?`<div class="stat ${conf?'er':'ok'}"><b>${conf}</b><span>Jam bentrok</span></div>`:''}</div>`+
     tabel+`<p class="mu mt">Sel kosong berarti tidak ada pelajaran pada jam tersebut. Kolom pertama tetap terlihat saat tabel digeser ke samping.</p></div>`;
@@ -5681,7 +5680,7 @@ function jdSave(){
 const jnSk=j=>{const t=/^(\d+)-(\d+)$/.exec(String(j&&j.s||'').trim());return t?[+t[1],+t[2]]:[0,100];};
 const jnRow=j=>{const sk=jnSk(j);return`<div class="jnr" data-k="${esc(j.k||'')}"><label class="jn-f jn-fn"><span>Nama jenis</span><input class="in jn-l" value="${esc(j.l||'')}" placeholder="Nama jenis, mis. Nilai Harian" aria-label="Nama jenis penilaian"></label><label class="jn-f"><span>Jumlah</span><input class="in jn-n" type="number" min="1" max="20" value="${j.n||1}" aria-label="Jumlah penilaian"></label><label class="jn-f"><span>Skala min</span><input class="in jn-smn" type="number" min="0" value="${sk[0]}" aria-label="Skala minimum"></label><label class="jn-f"><span>Skala maks</span><input class="in jn-smx" type="number" min="1" value="${sk[1]}" aria-label="Skala maksimum"></label><button type="button" class="btn ghost ib del" onclick="this.closest('.jnr').remove()" aria-label="Hapus jenis" title="Hapus jenis">${ico('trash')}</button></div>`;};
 function aNilaiJn(){
-  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h3>Jenis penilaian</h3><p class="mu">Berlaku untuk <b>semua</b> mata pelajaran. Kolom nilai pada lembar penilaian mengikuti jenis dan jumlah di sini, dan <b>skala nilai</b> (batas isian, mis. 0–100 atau 0–1000) diatur per jenis; mengurangi jenis/jumlah hanya menyembunyikan nilai lama (tidak menghapusnya).</p></div><div class="row"><button class="btn ghost" onclick="jnAdd()">+ Tambah jenis</button><button class="btn pri" onclick="saveJenis()">Simpan jenis penilaian</button></div></div>`+
+  return`<div class="card"><div class="bt" style="flex-wrap:wrap"><div><h3>Jenis penilaian</h3></div><div class="row"><button class="btn ghost" onclick="jnAdd()">+ Tambah jenis</button><button class="btn pri" onclick="saveJenis()">Simpan jenis penilaian</button></div></div>`+
   `<div id="jn-list" class="mt">${nj().map(jnRow).join('')}</div></div>`;
 }
 function jnAdd(){const c=$('jn-list');if(c)c.insertAdjacentHTML('beforeend',jnRow({k:'',l:'',n:1,s:'0-100'}));}
@@ -5830,7 +5829,7 @@ function kopHtml(K,c){
 }
 function aKop(){return KED?kopEditor():kopListView();}
 function kopListView(){
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan kop</h2><p class="mu">Buat lebih dari satu kop. Setiap kali Anda mengunduh PDF (laporan, rekap, nilai, jadwal, dll.) akan muncul pilihan kop yang dipakai. Kop menyesuaikan otomatis dengan orientasi potret atau lanskap.</p></div><button class="btn pri" onclick="kopNew()">+ Tambah kop</button></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan kop</h2></div><button class="btn pri" onclick="kopNew()">+ Tambah kop</button></div>`;
   if(!KOPS.length)return head+`<div class="note">Belum ada kop tersimpan, jadi PDF memakai kop bawaan. Klik <b>+ Tambah kop</b> untuk membuat kop pertama.</div>`;
   return head+`<div class="mcl">`+KOPS.map(k=>`<div class="mcard"><div class="mc-h"><div><b>${esc(k.nm||k.id)}</b> ${k.def?'<span class="tag">Utama</span>':''}<div class="mc-sub">${k.logoL?'Logo kiri':''}${k.logoL&&k.logoR?' · ':''}${k.logoR?'Logo kanan':''}${!k.logoL&&!k.logoR?'Tanpa logo':''}</div></div></div>`+
     `<div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:10px;margin-top:10px">${kopHtml(k,true)}</div>`+
@@ -5843,7 +5842,7 @@ function kopEditor(){
   const al=[['left','Rata kiri'],['center','Tengah'],['right','Rata kanan']];
   setTimeout(kopPrev,0);
   const logoBox=(side,lbl)=>`<div class="mcard" style="margin-top:10px"><b>${lbl}</b><p class="mu" style="margin:2px 0 0">Opsional. Gambar otomatis diperkecil (maks. 300 px). Format PNG/JPG.</p><div class="row" style="margin-top:8px;align-items:center"><span id="k-th${side}"></span><button class="btn ghost sm" onclick="$('k-f${side}').click()">Unggah logo</button><button class="btn ghost sm" id="k-del${side}" onclick="kopLogoDel('${side}')">Hapus logo</button><input id="k-f${side}" type="file" accept="image/png,image/jpeg" hidden onchange="kopLogo(this,'${side}')"></div></div>`;
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${KED==='new'?'Tambah kop':'Ubah kop'}</h2><p class="mu">Teks kop, logo kiri &amp; kanan, lalu simpan.</p></div><div class="row"><button class="btn ghost" onclick="kopCancel()">Batal</button><button class="btn pri" onclick="saveKop()">Simpan kop</button></div></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${KED==='new'?'Tambah kop':'Ubah kop'}</h2></div><div class="row"><button class="btn ghost" onclick="kopCancel()">Batal</button><button class="btn pri" onclick="saveKop()">Simpan kop</button></div></div>`+
   `<div class="card"><h3>Identitas kop</h3><label for="k-n">Nama kop (untuk pilihan saat unduh)</label><input id="k-n" class="in" value="${esc(KD.nm)}" placeholder="Contoh: Kop MI, Kop Muallimin" oninput="kopSet('nm',this.value)">`+
   `<label class="jd-ck" style="margin-top:10px"><input type="checkbox" ${KD.def?'checked':''} onchange="kopSet('def',this.checked)"> Jadikan kop utama (terpilih otomatis saat unduh)</label></div>`+
   `<div class="card"><h3>Teks kop</h3>`+
@@ -5902,7 +5901,7 @@ function kopDelAsk(id){
 
 function aLog(){
   LOGL=LG;
-  return`<div class="card"><h2>Log aktivitas admin</h2><p class="mu">Aktivitas admin.</p>`+
+  return`<div class="card"><h2>Log aktivitas admin</h2>`+
   (isMob()
     ?`<div class="mcl" style="margin-top:12px">`+(LG.map((x,i)=>mcard(`logDet(${i})`,
       `<div class="mc-h"><div><b>${esc(x.a)}</b><div class="mc-sub">${esc(x.t)}</div></div><span class="tag">${esc(x.x)}</span></div><div class="mc-more" style="text-align:right;margin-top:8px">Rincian ›</div>`)).join('')||'<div class="mcard"><span class="mu">Belum ada log aktivitas.</span></div>')+`</div>`
@@ -5920,7 +5919,7 @@ let DAI=null,DAI_P='',DAI_BUSY=false,DAI_ERR='',DAI_TS='';
 function aDashai(){
   if(DAI_P!==S.vp){DAI=null;DAI_ERR='';DAI_TS='';DAI_P=S.vp;}
   const btn=DAI_BUSY?'<button class="btn pri" disabled>Menganalisis…</button>':`<button class="btn pri" onclick="dashaiRun(${DAI?'true':''})">${DAI?'Analisis ulang':'Analisis dengan AI'}</button>`;
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Analisis kinerja</h2><p class="mu">Kesimpulan bulanan dari laporan kinerja, absensi, nilai siswa, izin guru, kesiswaan (pelanggaran & BK, prestasi, kegiatan), dan sarana prasarana sebagai bahan rapat.</p></div><div class="row">${perSel()}${btn}</div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Analisis kinerja</h2></div><div class="row">${perSel()}${btn}</div></div>`;
   if(DAI_BUSY)return head+dashaiSkeleton();
   if(DAI_ERR)return head+`<div class="note" style="background:var(--erb);color:var(--er)"><b>Analisis gagal.</b> ${esc(DAI_ERR)}</div>`;
   if(!DAI)return head;
@@ -6123,7 +6122,7 @@ function wJdToday(d){
 }
 function wJadwal(){
   const d=WD||{sw:{},jdg:[]},sw=d.sw||{},D=wJdData(d),cfg=d.jdc||JDCFG,today=new Date().getDay()||7;
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Jadwal pelajaran</h2><p class="mu">Kelas ${esc(sw.k||'-')} \u00B7 hanya untuk dilihat</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Jadwal pelajaran · Kelas ${esc(sw.k||'-')}</h2></div></div>`;
   if(!D.n)return head+`<div class="card"><p class="mu">Belum ada jadwal pelajaran untuk kelas ini.</p></div>`;
   let grid;
   if(isMob()){
@@ -6166,7 +6165,7 @@ function wDash(){
 function wNilai(){
   const d=WD||{sw:{},nil:[]};
   const nil=d.nil||[];
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Nilai ${esc(d.sw.n||'')}</h2><p class="mu">Nilai yang diinput guru pada mata pelajaran yang diampu.</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Nilai ${esc(d.sw.n||'')}</h2></div></div>`;
   if(!nil.length)return head+`<div class="card"><p class="mu">Belum ada nilai yang dicatat untuk anak Anda.</p></div>`;
   const sems=[...new Set(nil.map(x=>x.sem))].sort().reverse();
   const aktif=sems.indexOf(NS)>=0?NS:sems[0];
@@ -6196,7 +6195,7 @@ function wNilai(){
 function wAbs(){
   const d=WD||{sw:{},am:[],ak:[],ax:[]};
   const bulans=wBulanList(d);
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi ${esc(d.sw.n||'')}</h2><p class="mu">Catatan kehadiran pada absensi mapel, absensi kelas, dan ekstrakurikuler.</p></div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi ${esc(d.sw.n||'')}</h2></div></div>`;
   if(!bulans.length)return head+`<div class="card"><p class="mu">Belum ada catatan absensi untuk anak Anda.</p></div>`;
   if(!S.wb||bulans.indexOf(S.wb)<0)S.wb=bulans.indexOf(YM())>=0?YM():bulans[0];
   const pick=(a,cat)=>(a||[]).filter(x=>String(x.t).slice(0,7)===S.wb).map(x=>({t:x.t,ket:x.ket||x.mn||x.en||'-',cat:cat,st:x.st}));
@@ -6232,7 +6231,7 @@ function wLvg(){
 function wThf(){
   const d=WD||{sw:{},thf:[]};
   const list=d.thf||[];
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Tahfidz ${esc(d.sw.n||'')}</h2><p class="mu">Materi hafalan kelas ${esc(d.sw.k||'-')} dan batas hafalan terakhir anak Anda.</p></div></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Tahfidz ${esc(d.sw.n||'')}</h2></div></div>`+
   (list.length?`<div class="mcl">${list.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${esc(x.n)}</b><div class="mc-sub">${x.pg?'Pengampu: '+esc(x.pg):'Pengampu belum diatur'}${x.ket?' · '+esc(x.ket):''}</div></div></div>`+
     (x.b?`<div class="mbody mt"><b>Batas hafalan:</b> ${esc(x.b)}</div><div class="mu mt">Setoran terakhir: ${esc(x.tg||'-')}</div>${x.ct?`<div class="mu mt"><b>Catatan:</b> ${esc(x.ct)}</div>`:''}`
       :`<div class="mu mt">Belum ada setoran yang dicatat.</div>`)+`</div>`).join('')}</div>`
@@ -6241,7 +6240,7 @@ function wThf(){
 function wPrs(){
   const d=WD||{sw:{},kpr:[]};
   const list=d.kpr||[];
-  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Prestasi ${esc(d.sw.n||'')}</h2><p class="mu">Prestasi dan capaian anak Anda di madrasah.</p></div></div>`+
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Prestasi ${esc(d.sw.n||'')}</h2></div></div>`+
   (list.length?`<div class="mcl">${list.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${esc(x.jd||'-')}</b><div class="mc-sub">${esc(x.t||'-')} · ${esc(x.jr||'-')} · ${esc(x.tg||'-')}</div></div><span class="tag">${esc(x.pj||'-')}</span></div>`+
     (x.ke?`<div class="mu mt">${esc(x.ke)}</div>`:'')+`</div>`).join('')}</div>`
     :`<div class="card"><p class="mu">Belum ada prestasi yang dicatat untuk anak Anda.</p></div>`);
