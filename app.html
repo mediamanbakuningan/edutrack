@@ -1017,6 +1017,7 @@ function navItems(){
     const d=WD||{};
     return[
       {k:'dash',l:'Ringkasan anak',i:'home',on:S.tab==='dash'},
+      {k:'wjdw',l:'Jadwal pelajaran',i:'cal',on:S.tab==='wjdw'},
       {k:'wnilai',l:'Nilai',i:'edit',on:S.tab==='wnilai'},
       {k:'wabs',l:'Absensi',i:'chk',on:S.tab==='wabs'},
       {k:'wlvg',l:'Pelanggaran',i:'kes',on:S.tab==='wlvg'},
@@ -1179,7 +1180,7 @@ const MBN={
   ADMIN_KESISWAAN:{c:'kesprest',s:['dbd','keskegiatan']},
   WALIMURID:{c:'wabs',s:['dash','wnilai','wlvg']}
 };
-const MBL={dbd:'Dashboard',dash:'Tugas',nilai:'Nilai',absen:'Absen Guru',absmapel:'Absen Mapel',abseskul:'Ekskul',izinver:'Izin',izinset:'Izin',bksesi:'Konseling',bksp:'Surat',jadwal:'Jadwal',rekapabs:'Rekap',kespelanggaran:'Pelanggaran',kespoin:'Poin',saraduadm:'Aduan',sarpinjamadm:'Pinjam',sarinven:'Inventaris',kesprest:'Prestasi',keskegiatan:'Kegiatan',wabs:'Absensi',wnilai:'Nilai',wlvg:'Pelanggaran'};
+const MBL={wjdw:'Jadwal',dbd:'Dashboard',dash:'Tugas',nilai:'Nilai',absen:'Absen Guru',absmapel:'Absen Mapel',abseskul:'Ekskul',izinver:'Izin',izinset:'Izin',bksesi:'Konseling',bksp:'Surat',jadwal:'Jadwal',rekapabs:'Rekap',kespelanggaran:'Pelanggaran',kespoin:'Poin',saraduadm:'Aduan',sarpinjamadm:'Pinjam',sarinven:'Inventaris',kesprest:'Prestasi',keskegiatan:'Kegiatan',wabs:'Absensi',wnilai:'Nilai',wlvg:'Pelanggaran'};
 function mbnMore(f){
   const o=typeof f==='boolean'?f:!document.body.classList.contains('mbn-open');
   document.body.classList.toggle('mbn-open',o);
@@ -5946,9 +5947,52 @@ const wBulanList=d=>{
 };
 const wAvg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length*100)/100:null;
 function vWali(){
-  const al=['dash','wnilai','wabs','wlvg','wprs','wthf'];
+  const al=['dash','wjdw','wnilai','wabs','wlvg','wprs','wthf'];
   if(al.indexOf(S.tab)<0)S.tab='dash';
-  return({dash:wDash,wnilai:wNilai,wabs:wAbs,wlvg:wLvg,wprs:wPrs,wthf:wThf}[S.tab]||wDash)();
+  return({dash:wDash,wjdw:wJadwal,wnilai:wNilai,wabs:wAbs,wlvg:wLvg,wprs:wPrs,wthf:wThf}[S.tab]||wDash)();
+}
+/* Jadwal pelajaran wali murid: tampilan sama seperti jadwal mapel admin, tetapi hanya-baca */
+function wJdData(d){
+  const cells={},mx={};
+  (d.jdg||[]).forEach(x=>{
+    const h=+x.h||0;if(!h)return;
+    const kh=jdKh(x.mi),man=String(x.mi||'').indexOf(JD_MAN)===0;
+    jamParse(x.j).forEach(j=>{(cells[h]=cells[h]||{})[j]={m:x.mn||'-',g:kh?'':(x.gn||''),kh:kh,man:man};mx[h]=Math.max(mx[h]||0,j);});
+  });
+  const days=[1,2,3,4,5,6];if(mx[7])days.push(7);
+  const n=Math.max(0,...Object.keys(mx).map(h=>mx[h]));
+  return{cells:cells,days:days,n:n};
+}
+function wjCell(c){
+  if(!c)return{cls:'',st:'',html:''};
+  const b=`<b style="font-size:.82rem;line-height:1.25;display:block">${esc(c.m)}</b>`;
+  if(c.kh)return{cls:'ist',st:'',html:b+(c.man?`<div class="jdc-g">Kegiatan</div>`:'')};
+  return{cls:'fl',st:'--c:hsl('+jdCol(c.m)+')',html:b+(c.g?`<div class="jdc-g">${esc(c.g)}</div>`:'')};
+}
+function wJdToday(d){
+  const D=wJdData(d),cfg=d.jdc||JDCFG,today=new Date().getDay()||7,row=D.cells[today]||{};
+  const list=Object.keys(row).map(Number).sort((a,b)=>a-b).map(j=>{
+    const c=row[j];
+    return`<div class="mu" style="font-size:.88rem;margin-top:6px">Jam ke-${j} <span style="opacity:.8">(${jdWk(cfg,j,j)})</span> \u00B7 <b>${esc(c.m)}</b>${c.g?' ('+esc(c.g)+')':''}</div>`;
+  }).join('');
+  return`<div class="card mt"><div class="bt" style="flex-wrap:wrap"><h3>Jadwal hari ini \u00B7 ${esc(JD_HARI[today]||'')}</h3><button type="button" class="btn ghost" onclick="go('wjdw')">Jadwal lengkap</button></div>`+
+    (D.n?(list||`<p class="mu mt">Tidak ada jadwal pelajaran hari ini.</p>`):`<p class="mu mt">Belum ada jadwal pelajaran untuk kelas ini.</p>`)+`</div>`;
+}
+function wJadwal(){
+  const d=WD||{sw:{},jdg:[]},sw=d.sw||{},D=wJdData(d),cfg=d.jdc||JDCFG,today=new Date().getDay()||7;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Jadwal pelajaran</h2><p class="mu">Kelas ${esc(sw.k||'-')} \u00B7 hanya untuk dilihat</p></div></div>`;
+  if(!D.n)return head+`<div class="card"><p class="mu">Belum ada jadwal pelajaran untuk kelas ini.</p></div>`;
+  let grid;
+  if(isMob()){
+    if(D.days.indexOf(S.wjh)<0)S.wjh=D.days.indexOf(today)>=0?today:D.days[0];
+    const h=S.wjh;
+    grid=`<div class="dnav" style="margin-top:12px">${D.days.map(x=>`<button type="button" class="btn ${x===h?'pri':'ghost'}" onclick="S.wjh=${x};render(true)">${HR3[x-1]}</button>`).join('')}</div><div class="jdm">`+
+      Array.from({length:D.n},(_,i)=>{const j=i+1,c=wjCell((D.cells[h]||{})[j]);return`<div class="jr ${c.cls}" style="${c.st}"><div class="jl">Jam ke-${j}<div class="jdc-g">${jdWk(cfg,j,j)}</div></div><div>${c.html||'<span class="mu">\u2014</span>'}</div></div>`;}).join('')+`</div>`;
+  }else{
+    grid=`<div class="jdg-wrap"><table class="jdg"><thead><tr><th class="jh">Jam ke-</th>${D.days.map(h=>`<th${h===today?' style="color:var(--pr)"':''}>${JD_HARI[h]}</th>`).join('')}</tr></thead><tbody>`+
+      Array.from({length:D.n},(_,i)=>{const j=i+1;return`<tr><th class="jh" scope="row">${j}<div class="jdc-g">${jdWk(cfg,j,j)}</div></th>${D.days.map(h=>{const c=wjCell((D.cells[h]||{})[j]);return`<td class="${c.cls}" style="${c.st}">${c.html}</td>`;}).join('')}</tr>`;}).join('')+`</tbody></table></div>`;
+  }
+  return head+`<div class="card">${grid}<p class="mu mt">Sel kosong berarti tidak ada pelajaran pada jam tersebut. Jadwal diatur oleh admin madrasah.</p></div>`;
 }
 function wDash(){
   const d=WD||{sw:{},nil:[],am:[],ak:[],ax:[],ksl:[],kpr:[],bks:[],jdg:[],ek:[]};
@@ -5972,8 +6016,7 @@ function wDash(){
   `<div class="card"><div class="row" style="gap:14px;align-items:center;flex-wrap:wrap">${logoPv('')}<div><b style="font-size:1.05rem">${esc(sw.n||'-')}</b><div class="mu mt">Kelas ${esc(sw.k||'-')} · NISN ${esc(sw.nisn||'-')}</div>`+
     ((d.ek||[]).length?`<div class="row mt" style="gap:6px">${d.ek.map(e=>`<span class="tag">${esc(e)}</span>`).join('')}</div>`:'')+`</div></div>`+
     `<div class="stats mt">${stats.map(x=>`<div class="stat ${x.k}"><b>${x.v}</b><span>${esc(x.l)}</span>${x.s?`<div class="mu" style="font-size:.72rem">${esc(x.s)}</div>`:''}</div>`).join('')}</div></div>`+
-  `<div class="card mt"><h3>Jadwal pelajaran kelas ${esc(sw.k||'-')}</h3>`+
-    (hari.length?`<div class="mt">${hari.map(h=>`<div style="margin-bottom:10px"><b>${esc(JD_HARI[h]||h)}</b><div class="mu" style="font-size:.85rem">${jdg[h].sort((a,b)=>String(a.j).localeCompare(String(b.j),undefined,{numeric:true})).map(x=>esc(jamLbl(x.j)+(d.jdc&&jdWkStr(d.jdc,x.j)?' ('+jdWkStr(d.jdc,x.j)+')':'')+' · '+x.mn)+(x.gn?' ('+esc(x.gn)+')':'')).join(' · ')||'-'}</div></div>`).join('')}</div>`:'<p class="mu">Belum ada jadwal pelajaran untuk kelas ini.</p>')+`</div>`+
+  wJdToday(d)+
   `<div class="card mt"><h3>Pengumuman madrasah</h3>`+(nt.length?nt.map(x=>`<div class="mcard" style="margin-top:10px"><div class="mc-h"><div><b>${esc(x.j)}</b><div class="mc-sub">${esc(String(x.t).slice(0,16))}${x.o?' · '+esc(x.o):''}</div></div></div><div class="mbody mt">${esc(x.i).replace(/\n/g,'<br>')}</div></div>`).join(''):'<p class="mu">Belum ada pengumuman.</p>')+`</div>`+
   ((d.bks||[]).length?`<div class="card mt"><h3>Sesi konseling terbaru</h3>${d.bks.slice(0,3).map(x=>`<div class="mcard" style="margin-top:10px"><div class="mc-h"><div><b>${esc(x.j||'Konseling')}</b><div class="mc-sub">${esc(x.t||'-')} · Pencatat: ${esc(x.o||'-')}</div></div></div>${x.m?`<div class="mbody mt"><b>Materi:</b> ${esc(x.m)}</div>`:''}${x.h?`<div class="mbody mt"><b>Hasil:</b> ${esc(x.h)}</div>`:''}</div>`).join('')}</div>`:'');
 }
