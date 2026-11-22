@@ -6293,6 +6293,7 @@ if('serviceWorker' in navigator){fetch('sw.js',{method:'HEAD'}).then(function(r)
   function h(s){var x=5381,i=s.length;while(i)x=(x*33)^s.charCodeAt(--i);return(x>>>0).toString(36)+'.'+s.length;}
   function sig(d){var o='';d.querySelectorAll('script:not([src]),style:not(#cfg-css)').forEach(function(n){o+=n.textContent;});return h(o);}
   var base=sig(document);
+  try{var _u=new URL(location.href);if(_u.searchParams.has('_u')){_u.searchParams.delete('_u');history.replaceState(null,'',_u.pathname+_u.search+_u.hash);}}catch(e){}
   function lget(k){try{return localStorage.getItem(k);}catch(e){return null;}}
   function lset(k,v){try{localStorage.setItem(k,v);}catch(e){}}
   function bust(u){return u+(u.indexOf('?')<0?'?':'&')+'_u='+Date.now();}
@@ -6321,17 +6322,36 @@ if('serviceWorker' in navigator){fetch('sw.js',{method:'HEAD'}).then(function(r)
       }).catch(function(){});
     try{if(navigator.serviceWorker)navigator.serviceWorker.getRegistration().then(function(r){if(r)r.update().catch(function(){});}).catch(function(){});}catch(e){}
   }
+  /* Ambil salinan TERBARU dari server tanpa cache apa pun (URL unik + no-store), dengan beberapa percobaan. */
+  function fresh(n){
+    return fetch(bust(location.pathname+location.search),{cache:'no-store'})
+      .then(function(r){return r.ok?r.text():Promise.reject();})
+      .catch(function(){
+        if(n<=1)return Promise.reject();
+        return new Promise(function(ok){setTimeout(ok,900);}).then(function(){return fresh(n-1);});
+      });
+  }
+  function reset(){busy=false;BTN.disabled=false;TXT.textContent='Update tersedia · Perbarui';}
   function apply(){
     if(busy)return;
     if(!confirm('Muat ulang aplikasi untuk menerapkan pembaruan?\n\nPastikan data yang sedang Anda isi sudah disimpan.'))return;
     busy=true;BTN.disabled=true;TXT.textContent='Memperbarui…';
-    var t=[];
-    try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)t.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister();}));}));}catch(e){}
-    try{if(window.caches&&caches.keys)t.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));}));}catch(e){}
-    Promise.all(t.map(function(p){return p.catch(function(){});}))
-      .then(ext).then(function(e){lset('er-upd-ext',e);})
+    /* 1) Pastikan server terjangkau SEBELUM menyentuh cache, agar aplikasi tidak rusak saat offline. */
+    fresh(3).then(function(){
+      /* 2) Buang service worker & seluruh cache lama (berapa pun versi yang terlewat). */
+      var t=[];
+      try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)t.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister();}));}));}catch(e){}
+      try{if(window.caches&&caches.keys)t.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));}));}catch(e){}
+      return Promise.all(t.map(function(p){return p.catch(function(){});}));
+    }).then(ext).then(function(e){lset('er-upd-ext',e);})
+      /* 3) Segarkan salinan di cache HTTP untuk alamat biasa (dipakai saat aplikasi dibuka lagi). */
       .then(function(){return fetch(location.pathname+location.search,{cache:'reload'}).catch(function(){});})
-      .then(function(){location.reload();});
+      /* 4) Buka alamat unik: pasti memuat versi terbaru, bukan salinan lama dari cache browser/CDN. */
+      .then(function(){
+        var u=new URL(location.href);u.searchParams.set('_u',Date.now().toString(36));
+        location.replace(u.href);
+      })
+      .catch(function(){reset();alert('Gagal memperbarui. Periksa koneksi internet, lalu klik Perbarui lagi.');});
   }
   BTN.addEventListener('click',apply);
   setTimeout(function(){check(true);},4000);
