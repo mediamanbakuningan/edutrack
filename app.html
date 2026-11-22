@@ -3229,7 +3229,7 @@ function vRankGuru(){
   if(AGR&&AGR.bulan&&AGR.bulan!==AGRM)AGR=null;
   if(AGR===null&&!AGRB)agrLoad();
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ranking antar guru</h2></div></div>`;
-  const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AGRM}" max="${YM()}" aria-label="Bulan ranking" onchange="agrSetBulan(this.value)"><button class="btn ghost" onclick="agrRumus()">Cara penilaian</button>${canDbdPdf()?'<button class="btn ghost" onclick="agrPdf()">Unduh PDF</button>':''}</div><span class="mu">Klik Cara Penilaian untuk mengetahui rules.':''}</span></div></div>`;
+  const bar=`<div class="card"><div class="bt" style="flex-wrap:wrap"><div class="row"><input type="month" class="in" style="width:auto" value="${AGRM}" max="${YM()}" aria-label="Bulan ranking" onchange="agrSetBulan(this.value)"><button class="btn ghost" onclick="agrRumus()">Cara penilaian</button>${canDbdPdf()?'<button class="btn ghost" onclick="agrPdf()">Unduh PDF</button>':''}</div><span class="mu">Klik Cara Penilaian untuk mengetahui rules.</span></div></div>`;
   if(AGR===null)return head+bar+`<div class="card mu" style="margin-top:12px">${lbar('Memuat ranking…')}</div>`;
   return head+bar+`<div id="agr-b">${agrBody()}</div>`;
 }
