@@ -3372,23 +3372,18 @@ function rkRows(k){
   return D.gr.filter(x=>(!q||(x.n+' '+(x.un||'')).toLowerCase().indexOf(q)>=0)&&(!f||x.s===f));
 }
 const rkRefresh=k=>{const e=$('rk-b');if(e)e.innerHTML=rkBody(k);};
-const rkProg=x=>x.ct?`<div class="prog sm"><i style="width:${Math.round(x.cv/x.ct*100)}%"></i></div>${x.cv}/${x.ct} mapel-kelas`:'<span class="mu">-</span>';
-const rkNum=v=>v?`<b>${v}</b>`:'<span class="mu">-</span>';
 function rkBody(k){
-  const pa=k==='pa',D=rkData(k),list=rkRows(k),js=pa?rkJenis(D):[];
+  const pa=k==='pa',D=rkData(k),list=rkRows(k);
   if(!list.length)return`<div class="card mu" style="margin-top:12px">${D.gr.length?'Tidak ada guru yang cocok dengan filter.':'Belum ada guru terdaftar.'}</div>`;
-  if(isMob()){
-    return`<div class="mcl" style="margin-top:12px">${list.map(x=>mcard(`rkDet('${k}','${esc(x.id)}')`,
-      `<div class="mc-h"><div><b>${esc(x.n)}</b><div class="mc-sub">${pa?x.dc+' dokumen · '+x.fc+' berkas':x.nu+' unggahan · '+x.fc+' berkas'}${x.ct?' · '+x.cv+'/'+x.ct+' mapel-kelas':''}</div></div>${rkBd(x.s)}</div>`+
-      (x.ct?`<div class="prog sm" style="margin:10px 0 0"><i style="width:${Math.round(x.cv/x.ct*100)}%"></i></div>`:'')+
-      `<div class="mc-more" style="text-align:right;margin-top:6px">Detail ›</div>`)).join('')}</div>`;
-  }
-  const th=pa?js.map(j=>`<th class="ctr">${esc(j)}`).join('')+'<th class="ctr">Total':'<th class="ctr">Unggahan<th class="ctr">Berkas';
-  const td=x=>pa?js.map(j=>`<td class="ctr">${rkNum(x.bj[j]||0)}</td>`).join('')+`<td class="ctr"><b>${x.dc}</b></td>`
-    :`<td class="ctr">${rkNum(x.nu)}</td><td class="ctr">${rkNum(x.fc)}</td>`;
-  return`<div class="tw" style="margin-top:12px"><table><thead><tr><th>Guru${th}<th>Mapel &amp; kelas<th>Terakhir<th>Status<th></thead><tbody>`+
-    list.map(x=>`<tr><td><b>${esc(x.n)}</b><div class="mu">${esc(x.un||'')}</div></td>${td(x)}<td>${rkProg(x)}</td><td class="nw">${rkTime(x.la)}</td><td>${rkBd(x.s)}</td><td class="nw"><button class="btn ghost sm" onclick="rkDet('${k}','${esc(x.id)}')">Detail</button></td></tr>`).join('')+
-    `</tbody></table></div>`;
+  return`<div class="mcl" style="margin-top:12px">${list.map(x=>{
+    const sum=(pa?x.dc+' dokumen':x.nu+' unggahan')+' · '+x.fc+' berkas';
+    const jn=pa?Object.keys(x.bj||{}).filter(j=>x.bj[j]>0).map(j=>`<span class="tag">${esc(j)}: ${x.bj[j]}</span>`).join(''):'';
+    const prog=x.ct?`<div class="prog sm" style="margin:10px 0 0"><i style="width:${Math.round(x.cv/x.ct*100)}%"></i></div><div class="mc-sub" style="margin-top:4px">${x.cv}/${x.ct} mapel-kelas terisi</div>`
+      :`<div class="mc-sub" style="margin-top:10px">Belum ada mapel &amp; kelas ampu</div>`;
+    return`<div class="mcard"><div class="mc-h"><div><b>${esc(x.n)}</b>${x.un?`<div class="mc-sub">${esc(x.un)}</div>`:''}<div class="mc-sub">${sum}</div></div>${rkBd(x.s)}</div>`+
+      (jn?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${jn}</div>`:'')+prog+
+      `<div class="mc-f"><span class="mu">Terakhir: ${esc(rkTime(x.la))}</span><span class="acts"><button class="btn ghost sm" onclick="rkDet('${k}','${esc(x.id)}')">Detail</button></span></div></div>`;
+  }).join('')}</div>`;
 }
 function rkView(k){
   const pa=k==='pa',D=rkData(k);
