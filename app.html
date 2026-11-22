@@ -2551,11 +2551,11 @@ function absMapelCards(){
     if(!AMK.kartu.length){
       const msg=(S.user.r==='GURU'&&!AMK.nmine)
         ?'Belum ada jadwal mapel untuk Anda. Minta Admin mengisi jadwal mengajar Anda di Kelola penilaian (tab Jadwal mapel).'
-        :'Tidak ada jadwal mengajar pada hari '+esc(hariNm(AMK.hari))+'.'+(S.user.r==='GURU'?'':' Pilih tanggal lain, atau atur jadwal di Kelola penilaian (tab Jadwal mapel).');
+        :'Tidak ada jadwal mengajar pada hari ini'+esc(hariNm(AMK.hari))+'.'+(S.user.r==='GURU'?'':' Pilih tanggal lain, atau atur jadwal di Kelola penilaian (tab Jadwal mapel).');
       return head+day+`<div class="note">${msg}</div>`;
     }
     AMPC=AMK.kartu;
-    return head+day+`<p class="mu" style="margin:2px 0 8px">${AMPC.length} jadwal pada hari <b>${esc(hariNm(AMK.hari))}</b>${S.user.r!=='GURU'?' · semua guru':''}:</p><div class="mcl">${AMPC.map(kartuBtn).join('')}</div>`;
+    return head+day+`<p class="mu" style="margin:2px 0 8px">${AMPC.length} jadwal pada hari ini <b>${esc(hariNm(AMK.hari))}</b>${S.user.r!=='GURU'?' · semua guru':''}:</p><div class="mcl">${AMPC.map(kartuBtn).join('')}</div>`;
   }
   const combos=AMK.kartu||[];
   AMPC=[];combos.forEach(a=>(a.ks||[]).forEach(k=>AMPC.push({mi:a.mi,m:a.m,k})));
