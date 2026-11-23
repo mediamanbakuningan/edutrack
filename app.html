@@ -1348,7 +1348,8 @@ function switchRole(r){
   if(!S.user||r===S.user.r)return;
   cancelPend();
   S.ar=r;S.view=viewAwal(r);S.tab=tabAwal(r);S.q='';S.fs='';S.fu='';S.ad='';S.tugasId=null;msReset();closeSb();
-  rpc('state').then(()=>render()).catch(e=>{toast(e.message,'er');render();});
+  svStart('pindahRole');
+  rpc('state').then(()=>{svEnd(true);render();}).catch(e=>{svEnd(false);toast(e.message,'er');render();});
 }
 function go(k){
   cancelPend();if(k!=='kop')KED=null;
@@ -1418,7 +1419,7 @@ function gsCall(action,token,p){
 }
 const SVW={};"saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
 const SVP={v:0,t:0,n:0,h:0};
-const svLabel=a=>/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
+const svLabel=a=>a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
 function svEl(){
   let e=document.getElementById('svp');
   if(!e){
