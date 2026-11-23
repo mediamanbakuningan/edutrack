@@ -16,6 +16,7 @@
 <script>document.documentElement.setAttribute('data-theme','light');try{localStorage.removeItem('er-theme');}catch(e){}</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
@@ -3484,7 +3485,7 @@ function rkBody(k){
 function rkView(k){
   const pa=k==='pa',D=rkData(k);
   if(D===null&&!(pa?PRKB:SRKB))setTimeout(()=>{if(rkData(k)===null)rkLoad(k);},0);
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${pa?'Rekap perangkat ajar':'Rekap soal'}</h2></div><div class="row"><button class="btn ghost" onclick="rkReload('${k}')">Muat ulang</button>${canDbdPdf()?`<button class="btn ghost" onclick="rkPdf('${k}')">Unduh PDF</button>`:''}</div></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${pa?'Rekap perangkat ajar':'Rekap soal'}</h2></div><div class="row"><button class="btn ghost" onclick="rkReload('${k}')">Muat ulang</button>${isPAAdm()?`<button class="btn ghost" onclick="rkZip('${k}')">${pa?'Unduh seluruh perangkat ajar (ZIP)':'Unduh seluruh soal (ZIP)'}</button>`:''}${canDbdPdf()?`<button class="btn ghost" onclick="rkPdf('${k}')">Unduh PDF</button>`:''}</div></div>`;
   if(D===null)return head+`<div class="card mu">${lbar('Memuat rekap…')}</div>`;
   const gr=D.gr,c=s=>gr.filter(x=>x.s===s).length,tanpa=c('TANPA');
   const sts=[['Total guru',gr.length,''],['Lengkap',c('LENGKAP'),'ok'],['Sebagian',c('SEBAGIAN'),'wa'],['Belum ada',c('BELUM'),'er']]
@@ -3513,6 +3514,60 @@ function rkBuka(k,id,i){
   closeM();
   if(k==='pa'){S.pm=c.m;S.pk=c.k;S.pj='';S.pg=id;S.paq='';PAL=null;go('perangkat');}
   else{S.sm=c.m;S.sk=c.k;S.pb=null;SUL=null;go('soal');}
+}
+/* ===== Unduh seluruh berkas (ZIP) dari rekap: hanya Admin Operator & Admin Kurikulum ===== */
+let RKZ=null;
+const rkZn=(x,m)=>String(x||'').replace(/[\\\/:*?"<>|\r\n\t]+/g,'_').replace(/\s+/g,' ').replace(/^\.+/,'').trim().slice(0,m||60)||'-';
+function rkZip(k){
+  if(!isPAAdm())return toast('Hanya Admin Operator dan Admin Kurikulum yang dapat mengunduh seluruh berkas','er');
+  if(RKZ)return toast('Unduhan ZIP sedang berjalan','er');
+  if(typeof JSZip==='undefined')return toast('Pustaka ZIP belum termuat. Periksa koneksi internet lalu muat ulang halaman.','er');
+  const pa=k==='pa',nm=pa?'perangkat ajar':'soal';
+  RKZ={cancel:false};
+  modal('Unduh seluruh '+nm+' (ZIP)',
+    `<div id="rkz-t" class="mu">Mengambil daftar berkas…</div><div class="prog" style="margin:12px 0"><i id="rkz-p" style="width:0%"></i></div><div id="rkz-s" class="mc-sub"></div>`,
+    [{t:'Batalkan',c:'ghost',f:()=>{if(RKZ){RKZ.cancel=true;$('rkz-t')&&($('rkz-t').textContent='Membatalkan…');}else closeM(true);}}],true);
+  const T=x=>{const e=$('rkz-t');if(e)e.textContent=x;},Sx=x=>{const e=$('rkz-s');if(e)e.textContent=x;},Pr=v=>{const e=$('rkz-p');if(e)e.style.width=v+'%';};
+  const done=(msg,t)=>{RKZ=null;closeM(true);if(msg)toast(msg,t||'');};
+  rpc(pa?'paList':'soUList').then(r=>{
+    const list=(r.info&&(pa?r.info.pa:r.info.su))||[],jobs=[],used={};
+    list.forEach(d=>(d.f||[]).forEach(f=>{
+      const dir=[rkZn(d.gn),rkZn(d.mp),rkZn(String(d.kl||'').split(',').map(x=>x.trim()).filter(Boolean).join('+')||'Semua kelas'),rkZn(d.jn||'(tanpa jenis)')].join('/');
+      let nmf=rkZn(f.n,100),path=dir+'/'+nmf,i=1;
+      while(used[path.toLowerCase()]){i++;const dot=nmf.lastIndexOf('.');path=dir+'/'+(dot>0?nmf.slice(0,dot)+' ('+i+')'+nmf.slice(dot):nmf+' ('+i+')');}
+      used[path.toLowerCase()]=1;
+      jobs.push({doc:d.id,fid:f.id,path:path});
+    }));
+    if(!jobs.length)return done('Belum ada berkas '+nm+' untuk diunduh.','er');
+    const zip=new JSZip(),gagal=[];let n=0,idx=0,bytes=0;
+    T('Mengunduh berkas 0 dari '+jobs.length+'…');
+    const worker=()=>new Promise(res=>{
+      const next=()=>{
+        if(RKZ.cancel||idx>=jobs.length)return res();
+        const j=jobs[idx++];
+        rpc(pa?'paGet':'soUGet',{id:j.doc,fileId:j.fid}).then(x=>{
+          const i=x.info||{};
+          zip.file(j.path,i.d||'',{base64:true});bytes+=Math.floor((i.d||'').length*3/4);
+        }).catch(e=>{gagal.push(j.path+' -> '+(e&&e.message||'gagal'));}).then(()=>{
+          n++;T('Mengunduh berkas '+n+' dari '+jobs.length+'…');Pr(Math.round(n/jobs.length*92));Sx(Math.round(bytes/1048576*10)/10+' MB terkumpul'+(gagal.length?' · '+gagal.length+' gagal':''));
+          next();
+        });
+      };
+      next();
+    });
+    return Promise.all([worker(),worker(),worker()]).then(()=>{
+      if(RKZ.cancel)return done('Unduhan dibatalkan');
+      if(gagal.length)zip.file('_GAGAL_DIUNDUH.txt','Berkas berikut tidak dapat diambil dari Google Drive:\r\n\r\n'+gagal.join('\r\n'));
+      if(gagal.length===jobs.length)return done('Semua berkas gagal diunduh. Coba lagi nanti.','er');
+      T('Menyusun file ZIP…');Pr(95);Sx('');
+      return zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},m=>Pr(95+Math.round(m.percent/20))).then(blob=>{
+        const url=URL.createObjectURL(blob),a=document.createElement('a');
+        a.href=url;a.download=(pa?'perangkat-ajar-':'soal-')+today()+'.zip';document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),10000);
+        done(jobs.length-gagal.length+' berkas '+nm+' diunduh'+(gagal.length?' ('+gagal.length+' gagal, lihat _GAGAL_DIUNDUH.txt)':''),gagal.length?'er':'ok');
+      });
+    });
+  }).catch(e=>done(e.message||'Gagal membuat ZIP','er'));
 }
 function rkPdf(k){
   if(!canDbdPdf())return noDbdPdf();
