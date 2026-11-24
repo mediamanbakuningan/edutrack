@@ -219,6 +219,8 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
 .nl-it{display:flex;flex-direction:column;gap:3px;margin:0;min-width:0}
 .nl-it span{font-size:.68rem;color:var(--mu);font-weight:600;line-height:1.2}
 .nl-it .in{padding:7px 6px;text-align:center;font-weight:600}
+input.nl.kk-lo,.in.kk-lo{background:color-mix(in srgb,var(--er) 16%,transparent)!important;border-color:var(--er)!important;color:var(--er)!important;font-weight:800!important}
+.kk-t{display:inline-block;background:color-mix(in srgb,var(--er) 16%,transparent);color:var(--er);font-weight:800;border-radius:6px;padding:1px 7px;border:1px solid var(--er)}
 @media(max-width:860px){
   body{font-size:13.5px}
   h2{font-size:1.15rem}
@@ -1611,7 +1613,8 @@ function savePdf(o){
   doc.autoTable({startY:ty,head:[o.head],body:o.body,theme:'grid',margin:{left:10,right:10,bottom:14},
     styles:{font:'times',fontSize:o.fs||9,cellPadding:o.cp==null?2:o.cp,overflow:'linebreak',valign:'top',lineColor:[150,150,150],lineWidth:.2,textColor:[0,0,0]},
     headStyles:{font:'times',fontStyle:'bold',fillColor:[230,230,230],textColor:[0,0,0],fontSize:o.fs||9,halign:'center',valign:'middle'},columnStyles:cs,
-    didParseCell:d=>{if(d.section==='head')d.cell.styles.halign='center';}});
+    didParseCell:d=>{if(d.section==='head')d.cell.styles.halign='center';if(d.section==='body'&&o.cellFx)o.cellFx(d);}});
+  if(o.after)o.after(doc,doc.lastAutoTable?doc.lastAutoTable.finalY:ty,W,H);
   doc.save(o.name);
 }
 
@@ -5163,6 +5166,10 @@ const mpMine=(m,id)=>mpGuru(m).indexOf(id)>=0;
 const mpGuruN=(m,me)=>mpGuru(m).map(id=>id===me?'Anda':gname(id)).join(', ');
 const mpKelasMine=(m,id)=>{if(!mpMine(m,id))return null;const mine=((m&&m.ap)||[]).filter(a=>a.g===id);const out=[];mine.forEach(a=>(a.k||[]).forEach(k=>{if(out.indexOf(k)<0)out.push(k);}));return out;};
 const mpKelasOk=(m,id,k)=>{const km=mpKelasMine(m,id);return !km||!km.length||km.indexOf(k)>=0;};
+const kkmOf=m=>{const v=m&&m.kkm;return(v===undefined||v===null||v===''||isNaN(+v))?null:+v;};
+const nlAvgSc=a=>a.length&&a.every(s=>s.mn===a[0].mn&&s.mx===a[0].mx)?a[0]:{mn:0,mx:100};
+const nlLow=(v,kkm,sc)=>{if(kkm===null||kkm===undefined||v===''||v===undefined||v===null)return false;const x=+String(v).replace(',','.');if(isNaN(x))return false;sc=sc||{mn:0,mx:100};const p=sc.mx>sc.mn?(x-sc.mn)/(sc.mx-sc.mn)*100:x;return Math.round(p*1e6)/1e6<kkm;};
+function nlMark(el){const k=kkmOf(MP.find(x=>x.id===S.nm));el.classList.toggle('kk-lo',nlLow(el.value,k,skalaJ(el.dataset.k)));}
 const mpAmpuTxt=m=>{const gs=mpGuru(m);if(!gs.length)return'';const ap=(m&&m.ap)||[];if(!ap.length)return gs.map(id=>gname(id)).join(', ');return gs.map(id=>{const ks=[];ap.filter(a=>a.g===id).forEach(a=>(a.k||[]).forEach(k=>{if(ks.indexOf(k)<0)ks.push(k);}));return gname(id)+(ks.length?' ('+ks.join(', ')+')':' (semua kelas)');}).join(' · ');};
 
 function vNilai(){
@@ -5192,16 +5199,19 @@ function nilaiTable(m,ro){
   const cols=[];
   nj().forEach(j=>{if(S.njv&&j.k!==S.njv)return;for(let i=1;i<=j.n;i++)cols.push({k:j.k+'-'+i,i,l:j.l,n:j.n,sc:skalaOf(j)});});
   const skT=skalaTxt(nj().filter(j=>!S.njv||j.k===S.njv));
+  const kk=kkmOf(m),avSc=nlAvgSc(cols.map(c=>c.sc));
   const inp=(s,c,mob)=>{const v=NL[s.id+'|'+c.k]??'';
-    return`<input class="in nl" type="number" min="${c.sc.mn}" max="${c.sc.mx}" step="any" inputmode="decimal" ${mob?'':'style="width:68px;padding:6px;text-align:center"'} data-s="${s.id}" data-k="${c.k}" data-o="${esc(v)}" value="${esc(v)}" aria-label="${esc(s.n+' '+c.l+' '+c.i)}" ${ro?'disabled':''}>`;};
-  const info=`<p class="mu mt">${sw.length} siswa · ${esc(m.n)}${mpGuru(m).length?' · pengampu: '+esc(mpGuruN(m,S.user.id)):''} · kelas ${esc(S.nk)} · skala ${skT}. ${S.njv?'':'Semua jenis penilaian tampil. '}Kosongkan jika belum ada.</p>`;
+    return`<input class="in nl${nlLow(v,kk,c.sc)?' kk-lo':''}" oninput="nlMark(this)" type="number" min="${c.sc.mn}" max="${c.sc.mx}" step="any" inputmode="decimal" ${mob?'':'style="width:68px;padding:6px;text-align:center"'} data-s="${s.id}" data-k="${c.k}" data-o="${esc(v)}" value="${esc(v)}" aria-label="${esc(s.n+' '+c.l+' '+c.i)}" ${ro?'disabled':''}>`;};
+  const info=`<p class="mu mt">${sw.length} siswa · ${esc(m.n)}${mpGuru(m).length?' · pengampu: '+esc(mpGuruN(m,S.user.id)):''} · kelas ${esc(S.nk)} · skala ${skT}${kk===null?'':' · KKM '+kk}. ${S.njv?'':'Semua jenis penilaian tampil. '}Kosongkan jika belum ada.</p>`+
+    (kk===null?`<p class="mu">KKM mapel ini belum diatur, sehingga tanda merah belum aktif. Atur di menu Kelola penilaian → tab Mata pelajaran → Ubah.</p>`:`<p class="mu">Angka <span class="kk-t">merah</span> = nilai di bawah KKM (${kk}).</p>`);
   const pdfBtn=`<button class="btn ghost" onclick="nilaiPdf()">Unduh daftar nilai</button>`;
+  const kkBtn=(ro||kk===null)?'':`<button class="btn ghost" onclick="nilIsiKkm()" title="Mengisi semua kolom yang masih kosong dengan nilai KKM">Isi kolom kosong dengan KKM</button>`;
   if(isMob()){
-    return(ro?'':`<div class="row" style="margin:12px 0"><button class="btn pri" onclick="saveNil()">Simpan nilai (massal)</button><span class="mu">Isi nilai pada kartu di bawah, lalu simpan sekali untuk semua siswa.</span></div>`)+
+    return(ro?'':`<div class="row" style="margin:12px 0"><button class="btn pri" onclick="saveNil()">Simpan nilai (massal)</button>${kkBtn}<span class="mu">Isi nilai pada kartu di bawah, lalu simpan sekali untuk semua siswa.</span></div>`)+
       `<div class="mcl">${sw.map((s,i)=>{
         const vals=cols.map(c=>NL[s.id+'|'+c.k]).filter(v=>v!==undefined&&v!==null&&v!=='');
         const avg=vals.length?Math.round(vals.reduce((a,b)=>a+ +b,0)/vals.length*100)/100:null;
-        return`<div class="mcard"><div class="mc-h"><div><b>${i+1}. ${esc(s.n)}</b><div class="mc-sub">${vals.length} dari ${cols.length} nilai terisi</div></div><b>${avg===null?'-':avg}</b></div>`+
+        return`<div class="mcard"><div class="mc-h"><div><b>${i+1}. ${esc(s.n)}</b><div class="mc-sub">${vals.length} dari ${cols.length} nilai terisi</div></div><b${avg!==null&&nlLow(avg,kk,avSc)?' class="kk-t" title="Rata-rata di bawah KKM"':''}>${avg===null?'-':avg}</b></div>`+
           `<div class="nl-grid">${cols.map(c=>`<label class="nl-it"><span>${esc(c.n>1?c.l+' '+c.i:c.l)}</span>${inp(s,c,true)}</label>`).join('')}</div></div>`;
       }).join('')}</div>`+
       info+`<div class="row" style="margin-top:12px">${pdfBtn}</div>`;
@@ -5211,7 +5221,7 @@ function nilaiTable(m,ro){
   const h2=cols.map(c=>`<th class="ctr">${c.i}</th>`).join('');
   const rowsH=sw.map((s,i)=>`<tr><td>${i+1}</td><td class="nw"><b>${esc(s.n)}</b></td>`+cols.map(c=>`<td>${inp(s,c)}</td>`).join('')+'</tr>').join('');
   return`<div class="tw" style="margin-top:12px"><table><thead><tr>${h1}</tr><tr>${h2}</tr></thead><tbody>${rowsH}</tbody></table></div>`+
-    info+`<div class="row" style="margin-top:12px">${ro?'':'<button class="btn pri" onclick="saveNil()">Simpan nilai</button>'}${pdfBtn}</div>`;
+    info+`<div class="row" style="margin-top:12px">${ro?'':'<button class="btn pri" onclick="saveNil()">Simpan nilai</button>'}${kkBtn}${pdfBtn}</div>`;
 }
 function nilSelJ(el){
   const go=()=>{S.njv=el.value;render(true);},d=nlChanged().length;
@@ -5234,6 +5244,19 @@ function nilLoad(){
     if(key!==S.nm+'|'+S.nk)return;
     NL=(r.info&&r.info.nilai)||{};NLK=key;render(true);
   }).catch(e=>toast(e.message,'er'));
+}
+function nilIsiKkm(){
+  const kk=kkmOf(MP.find(x=>x.id===S.nm));
+  if(kk===null)return toast('KKM mapel ini belum diatur','er');
+  let n=0;
+  document.querySelectorAll('input.nl:not([disabled])').forEach(e=>{
+    if(e.value.trim()!=='')return;
+    const sc=skalaJ(e.dataset.k);
+    e.value=String(Math.round((sc.mn+kk/100*(sc.mx-sc.mn))*100)/100);
+    nlMark(e);n++;
+  });
+  if(!n)return toast('Tidak ada kolom kosong yang perlu diisi','er');
+  toast(n+' kolom kosong diisi KKM ('+kk+'). Ubah nilai siswa yang lebih tinggi, lalu klik Simpan nilai.','ok');
 }
 function saveNil(){
   const ch=nlChanged();
@@ -5259,21 +5282,31 @@ function nilaiPdf(){
   nj().forEach(j=>{if(S.njv&&j.k!==S.njv)return;for(let i=1;i<=j.n;i++)cols.push({k:j.k+'-'+i,h:j.n>1?j.l+' '+i:j.l});});
   const live={};
   document.querySelectorAll('input.nl').forEach(e=>live[e.dataset.s+'|'+e.dataset.k]=e.value.trim());
+  const kk=kkmOf(m),LOW={},avSc=nlAvgSc(cols.map(c=>skalaJ(c.k)));
   const body=sw.map((s,i)=>{
     const r=[i+1,s.n];let sum=0,n=0;
-    cols.forEach(c=>{
+    cols.forEach((c,ci)=>{
       const key=s.id+'|'+c.k,v=hasOwn(live,key)?live[key]:(NL[key]??'');
       if(v!==''){sum+=+v;n++;}
+      if(nlLow(v,kk,skalaJ(c.k)))LOW[i+','+(2+ci)]=1;
       r.push(v===''?'-':v);
     });
-    r.push(n?Math.round(sum/n*100)/100:'-');
+    const av=n?Math.round(sum/n*100)/100:null;
+    if(av!==null&&nlLow(av,kk,avSc))LOW[i+','+(2+cols.length)]=1;
+    r.push(av===null?'-':av);
     return r;
   });
   const land=cols.length>8,W=land?277:190;
   const per=Math.min(22,Math.max(11,(W-9-40-16)/cols.length));
   const safe=s=>String(s).replace(/[\\\/:*?"<>|]+/g,'-').trim();
   savePdf({land:land,title:'Daftar Nilai Siswa',
-    sub:'Semester '+(NS||'-'),
+    sub:m.n+' · Kelas '+S.nk+' · Semester '+(NS||'-')+(kk===null?'':' · KKM '+kk),
+    cellFx:d=>{if(LOW[d.row.index+','+d.column.index]){d.cell.styles.fillColor=[254,226,226];d.cell.styles.textColor=[185,28,28];d.cell.styles.fontStyle='bold';}},
+    after:(doc,fy,W2,H2)=>{
+      let y=fy+6;if(y>H2-16){doc.addPage();y=20;}
+      if(kk!==null){doc.setFillColor(254,226,226);doc.setDrawColor(185,28,28);doc.setLineWidth(.2);doc.rect(10,y-3.2,6,4.2,'FD');
+        doc.setFont('times','bold');doc.setFontSize(9);doc.setTextColor(185,28,28);doc.text('Nilai merah = di bawah KKM ('+kk+')',18,y);y+=5;}
+      doc.setFont('times','normal');doc.setFontSize(9);doc.setTextColor(71,85,105);doc.text('Tanda - berarti belum ada nilai.',10,y);doc.setTextColor(0,0,0);},
     head:['No','Siswa'].concat(cols.map(c=>c.h)).concat(['Rata-rata']),body:body,
     widths:[9,40].concat(cols.map(()=>per)).concat([16]),
     note:'Jenis penilaian yang tampil: '+nj().filter(j=>!S.njv||j.k===S.njv).map(j=>j.l+' ×'+j.n).join(', ')+'. Skala nilai '+skalaTxt(nj().filter(j=>!S.njv||j.k===S.njv))+'. Tanda - berarti belum ada nilai.',
@@ -5307,14 +5340,14 @@ function aNilaiSw(){
   `</tbody></table></div>`)+`</div>`;
 }
 function aNilaiMp(){
-  const tagKelas=m=>`<span class="tag">${m.kl&&m.kl.length?esc(m.kl.join(', ')):'Semua kelas'}</span>`;
+  const tagKelas=m=>`<span class="tag">${m.kl&&m.kl.length?esc(m.kl.join(', ')):'Semua kelas'}</span>`+(kkmOf(m)!==null?`<span class="tag">KKM ${kkmOf(m)}</span>`:'');
   return`<div class="bt" style="flex-wrap:wrap"><h3>Mata pelajaran</h3><div class="row"><button class="btn ghost" onclick="impMapel()">Impor mapel (Excel)</button><button class="btn pri" onclick="mpNew()">Tambah mapel</button></div></div>`+
   `<p class="mu" style="margin:6px 0 0">Kelas mapel mengikuti penugasan guru pengampunya</p>`+
   (isMob()
     ?`<div class="mcl" style="margin-top:12px">`+(MP.map(m=>`<div class="mcard">${mzone(`mpEdit('${m.id}')`,
       `<div class="mc-h"><div><b>${esc(m.n)}</b><div class="mc-sub">Pengampu: ${mpGuru(m).length?esc(mpAmpuTxt(m)):'belum diatur'}</div></div><div class="mc-more">Ubah ›</div></div><div class="mc-chips">${tagKelas(m)}</div>`)}<div class="mc-f" style="justify-content:flex-end"><span class="acts">${ib('del',`delMapel('${m.id}')`,'trash','Hapus mapel')}</span></div></div>`).join('')||'<div class="mcard"><span class="mu">Belum ada mata pelajaran.</span></div>')+`</div>`
-    :`<div class="tw" style="margin-top:12px"><table class="tu"><thead><tr><th>Nama mata pelajaran<th>Guru pengampu (kelas)<th>Kelas berlaku<th>Aksi</thead><tbody>`+
-  (MP.map(m=>`<tr><td><b>${esc(m.n)}</b></td><td>${mpGuru(m).length?esc(mpAmpuTxt(m)):'<span class="mu">— belum diatur —</span>'}</td><td>${tagKelas(m)}</td><td><div class="acts">${ib('',`mpEdit('${m.id}')`,'edit','Ubah mapel')}${ib('del',`delMapel('${m.id}')`,'trash','Hapus mapel')}</div></td></tr>`).join('')||'<tr><td colspan="4" class="mu">Belum ada mata pelajaran.</td></tr>')+
+    :`<div class="tw" style="margin-top:12px"><table class="tu"><thead><tr><th>Nama mata pelajaran<th>Guru pengampu (kelas)<th>Kelas berlaku<th>KKM<th>Aksi</thead><tbody>`+
+  (MP.map(m=>`<tr><td><b>${esc(m.n)}</b></td><td>${mpGuru(m).length?esc(mpAmpuTxt(m)):'<span class="mu">— belum diatur —</span>'}</td><td>${m.kl&&m.kl.length?esc(m.kl.join(', ')):'<span class="tag">Semua kelas</span>'}</td><td>${kkmOf(m)===null?'<span class="mu">-</span>':'<b>'+kkmOf(m)+'</b>'}</td><td><div class="acts">${ib('',`mpEdit('${m.id}')`,'edit','Ubah mapel')}${ib('del',`delMapel('${m.id}')`,'trash','Hapus mapel')}</div></td></tr>`).join('')||'<tr><td colspan="5" class="mu">Belum ada mata pelajaran.</td></tr>')+
   `</tbody></table></div>`);
 }
 function mpRowHtml(g,k){
@@ -5339,6 +5372,7 @@ function mpModal(id){
   modal(m?'Ubah mata pelajaran':'Tambah mata pelajaran',
     (m?'':`<p class="mu">Jenis penilaian beserta skalanya diatur di tab "Jenis penilaian" dan berlaku untuk semua mapel.</p>`)+
     `<label for="mp-n">Nama mata pelajaran</label><input id="mp-n" class="in" value="${esc(m?m.n:'')}" placeholder="Contoh: Matematika">`+
+    `<label for="mp-kkm">KKM (batas minimal nilai dianggap cukup)</label><input id="mp-kkm" type="number" min="0" max="100" step="any" inputmode="decimal" class="in" value="${m&&kkmOf(m)!==null?kkmOf(m):''}" placeholder="Contoh: 75 (kosongkan bila tidak dipakai)"><p class="mu" style="margin:2px 0 6px">Nilai siswa di bawah KKM tampil <b style="color:var(--er)">merah</b> di aplikasi dan PDF. Berlaku untuk semua jenis penilaian mapel ini (skala selain 0–100 dihitung proporsional).</p>`+
     `<label>Guru pengampu &amp; kelasnya</label><p class="mu" style="margin:2px 0 6px">Pilih nama guru, lalu pilih kelasnya. Klik <b>+ Tambah</b> bila ada guru lain yang mengajar mapel ini di kelas lain (atau guru yang sama di kelas lain). <b>Semua kelas</b> = mengampu semua kelas.</p>`+
     (G.some(g=>hasR(g,'GURU'))
       ?`<div id="mp-rows" style="max-height:260px;overflow:auto">${rowsInit.map(r=>mpRowHtml(r.g,r.k)).join('')}</div><button type="button" class="btn ghost" onclick="mpAddRow()">+ Tambah</button>`
@@ -5346,6 +5380,8 @@ function mpModal(id){
     [CANCEL,{t:'Simpan',c:'pri',f:()=>{
       const n=$('mp-n').value.trim();
       if(!n)return toast('Nama mapel wajib diisi','er');
+      const kv=($('mp-kkm').value||'').trim().replace(',','.');
+      if(kv!==''&&(isNaN(+kv)||+kv<0||+kv>100))return toast('KKM harus berupa angka 0 sampai 100','er');
       const gm={},go=[];
       document.querySelectorAll('#mp-rows .mp-r').forEach(r=>{
         const g=r.querySelector('.mp-rg').value,k=r.querySelector('.mp-rk').value;
@@ -5355,7 +5391,7 @@ function mpModal(id){
       });
       const ampu=go.map(g=>({g:g,k:gm[g].all?[]:gm[g].k}));
       closeM();
-      rpc('saveMapel',{id:m?m.id:'',n,ampu}).then(()=>{toast('Mapel tersimpan','ok');render(true);}).catch(e=>toast(e.message,'er'));
+      rpc('saveMapel',{id:m?m.id:'',n,ampu,kkm:kv===''?'':+kv}).then(()=>{toast('Mapel tersimpan','ok');render(true);}).catch(e=>toast(e.message,'er'));
     }}]);
 }
 function mpNew(){mpModal('');}
@@ -6254,14 +6290,15 @@ function wNilai(){
   const body=list.map(m=>{
     const xs=byM[m.id],vals=kol.map(k=>{const f=xs.find(x=>x.k===k);return f?f.v:'';});
     const av=wAvg(xs.map(x=>num(x.v)).filter(x=>x!==null));
-    if(mob)return`<div class="mcard"><div class="mc-h"><div><b>${esc(m.n)}</b><div class="mc-sub">Rata-rata ${av===null?'-':av}</div></div></div><div class="row mt" style="gap:6px">${kol.map((k,i)=>vals[i]!==''?`<span class="tag">${esc(wKodeLbl(k))}: <b>${esc(vals[i])}</b></span>`:'').join('')||'<span class="mu">Belum ada nilai</span>'}</div></div>`;
-    return`<tr><td><b>${esc(m.n)}</b></td>${kol.map((k,i)=>`<td>${vals[i]===''?'<span class="mu">-</span>':esc(vals[i])}</td>`).join('')}<td><b>${av===null?'-':av}</b></td></tr>`;
+    const kk=kkmOf(m),avSc=nlAvgSc(kol.map(k=>skalaJ(k))),avLow=av!==null&&nlLow(av,kk,avSc),lw=i=>nlLow(vals[i],kk,skalaJ(kol[i]));
+    if(mob)return`<div class="mcard"><div class="mc-h"><div><b>${esc(m.n)}</b><div class="mc-sub">Rata-rata ${av===null?'-':avLow?'<span class="kk-t">'+av+'</span>':av}${kk===null?'':' · KKM '+kk}</div></div></div><div class="row mt" style="gap:6px">${kol.map((k,i)=>vals[i]!==''?`<span class="tag${lw(i)?' kk-t':''}">${esc(wKodeLbl(k))}: <b>${esc(vals[i])}</b></span>`:'').join('')||'<span class="mu">Belum ada nilai</span>'}</div></div>`;
+    return`<tr><td><b>${esc(m.n)}</b>${kk===null?'':'<div class="mu">KKM '+kk+'</div>'}</td>${kol.map((k,i)=>`<td>${vals[i]===''?'<span class="mu">-</span>':lw(i)?'<span class="kk-t">'+esc(vals[i])+'</span>':esc(vals[i])}</td>`).join('')}<td>${av===null?'<b>-</b>':avLow?'<span class="kk-t">'+av+'</span>':'<b>'+av+'</b>'}</td></tr>`;
   }).join('');
   return head+nav+
     `<div class="card mt"><h3>Daftar nilai — ${esc(S.ws)}</h3>`+
     (mob?`<div class="mcl" style="margin-top:12px">${body||'<div class="mcard"><span class="mu">Belum ada nilai.</span></div>'}</div>`
       :`<div class="tw" style="margin-top:12px"><table class="tu"><thead><tr><th>Mata pelajaran</th>${kol.map(k=>`<th>${esc(wKodeLbl(k))}</th>`).join('')}<th>Rata-rata</th></tr></thead><tbody>${body}</tbody></table></div>`)+
-    `<p class="mu mt">Keterangan kolom: ${kol.map(k=>esc(wKodeLbl(k))).join(', ')}.</p></div>`;
+    `<p class="mu mt">Keterangan kolom: ${kol.map(k=>esc(wKodeLbl(k))).join(', ')}.</p>`+(list.some(m=>kkmOf(m)!==null)?`<p class="mu">Angka <span class="kk-t">merah</span> = nilai di bawah KKM mata pelajaran tersebut.</p>`:'')+`</div>`;
 }
 function wAbs(){
   const d=WD||{sw:{},am:[],ak:[],ax:[]};
