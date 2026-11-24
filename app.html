@@ -3284,13 +3284,61 @@ function agrPdf(){
   if(AGR===null){agrLoad();return toast('Menyiapkan ranking… klik "Unduh ranking antar guru" lagi beberapa saat','er');}
   const bulan=AGR.bulan||AGRM||YM(),rows=AGR.rows||[];
   if(!rows.length)return toast('Belum ada guru untuk diunduh.','er');
-  const cs=Object.keys(AGR_LBL),pc=x=>x===null?'-':x+'%';
-  savePdf({land:true,fs:8,title:'Ranking Keaktifan Guru — '+(AGR.top||10)+' Terbaik',sub:'Bulan '+bulanL(bulan),
-    head:['Rank','Nama Guru','Skor'].concat(cs.map(c=>AGR_LBL[c])),
-    body:rows.map(x=>[x.rank===null?'-':x.rank,x.n,x.skor===null?'-':x.skor].concat(cs.map(c=>pc(x.comp[c].p)))),
-    widths:[14,52,16].concat(cs.map(()=>25)),ctr:[0,2,3,4,5,6,7,8],
-    note:'Skor = capaian kewajiban (bobot: '+cs.map(c=>AGR_LBL[c]+' '+((AGR.bobot||{})[c]||0)+'%').join(', ')+'). Skor sama diurutkan dari kehadiran guru, lalu laporan, absensi mapel, dan abjad (tidak ada peringkat kembar). Hanya guru yang memiliki semua kewajiban (absensi mapel, perangkat ajar, soal, nilai) yang diikutkan. Perangkat ajar, soal, dan nilai bersifat akumulatif.',
-    name:'ranking-guru-'+bulan+'.pdf'});
+  const cs=Object.keys(AGR_LBL);
+  const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  const TIER={ok:[22,163,74],wa:[217,119,6],er:[220,38,38],none:[100,116,139]};
+  const tierOf=p=>p===null||p===undefined?'none':p>=80?'ok':p>=60?'wa':'er';
+  let y=kopPdf(doc,W,10,10)+8;
+  doc.setFont('times','bold');doc.setFontSize(12);doc.setTextColor(0,0,0);
+  doc.text('Ranking Keaktifan Guru — '+(AGR.top||10)+' Terbaik',W/2,y,{align:'center'});
+  y+=6;doc.setFont('times','normal');doc.setFontSize(9.5);doc.setTextColor(71,85,105);
+  doc.text('Bulan '+bulanL(bulan),W/2,y,{align:'center'});
+  const note='Skor = capaian kewajiban terbobot ('+cs.map(c=>AGR_LBL[c]+' '+((AGR.bobot||{})[c]||0)+'%').join(', ')+'). Skor sama diurutkan dari kehadiran guru, laporan, absensi mapel, lalu abjad. Hanya guru yang memiliki semua kewajiban (absensi mapel, perangkat ajar, soal, nilai) yang diikutkan; perangkat ajar, soal, dan nilai bersifat akumulatif.';
+  doc.setFont('times','italic');doc.setFontSize(7);
+  const nl=doc.splitTextToSize(note,W-20),noteH=nl.length*3+3;
+  const gap=2,top0=y+5,bot=H-10,PER=10,CW=W-20;
+  const ch=Math.max(18,Math.min(28,(bot-noteH-top0-(PER-1)*gap)/PER));
+  const cw=(CW-24)/cs.length;
+  const draw=(x,cy)=>{
+    const col=TIER[x.skor===null?'none':tierOf(x.skor)];
+    doc.setDrawColor(col[0],col[1],col[2]);doc.setLineWidth(.35);doc.roundedRect(10,cy,CW,ch,1.5,1.5,'S');
+    doc.setFillColor(col[0],col[1],col[2]);doc.rect(10,cy,2,ch,'F');
+    doc.setFont('times','bold');doc.setFontSize(15);doc.setTextColor(col[0],col[1],col[2]);
+    doc.text(x.rank===null?'-':'#'+x.rank,21,cy+ch/2+2,{align:'center'});
+    doc.setDrawColor(203,213,225);doc.setLineWidth(.2);doc.line(30,cy+3,30,cy+ch-3);
+    doc.setFont('times','bold');doc.setFontSize(10);doc.setTextColor(0,0,0);
+    const nm=doc.splitTextToSize(String(x.n||'-'),105)[0];
+    doc.text(nm,33,cy+5.8);
+    if(x.un){const w=doc.getTextWidth(nm);doc.setFont('times','normal');doc.setFontSize(7.5);doc.setTextColor(100,116,139);doc.text(String(x.un).slice(0,28),33+w+2,cy+5.8);}
+    if(x.skor===null){doc.setFont('times','italic');doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('Tanpa data',W-12,cy+5.8,{align:'right'});}
+    else{
+      doc.setFont('times','bold');doc.setFontSize(13);doc.setTextColor(col[0],col[1],col[2]);doc.text(String(x.skor),W-12,cy+6.4,{align:'right'});
+      const w=doc.getTextWidth(String(x.skor));
+      doc.setFont('times','normal');doc.setFontSize(7);doc.setTextColor(100,116,139);doc.text('Skor',W-12-w-1.2,cy+6.4,{align:'right'});
+    }
+    cs.forEach((c,i)=>{
+      const v=x.comp[c],cx=33+i*cw,p=v.p;
+      doc.setFont('times','normal');doc.setFontSize(6.5);doc.setTextColor(71,85,105);doc.text(AGR_LBL[c],cx,cy+9.8);
+      doc.setFont('times','bold');doc.setFontSize(9.5);doc.setTextColor(0,0,0);doc.text(p===null?'-':p+'%',cx,cy+14);
+      if(p!==null){
+        const w=doc.getTextWidth(p+'%');doc.setFont('times','normal');doc.setFontSize(6.5);doc.setTextColor(100,116,139);doc.text(v.c+'/'+v.t,cx+w+1.5,cy+14);
+        const bw=cw-4,tc=TIER[tierOf(p)];
+        doc.setFillColor(226,232,240);doc.rect(cx,cy+ch-3,bw,1.3,'F');
+        doc.setFillColor(tc[0],tc[1],tc[2]);doc.rect(cx,cy+ch-3,Math.max(.4,bw*Math.min(100,p)/100),1.3,'F');
+      }
+    });
+  };
+  let cy=top0;
+  rows.forEach(x=>{
+    if(cy+ch>bot){doc.addPage();cy=12;}
+    draw(x,cy);cy+=ch+gap;
+  });
+  if(cy+noteH>H-6){doc.addPage();cy=12;}
+  doc.setFont('times','italic');doc.setFontSize(7);doc.setTextColor(71,85,105);
+  doc.text(nl,10,cy+2.5,{lineHeightFactor:1.15});
+  doc.setTextColor(0,0,0);
+  doc.save('ranking-guru-'+bulan+'.pdf');
   toast('PDF ranking guru diunduh','ok');
 }
 function absRankPdf(){
