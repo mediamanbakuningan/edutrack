@@ -6081,7 +6081,7 @@ function logDet(i){
 let DAI=null,DAI_P='',DAI_BUSY=false,DAI_ERR='',DAI_TS='';
 function aDashai(){
   if(DAI_P!==S.vp){DAI=null;DAI_ERR='';DAI_TS='';DAI_P=S.vp;}
-  const btn=DAI_BUSY?'<button class="btn pri" disabled>Menganalisis…</button>':`<button class="btn pri" onclick="dashaiRun(${DAI?'true':''})">${DAI?'Analisis ulang':'Analisis dengan AI'}</button>`;
+  const btn=DAI_BUSY?'<button class="btn pri" disabled>Menganalisis…</button>':`<button class="btn pri" onclick="dashaiRun(${DAI?'true':''})">${DAI?'Analisis ulang':'Analisis Sekarang'}</button>`;
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Analisis kinerja</h2></div><div class="row">${perSel()}${btn}</div></div>`;
   if(DAI_BUSY)return head+dashaiSkeleton();
   if(DAI_ERR)return head+`<div class="note" style="background:var(--erb);color:var(--er)"><b>Analisis gagal.</b> ${esc(DAI_ERR)}</div>`;
