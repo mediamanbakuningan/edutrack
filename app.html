@@ -1048,6 +1048,7 @@ function navItems(){
       {k:'abseskul',l:'Absensi ekskul',i:'users',on:v==='abseskul'},
       ...(hasR(u,'WALIKELAS')?[{k:'kesprest',l:'Prestasi siswa',i:'ksp',on:v==='kesprest'}]:[]),
       {k:'nilai',l:'Penilaian siswa',i:'edit',on:v==='nilai'},
+      {k:'tahfidz',l:'Tahfidz',i:'book',on:v==='tahfidz'},
       {k:'inbox',l:'Usulan masuk',i:'inbox',on:v==='inbox',b:n},
       {k:'usulan',l:'Kirim Kritik/Saran/Usulan',i:'send',on:v==='usulan'}
     ];
@@ -2083,7 +2084,7 @@ function klSync(p){const a=document.querySelectorAll('.'+p+'-kc'),c=$(p+'-kall')
 const timeShow=u=>esc(String(u||'').replace('T',' ').slice(0,16));
 const isPAAdm=()=>S.user.r==='ADMIN'||S.user.r==='KURIKULUM';
 const screator=g=>S.user.r==='GURU'?'':(g===S.user.id?'Anda':gname(g));
-function msReset(){PRK=null;PRKB=false;SRK=null;SRKB=false;S.rkq='';S.rks='';PAL=null;SQL=null;PKL=null;PALB=false;SQLB=false;PKLB=false;PAF=[];PA_KEEP=[];PAF_BUSY=0;AMP=null;AMPB=false;AMPC=[];PJL=null;PJLB=false;PAJN=[];PJED='';SUL=null;SULB=false;SJL=null;SJLB=false;SUD='';SUF=[];SU_KEEP=[];SUF_BUSY=0;SJJED='';S.paq='';S.pae='';S.dt='lap';SQS=null;SQSB=false;RLP=null;RLPB=false;S.rlp='';S.pm='';S.pk='';S.pj='';S.pg='';S.sm='';S.sk='';S.suq='';S.suj='';absReset();S.am='';S.ami='';S.ak='';S.at='isi';S.amd='';S.arm='';S.ae='';S.aet='isi';S.aed='';S.aerm='';S.akc='';S.akb='';JDML=null;JDG={};JDMLB=false;S.nt='';IZ=[];IZN=null;IZL=null;IZLB=false;S.iztab='';BKSL=null;BKSLB=false;SPGL=null;SPGLB=false;SPA=[];SPP=[];SPN=null;SALS=null;SALSB=false;SPLS=null;SPLSB=false;SILS=null;SILSB=false;S.sat='';S.spt='';S.srkat='';KSL=[];KSN=null;KSPL=null;KSPLB=false;KPLS=null;KPLSB=false;KJLS=null;KJLSB=false;KJWK='';KEGLS=null;KEGLSB=false;S.kltab='';S.kpf='';S.kpq='';S.kegj='';AKP=null;AKPB=false;AKPM='';AKSP=null;AKSPB=false;AKSPM='';AKSPK='';AN={};ANB='';ANE='';}
+function msReset(){thReset();THIB=false;THLB=false;THRB=false;PRK=null;PRKB=false;SRK=null;SRKB=false;S.rkq='';S.rks='';PAL=null;SQL=null;PKL=null;PALB=false;SQLB=false;PKLB=false;PAF=[];PA_KEEP=[];PAF_BUSY=0;AMP=null;AMPB=false;AMPC=[];PJL=null;PJLB=false;PAJN=[];PJED='';SUL=null;SULB=false;SJL=null;SJLB=false;SUD='';SUF=[];SU_KEEP=[];SUF_BUSY=0;SJJED='';S.paq='';S.pae='';S.dt='lap';SQS=null;SQSB=false;RLP=null;RLPB=false;S.rlp='';S.pm='';S.pk='';S.pj='';S.pg='';S.sm='';S.sk='';S.suq='';S.suj='';absReset();S.am='';S.ami='';S.ak='';S.at='isi';S.amd='';S.arm='';S.ae='';S.aet='isi';S.aed='';S.aerm='';S.akc='';S.akb='';JDML=null;JDG={};JDMLB=false;S.nt='';IZ=[];IZN=null;IZL=null;IZLB=false;S.iztab='';BKSL=null;BKSLB=false;SPGL=null;SPGLB=false;SPA=[];SPP=[];SPN=null;SALS=null;SALSB=false;SPLS=null;SPLSB=false;SILS=null;SILSB=false;S.sat='';S.spt='';S.srkat='';KSL=[];KSN=null;KSPL=null;KSPLB=false;KPLS=null;KPLSB=false;KJLS=null;KJLSB=false;KJWK='';KEGLS=null;KEGLSB=false;S.kltab='';S.kpf='';S.kpq='';S.kegj='';AKP=null;AKPB=false;AKPM='';AKSP=null;AKSPB=false;AKSPM='';AKSPK='';AN={};ANB='';ANE='';}
 
 function ampLoad(){
   if(AMP||AMPB)return;
@@ -2825,6 +2826,11 @@ function absEkskulPdf(){
 /* ===== Tahfidz: materi hafalan per kelas, dikelola Admin Operator & Kurikulum ===== */
 let THI=null,THIB=false,THL=null,THLB=false,THR=null,THRB=false;
 const THMGR=()=>S.user.r==='ADMIN'||S.user.r==='KURIKULUM';
+const thGuru=()=>S.user.r==='GURU';
+const thMine=m=>(m.pg||[]).indexOf(S.user.id)>=0;
+const thCan=m=>THMGR()||(thGuru()&&thMine(m));
+const thVis=()=>thGuru()?(THI||[]).filter(thMine):(THI||[]);
+const thKelas=()=>{if(!thGuru())return kelasUnik();const m={};thVis().forEach(x=>{if(x.k)m[String(x.k).toLowerCase()]=x.k;});return Object.keys(m).map(l=>m[l]).sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));};
 const thPg=m=>(m.pg||[]).slice(0,1).map(id=>gname(id)).filter(x=>x&&x!=='-').join('');
 function thReset(){THI=null;THL=null;THR=null;S.thm='';}
 function thLoad(){
@@ -2850,12 +2856,14 @@ function vTahfidz(){
   const mgr=THMGR();
   if(THI===null&&!THIB)thLoad();
   if(THI===null)return`<div class="card mu">${lbar('Memuat…')}</div>`;
-  const kl=kelasUnik();
+  const kl=thKelas();
   if(!S.thk||kl.indexOf(S.thk)<0){S.thk=kl[0]||'';S.thm='';}
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Tahfidz</h2></div>${mgr&&kl.length?`<button class="btn pri" onclick="thMateriM('')">+ Tambah materi</button>`:''}</div>`;
-  if(!kl.length)return head+`<div class="note">Belum ada data siswa. Tambahkan siswa dan kelas terlebih dahulu di menu Kelola penilaian.</div>`;
+  if(!kl.length)return head+(thGuru()
+    ?`<div class="note">Anda belum ditetapkan sebagai pengampu materi tahfidz. Hubungi Admin Operator atau Admin Kurikulum untuk menetapkan pengampu pada materi.</div>`
+    :`<div class="note">Belum ada data siswa. Tambahkan siswa dan kelas terlebih dahulu di menu Kelola penilaian.</div>`);
   if(S.thm){
-    const m=THI.find(x=>x.id===S.thm);
+    const m=thVis().find(x=>x.id===S.thm);
     if(m)return thMateriView(m);
     S.thm='';
   }
@@ -2867,7 +2875,7 @@ function vTahfidz(){
 function thSetK(v){S.thk=v;S.thm='';THR=null;render(true);}
 function thMateriList(){
   const mgr=THMGR(),k=S.thk,N=SW.filter(s=>s.k===k).length;
-  const ms=THI.filter(m=>m.k===k).sort((a,b)=>a.u-b.u);
+  const ms=thVis().filter(m=>m.k===k).sort((a,b)=>a.u-b.u);
   if(!ms.length)return`<div class="note">Kelas ${esc(k)} belum punya materi tahfidz.${mgr?' Klik "+ Tambah materi" untuk mengisinya.':''}</div>`;
   const stt=`<div class="stats">${[['Siswa',N],['Materi tahfidz',ms.length]].map(([l,v])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
   return stt+`<div class="mcl">${ms.map(m=>{
@@ -2875,14 +2883,14 @@ function thMateriList(){
     return`<div class="mcard">${mzone(`thGo('${esc(m.id)}')`,
       `<div class="mc-h"><div><b>${esc(m.n)}</b><div class="mc-sub">${pg?'Pengampu: '+esc(pg):'Pengampu belum diatur'}${m.ket?' · '+esc(m.ket):''}</div><div class="mc-sub">${m.s} dari ${N} siswa sudah tercatat</div>`+
       `<div style="height:6px;border-radius:99px;background:var(--bd);overflow:hidden;margin-top:8px"><div style="height:100%;width:${bar}%;background:var(--ok)"></div></div></div>`+
-      `<div class="mc-more">${mgr?'Catat setoran':'Lihat setoran'} ›</div></div>`)}`+
+      `<div class="mc-more">${thCan(m)?'Catat setoran':'Lihat setoran'} ›</div></div>`)}`+
       (mgr?`<div class="mc-f" style="justify-content:flex-end"><span class="acts">${ib('',`thMateriM('${esc(m.id)}')`,'edit','Ubah materi')}${ib('del',`thMateriDel('${esc(m.id)}')`,'trash','Hapus materi')}</span></div>`:'')+`</div>`;
   }).join('')}</div>`;
 }
 function thGo(id){S.thm=id;THL=null;S.thtg=today();render();}
 function thBack(){S.thm='';THL=null;render();}
 function thMateriView(m){
-  const mgr=THMGR(),pg=thPg(m);
+  const mgr=thCan(m),pg=thPg(m);
   const back=`<button class="btn ghost" onclick="thBack()">← Materi kelas ${esc(m.k)}</button>`;
   if(!THL||THL.id!==m.id){if(!THLB)thLoadM(m.id);return back+`<div class="card mu" style="margin-top:12px">${lbar('Memuat…')}</div>`;}
   const rows=THL.rows;
@@ -6420,6 +6428,7 @@ function render(keep){
         :S.view==='absmapel'?vAbsMapel()
         :S.view==='abseskul'?vAbsEkskul()
         :S.view==='nilai'?vNilai()
+        :S.view==='tahfidz'?vTahfidz()
         :S.view==='perangkat'?vPerangkat()
         :S.view==='soal'?vSoal()
         :S.view==='dbd'?vDbd()
