@@ -2125,7 +2125,7 @@ const paGuruFilterHTML=()=>S.user.r==='GURU'?'':`<select class="in" style="width
 function vPerangkat(){
   ampLoad();jenisLoad();
   if(!S.pm||!S.pk){
-    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar</h2></div>${isPAAdm()?`<div class="row"><button class="btn ghost" onclick="rkZip('pa')">Unduh seluruh perangkat ajar (ZIP)</button></div>`:''}</div>`+
+    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar</h2></div>${isPAAdm()?`<div class="row"><button class="btn ghost" onclick="rkPick('pa')">Pilih &amp; unduh sebagian</button><button class="btn ghost" onclick="rkZip('pa')">Unduh seluruh perangkat ajar (ZIP)</button></div>`:''}</div>`+
       ampuCards('perangkat');
   }
   if(PAL===null&&!PALB)paLoad();
@@ -2336,7 +2336,7 @@ function vSoal(){
   const guru=S.user.r==='GURU';
   if(!S.sm||!S.sk){
     sqsLoad();
-    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal</h2></div>${isPAAdm()?`<div class="row"><button class="btn ghost" onclick="rkZip('so')">Unduh seluruh soal (ZIP)</button></div>`:''}</div>`+ampuCards('soal');
+    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal</h2></div>${isPAAdm()?`<div class="row"><button class="btn ghost" onclick="rkPick('so')">Pilih &amp; unduh sebagian</button><button class="btn ghost" onclick="rkZip('so')">Unduh seluruh soal (ZIP)</button></div>`:''}</div>`+ampuCards('soal');
   }
   const ctx=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal: ${esc(S.sm)} · Kelas ${esc(S.sk)}</h2></div><button class="btn ghost" onclick="ampuBack('soal')">← Mapel & kelas lain</button></div>`;
   return ctx+vSoalUnggah();
@@ -3599,20 +3599,21 @@ function rkBuka(k,id,i){
 /* ===== Unduh seluruh berkas (ZIP) dari rekap: hanya Admin Operator & Admin Kurikulum ===== */
 let RKZ=null;
 const rkZn=(x,m)=>String(x||'').replace(/[\\\/:*?"<>|\r\n\t]+/g,'_').replace(/\s+/g,' ').replace(/^\.+/,'').trim().slice(0,m||60)||'-';
-function rkZip(k){
+function rkZip(k,opt){
   if(!isPAAdm())return toast('Hanya Admin Operator dan Admin Kurikulum yang dapat mengunduh seluruh berkas','er');
   if(RKZ)return toast('Unduhan ZIP sedang berjalan','er');
   if(typeof JSZip==='undefined')return toast('Pustaka ZIP belum termuat. Periksa koneksi internet lalu muat ulang halaman.','er');
   const pa=k==='pa',nm=pa?'perangkat ajar':'soal';
   RKZ={cancel:false};
-  modal('Unduh seluruh '+nm+' (ZIP)',
+  modal((opt&&opt.sel?'Unduh '+nm+' terpilih':'Unduh seluruh '+nm)+' (ZIP)',
     `<div id="rkz-t" class="mu">Mengambil daftar berkas…</div><div class="prog" style="margin:12px 0"><i id="rkz-p" style="width:0%"></i></div><div id="rkz-s" class="mc-sub"></div>`,
     [{t:'Batalkan',c:'ghost',f:()=>{if(RKZ){RKZ.cancel=true;$('rkz-t')&&($('rkz-t').textContent='Membatalkan…');}else closeM(true);}}],true);
   const T=x=>{const e=$('rkz-t');if(e)e.textContent=x;},Sx=x=>{const e=$('rkz-s');if(e)e.textContent=x;},Pr=v=>{const e=$('rkz-p');if(e)e.style.width=v+'%';};
   const done=(msg,t)=>{RKZ=null;closeM(true);if(msg)toast(msg,t||'');};
-  rpc(pa?'paList':'soUList').then(r=>{
+  (opt&&opt.list?Promise.resolve({info:pa?{pa:opt.list}:{su:opt.list}}):rpc(pa?'paList':'soUList')).then(r=>{
     const list=(r.info&&(pa?r.info.pa:r.info.su))||[],jobs=[],used={};
     list.forEach(d=>(d.f||[]).forEach(f=>{
+      if(opt&&opt.sel&&!opt.sel[d.id+'|'+f.id])return;
       const dir=[rkZn(d.gn),rkZn(d.mp),rkZn(String(d.kl||'').split(',').map(x=>x.trim()).filter(Boolean).join('+')||'Semua kelas'),rkZn(d.jn||'(tanpa jenis)')].join('/');
       let nmf=rkZn(f.n,100),path=dir+'/'+nmf,i=1;
       while(used[path.toLowerCase()]){i++;const dot=nmf.lastIndexOf('.');path=dir+'/'+(dot>0?nmf.slice(0,dot)+' ('+i+')'+nmf.slice(dot):nmf+' ('+i+')');}
@@ -3643,12 +3644,119 @@ function rkZip(k){
       T('Menyusun file ZIP…');Pr(95);Sx('');
       return zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},m=>Pr(95+Math.round(m.percent/20))).then(blob=>{
         const url=URL.createObjectURL(blob),a=document.createElement('a');
-        a.href=url;a.download=(pa?'perangkat-ajar-':'soal-')+today()+'.zip';document.body.appendChild(a);a.click();a.remove();
+        a.href=url;a.download=(pa?'perangkat-ajar-':'soal-')+(opt&&opt.sel?'terpilih-':'')+today()+'.zip';document.body.appendChild(a);a.click();a.remove();
         setTimeout(()=>URL.revokeObjectURL(url),10000);
         done(jobs.length-gagal.length+' berkas '+nm+' diunduh'+(gagal.length?' ('+gagal.length+' gagal, lihat _GAGAL_DIUNDUH.txt)':''),gagal.length?'er':'ok');
       });
     });
   }).catch(e=>done(e.message||'Gagal membuat ZIP','er'));
+}
+/* ===== Unduh sebagian berkas (ZIP): centang pengirim, lalu centang berkas ===== */
+let RKP=null;
+function rkPick(k){
+  if(!isPAAdm())return toast('Hanya Admin Operator dan Admin Kurikulum yang dapat mengunduh berkas','er');
+  if(RKZ)return toast('Unduhan ZIP sedang berjalan','er');
+  if(typeof JSZip==='undefined')return toast('Pustaka ZIP belum termuat. Periksa koneksi internet lalu muat ulang halaman.','er');
+  const pa=k==='pa',nm=pa?'perangkat ajar':'soal';
+  RKP={k:k,step:0,list:[],gr:[],g:{},f:{},q:''};
+  modal('Pilih '+nm+' yang diunduh','<div class="mu">Mengambil daftar berkas…</div>',[{t:'Batal',c:'ghost',f:()=>{RKP=null;closeM();}}]);
+  rpc(pa?'paList':'soUList').then(r=>{
+    if(!RKP||RKP.k!==k)return;
+    const list=(r.info&&(pa?r.info.pa:r.info.su))||[],map={},gr=[];
+    list.forEach(d=>{
+      const fs=(d.f||[]).filter(f=>f&&f.id);if(!fs.length)return;
+      const n=d.gn||'(tanpa nama)';
+      if(!map[n]){map[n]={n:n,docs:[],fc:0};gr.push(map[n]);}
+      map[n].docs.push(d);map[n].fc+=fs.length;
+    });
+    gr.sort((a,b)=>a.n.localeCompare(b.n,'id'));
+    if(!gr.length){RKP=null;closeM(true);return toast('Belum ada berkas '+nm+' untuk dipilih.','er');}
+    RKP.list=list;RKP.gr=gr;rkPickDraw();
+  }).catch(e=>{RKP=null;closeM(true);toast(e.message||'Gagal memuat daftar berkas','er');});
+}
+const rkPKeys=g=>{const a=[];g.docs.forEach(d=>(d.f||[]).forEach(f=>{if(f&&f.id)a.push(d.id+'|'+f.id);}));return a;};
+const rkPBtn=()=>{const f=$('m-foot');return f&&f.lastChild;};
+function rkPickDraw(){
+  const P=RKP;if(!P)return;
+  const nm=P.k==='pa'?'perangkat ajar':'soal';
+  if(P.step===0){
+    modal('Pilih pengirim '+nm,
+      `<p class="mu" style="margin-top:0">Langkah 1 dari 2 — centang guru pengirim, lalu klik Lanjut untuk memilih berkas.</p>`+
+      `<input class="in" placeholder="Cari nama guru" aria-label="Cari nama guru" value="${esc(P.q)}" oninput="rkPQ(this.value)">`+
+      `<label style="display:flex;gap:8px;align-items:center;margin:10px 0 4px;font-weight:600;cursor:pointer"><input type="checkbox" id="rkp-all" onchange="rkPAll(this.checked)"> Pilih semua</label>`+
+      `<div id="rkp-l" style="max-height:48vh;overflow:auto"></div>`,
+      [{t:'Batal',c:'ghost',f:()=>{RKP=null;closeM();}},{t:'Lanjut',c:'pri',f:rkPNext}]);
+    rkPList();
+  }else{
+    const sel=P.gr.map((g,i)=>[g,i]).filter(x=>P.g[x[1]]);
+    modal('Pilih berkas '+nm,
+      `<p class="mu" style="margin-top:0">Langkah 2 dari 2 — centang berkas yang ingin diunduh.</p>`+
+      `<div class="row" style="gap:8px;margin-bottom:8px"><button type="button" class="btn ghost sm" onclick="rkPFAll(true)">Centang semua</button><button type="button" class="btn ghost sm" onclick="rkPFAll(false)">Kosongkan</button></div>`+
+      `<div style="max-height:52vh;overflow:auto">`+sel.map(([g,gi])=>
+        `<div style="margin-bottom:14px"><label style="display:flex;gap:8px;align-items:center;font-weight:700;cursor:pointer"><input type="checkbox" class="rkp-gc" data-g="${gi}" onchange="rkPFG(${gi},this.checked)"> ${esc(g.n)}</label>`+
+        g.docs.map(d=>{
+          const fs=(d.f||[]).filter(f=>f&&f.id);if(!fs.length)return'';
+          const lb=[d.mp,String(d.kl||'').trim()||'Semua kelas',d.jn].filter(Boolean).join(' · ');
+          return`<div class="mc-sub" style="margin:8px 0 2px 24px">${esc(lb)}</div>`+fs.map(f=>{
+            const key=d.id+'|'+f.id;
+            return`<label style="display:flex;gap:8px;align-items:center;margin:2px 0 2px 24px;font-weight:400;cursor:pointer"><input type="checkbox" class="rkp-fc" data-k="${esc(key)}" ${P.f[key]?'checked':''} onchange="rkPF(this)"><span style="flex:1;overflow-wrap:anywhere">${esc(f.n)}</span>${f.s?`<span class="mu nw">${fmtSize(f.s)}</span>`:''}</label>`;
+          }).join('');
+        }).join('')+`</div>`).join('')+`</div>`,
+      [{t:'‹ Kembali',c:'ghost',f:()=>{P.step=0;rkPickDraw();}},{t:'Unduh ZIP',c:'pri',f:rkPGo}]);
+    rkPSync1();
+  }
+}
+const rkPVis=()=>{const P=RKP,q=P.q.trim().toLowerCase();return P.gr.map((g,i)=>i).filter(i=>!q||P.gr[i].n.toLowerCase().indexOf(q)>=0);};
+function rkPQ(v){if(!RKP)return;RKP.q=v;rkPList();}
+function rkPList(){
+  const P=RKP,e=$('rkp-l');if(!P||!e)return;
+  const vis=rkPVis();
+  e.innerHTML=vis.map(i=>{const g=P.gr[i];
+    return`<label style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--bd);font-weight:500;cursor:pointer"><input type="checkbox" ${P.g[i]?'checked':''} onchange="rkPG(${i},this.checked)"><span style="flex:1">${esc(g.n)}</span><span class="mu nw">${g.fc} berkas</span></label>`;}).join('')||'<p class="mu">Tidak ada guru yang cocok.</p>';
+  rkPSync();
+}
+function rkPSync(){
+  const P=RKP;if(!P||P.step!==0)return;
+  const n=Object.keys(P.g).filter(i=>P.g[i]).length,vis=rkPVis(),a=$('rkp-all'),b=rkPBtn();
+  if(a)a.checked=vis.length>0&&vis.every(i=>P.g[i]);
+  if(b){b.textContent='Lanjut'+(n?' ('+n+' guru)':'');b.disabled=!n;}
+}
+function rkPG(i,on){if(!RKP)return;if(on)RKP.g[i]=true;else delete RKP.g[i];rkPSync();}
+function rkPAll(on){if(!RKP)return;rkPVis().forEach(i=>{if(on)RKP.g[i]=true;else delete RKP.g[i];});rkPList();}
+function rkPNext(){
+  const P=RKP;if(!P)return;
+  const idx=Object.keys(P.g).filter(i=>P.g[i]);
+  if(!idx.length)return toast('Centang minimal satu guru','er');
+  P.f={};idx.forEach(i=>rkPKeys(P.gr[i]).forEach(k=>{P.f[k]=true;}));
+  P.step=1;rkPickDraw();
+}
+function rkPSync1(){
+  const P=RKP;if(!P||P.step!==1)return;
+  const n=Object.keys(P.f).filter(k=>P.f[k]).length,b=rkPBtn();
+  document.querySelectorAll('#m-body .rkp-gc').forEach(c=>{
+    const ks=rkPKeys(P.gr[+c.dataset.g]),on=ks.filter(k=>P.f[k]).length;
+    c.checked=ks.length>0&&on===ks.length;c.indeterminate=on>0&&on<ks.length;
+  });
+  if(b){b.textContent='Unduh ZIP ('+n+' berkas)';b.disabled=!n;}
+}
+function rkPF(el){if(!RKP)return;if(el.checked)RKP.f[el.dataset.k]=true;else delete RKP.f[el.dataset.k];rkPSync1();}
+function rkPFG(gi,on){
+  const P=RKP;if(!P)return;
+  const set={};rkPKeys(P.gr[gi]).forEach(k=>{set[k]=1;if(on)P.f[k]=true;else delete P.f[k];});
+  document.querySelectorAll('#m-body .rkp-fc').forEach(c=>{if(set[c.dataset.k])c.checked=on;});
+  rkPSync1();
+}
+function rkPFAll(on){
+  const P=RKP;if(!P)return;
+  document.querySelectorAll('#m-body .rkp-fc').forEach(c=>{c.checked=on;if(on)P.f[c.dataset.k]=true;else delete P.f[c.dataset.k];});
+  rkPSync1();
+}
+function rkPGo(){
+  const P=RKP;if(!P)return;
+  const sel={};let n=0;Object.keys(P.f).forEach(k=>{if(P.f[k]){sel[k]=1;n++;}});
+  if(!n)return toast('Centang minimal satu berkas','er');
+  const list=P.list,k=P.k;RKP=null;
+  rkZip(k,{list:list,sel:sel});
 }
 function rkPdf(k){
   if(!canDbdPdf())return noDbdPdf();
@@ -5338,34 +5446,23 @@ function nilaiPdf(){
   nj().forEach(j=>{if(S.njv&&j.k!==S.njv)return;for(let i=1;i<=j.n;i++)cols.push({k:j.k+'-'+i,h:j.n>1?j.l+' '+i:j.l});});
   const live={};
   document.querySelectorAll('input.nl').forEach(e=>live[e.dataset.s+'|'+e.dataset.k]=e.value.trim());
-  const kk=kkmOf(m),LOW={},avSc=nlAvgSc(cols.map(c=>skalaJ(c.k)));
   const body=sw.map((s,i)=>{
-    const r=[i+1,s.n];let sum=0,n=0;
-    cols.forEach((c,ci)=>{
+    const r=[i+1,s.n];
+    cols.forEach(c=>{
       const key=s.id+'|'+c.k,v=hasOwn(live,key)?live[key]:(NL[key]??'');
-      if(v!==''){sum+=+v;n++;}
-      if(nlLow(v,kk,skalaJ(c.k)))LOW[i+','+(2+ci)]=1;
       r.push(v===''?'-':v);
     });
-    const av=n?Math.round(sum/n*100)/100:null;
-    if(av!==null&&nlLow(av,kk,avSc))LOW[i+','+(2+cols.length)]=1;
-    r.push(av===null?'-':av);
     return r;
   });
   const land=cols.length>8,W=land?277:190;
-  const per=Math.min(22,Math.max(11,(W-9-40-16)/cols.length));
+  const per=Math.min(22,Math.max(11,(W-9-40)/cols.length));
   const safe=s=>String(s).replace(/[\\\/:*?"<>|]+/g,'-').trim();
+  const ctr=[0].concat(cols.map((c,ci)=>2+ci));
   savePdf({land:land,title:'Daftar Nilai Siswa',
-    sub:m.n+' · Kelas '+S.nk+' · Semester '+(NS||'-')+(kk===null?'':' · KKM '+kk),
-    cellFx:d=>{if(LOW[d.row.index+','+d.column.index]){d.cell.styles.fillColor=[254,226,226];d.cell.styles.textColor=[185,28,28];d.cell.styles.fontStyle='bold';}},
-    after:(doc,fy,W2,H2)=>{
-      let y=fy+6;if(y>H2-16){doc.addPage();y=20;}
-      if(kk!==null){doc.setFillColor(254,226,226);doc.setDrawColor(185,28,28);doc.setLineWidth(.2);doc.rect(10,y-3.2,6,4.2,'FD');
-        doc.setFont('times','bold');doc.setFontSize(9);doc.setTextColor(185,28,28);doc.text('Nilai merah = di bawah KKM ('+kk+')',18,y);y+=5;}
-      doc.setFont('times','normal');doc.setFontSize(9);doc.setTextColor(71,85,105);doc.text('Tanda - berarti belum ada nilai.',10,y);doc.setTextColor(0,0,0);},
-    head:['No','Siswa'].concat(cols.map(c=>c.h)).concat(['Rata-rata']),body:body,
-    widths:[9,40].concat(cols.map(()=>per)).concat([16]),
-    note:'Jenis penilaian yang tampil: '+nj().filter(j=>!S.njv||j.k===S.njv).map(j=>j.l+' ×'+j.n).join(', ')+'. Skala nilai '+skalaTxt(nj().filter(j=>!S.njv||j.k===S.njv))+'. Tanda - berarti belum ada nilai.',
+    sub:m.n+' \u00b7 Kelas '+S.nk+' \u00b7 Semester '+(NS||'-'),
+    ctr:ctr,
+    head:['No','Siswa'].concat(cols.map(c=>c.h)),body:body,
+    widths:[9,40].concat(cols.map(()=>per)),
     name:'nilai-'+safe(S.nk)+'-'+safe(m.n)+'.pdf'});
   toast('PDF nilai diunduh','ok');
 }
