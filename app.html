@@ -170,6 +170,12 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
 .btn.ib{padding:0} 
 .ib.del{color:var(--er)}.ib.del:hover{background:var(--erb)}
 .acts{display:flex;gap:4px;justify-content:flex-end}
+.acts.kjA{flex:none;gap:6px}
+.acts.kjA .ib{width:38px;height:38px;border-radius:10px}
+.acts.kjA .ib svg{width:18px;height:18px}
+.kj-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.kj-g .mcard{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.kj-g .mcard.ed{border-color:var(--pr);box-shadow:0 0 0 2px var(--pr) inset}
 .tu td,.tu th{overflow-wrap:anywhere}
 .tu th:last-child,.tu td:last-child{width:1%;white-space:nowrap}
 .ctr{text-align:center}
@@ -952,7 +958,8 @@ function tabsFor(r){
   if(r==='ADMIN'||r==='ADMIN_SARPRAS'||r==='PIMPINAN')o.push({k:'saraduadm',l:'Pengaduan sarana',i:'sar',g:'Sarana prasarana',b:(r!=='PIMPINAN'&&SPN&&SPN.a)||0},{k:'sarpinjamadm',l:'Peminjaman sarana',i:'box',g:'Sarana prasarana',b:(r!=='PIMPINAN'&&SPN&&SPN.p)||0},{k:'sarinven',l:'Inventaris sarana',i:'list',g:'Sarana prasarana'});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='PIMPINAN')o.push({k:'nilai',l:'Nilai siswa',i:'edit',g:NIL});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='TU')o.push({k:'nilaimgr',l:'Kelola penilaian',i:'list',g:NIL});
-  if(r==='KURIKULUM'||r==='TU')o.push({k:'siswa',l:'Daftar siswa',i:'users',g:SET});
+  if(r==='KURIKULUM')o.push({k:'pengkur',l:'Pengaturan',i:'gear',g:SET});
+  if(r==='TU')o.push({k:'siswa',l:'Daftar siswa',i:'users',g:SET});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='PIMPINAN')o.push({k:'tahfidz',l:'Tahfidz',i:'book',g:'Tahfidz'});
   if(r==='ADMIN')o.push({k:'pengaturan',l:'Pengaturan aplikasi',i:'gear',g:SET},{k:'user',l:'Master user',i:'user',g:SET},{k:'siswa',l:'Daftar siswa',i:'users',g:SET},{k:'kop',l:'Pengaturan kop',i:'tpl',g:SET},{k:'log',l:'Log aktivitas',i:'log',g:SET});
   return o;
@@ -1196,8 +1203,18 @@ function aCfg(){
   `<div class="card mt"><h3>Logo &amp; warna</h3><div class="row" style="gap:14px;align-items:center;margin-top:10px"><div class="cfg-logo" id="cfg-lg"></div><div class="row"><label class="btn ghost sm" style="cursor:pointer">Pilih logo<input type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="cfgLogo(this)"></label><button class="btn ghost sm" id="cfg-lgd" onclick="cfgLogoDel()">Pakai logo bawaan</button></div></div>`+
     `<p class="mu mt">PNG/JPG/WebP, otomatis diperkecil (maks. 256 px). Logo tampil di sidebar, halaman masuk, beranda, dan ikon tab.</p>`+
     `<div class="row" style="margin-top:14px;align-items:center;gap:10px"><label for="cf-w" style="margin:0">Warna utama (mode terang)</label><input id="cf-w" type="color" value="${esc(d.wr||'#1e56e0')}" oninput="cfgIn('wr',this.value)" style="width:48px;height:34px;border:0;background:none;padding:0"><button class="btn ghost sm" onclick="cfgWrDel()">Kembalikan bawaan</button></div></div>`+
-  `<div class="card mt"><div class="bt" style="flex-wrap:wrap"><div><h3>Pengumuman (isi notifikasi)</h3></div><button class="btn pri sm" onclick="ntEdit('')">+ Buat pengumuman</button></div>`+
+  aNtCard();
+}
+function aNtCard(){
+  return `<div class="card mt"><div class="bt" style="flex-wrap:wrap"><div><h3>Pengumuman (isi notifikasi)</h3></div><button class="btn pri sm" onclick="ntEdit('')">+ Buat pengumuman</button></div>`+
     (NTA.length?NTA.map(x=>`<div class="mcard" style="margin-top:10px"><div class="mc-h"><div><b>${esc(x.j)}</b> ${x.a?'':'<span class="badge b-wa">Nonaktif</span>'}<div class="mc-sub">${esc(String(x.t).slice(0,16))} · ${x.s.length?x.s.map(r=>esc(ROLE_L[r]||r)).join(', '):'Semua pengguna'}</div></div></div><div class="mbody mt">${esc(trunc(x.i,140))}</div><div class="mc-f" style="justify-content:flex-end"><span class="acts">${ib('',`ntEdit('${esc(x.id)}')`,'edit','Ubah pengumuman')}${ib('del',`ntDelAsk('${esc(x.id)}')`,'trash','Hapus pengumuman')}</span></div></div>`).join(''):`<div class="note mt">Belum ada pengumuman.</div>`)+`</div>`;
+}
+const PK_TABS=[['ng','Pengumuman'],['sw','Daftar siswa']];
+function aPengKur(){
+  if(!PK_TABS.some(t=>t[0]===S.pkt))S.pkt='ng';
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan</h2></div></div>`+
+  `<div class="dnav" style="margin-bottom:6px">${PK_TABS.map(t=>`<button class="btn ${S.pkt===t[0]?'pri':'ghost'}" onclick="S.pkt='${t[0]}';render(true)">${t[1]}</button>`).join('')}</div>`+
+  (S.pkt==='sw'?aNilaiSw():aNtCard());
 }
 /* ===== Bottom navigation (mobile): menu inti di tengah + FAB menu tambahan ===== */
 const MBN={
@@ -1274,7 +1291,7 @@ const NAVK={
   kesprest:'ksw',keskegiatan:'ksw',
   saradu:'sar',sarpinjam:'sar',saraduadm:'sar',sarpinjamadm:'sar',sarinven:'sar',
   nilai:'nil',nilaimgr:'nil',
-  pengaturan:'set',user:'set',siswa:'set',kop:'set',log:'set'
+  pengaturan:'set',pengkur:'set',user:'set',siswa:'set',kop:'set',log:'set'
 };
 let NVO=[],NVL='';
 try{NVO=JSON.parse(localStorage.getItem('er-nvo')||'[]');if(!Array.isArray(NVO))NVO=[];}catch(_){NVO=[];}
@@ -1286,7 +1303,7 @@ function navPar(n){
   }
   return NAVK[n.k]||'';
 }
-const NAV_TABBED=['nilaimgr','tahfidz','absmapel','abseskul','izinver','izinset','saraduadm','sarpinjamadm','kespelanggaran'];
+const NAV_TABBED=['nilaimgr','pengkur','tahfidz','absmapel','abseskul','izinver','izinset','saraduadm','sarpinjamadm','kespelanggaran'];
 function navPlain(items){
   const g={};
   items.forEach(n=>{const p=navPar(n);if(!p||NAV_TABBED.indexOf(n.k)>=0)return;(g[p]=g[p]||[]).push(n);});
@@ -1388,7 +1405,7 @@ function go(k){
   if(k==='abseskul'){AXS=null;AXL=null;AXR=null;}
   if(k==='tahfidz')thReset();
   if(k==='izin'||k==='izinver'||k==='izinset'){IZL=null;S.iztab='';}
-  if(k==='keslanggar'||k==='kespelanggaran'||k==='kesprest'||k==='kespoin'||k==='keskegiatan'){KSPL=null;KPLS=null;KJLS=null;KJWK='';KEGLS=null;S.kltab='';}
+  if(k==='keslanggar'||k==='kespelanggaran'||k==='kesprest'||k==='kespoin'||k==='keskegiatan'){KSPL=null;KPLS=null;KJLS=null;KJWK='';KEGLS=null;S.kltab='';S.kjed='';}
   if(k==='saradu'||k==='sarpinjam'||k==='saraduadm'||k==='sarpinjamadm'||k==='sarinven'){SALS=null;SPLS=null;SILS=null;S.sat='';S.spt='';}
   if(k==='bksesi'||k==='bksp'){BKSL=null;SPGL=null;}
   if(S.user.r==='GURU')S.view=k;else S.tab=k;
@@ -3515,7 +3532,7 @@ function vAdmin(){
   if(S.user.mc){setTimeout(autoAkun,80);return`<div class="card"><h2>Keamanan akun</h2><p class="mu mt">Anda wajib mengganti kata sandi bawaan sebelum dapat menggunakan aplikasi. Username bawaan juga dapat Anda ubah.</p><button class="btn pri" style="margin-top:16px" onclick="akunM()">Atur akun sekarang</button></div>`;}
   const al=tabsFor(S.user.r).map(t=>t.k);
   if(al.indexOf(S.tab)<0)S.tab=al[0]||'dbd';
-  return({dbd:vDbd,pengaturan:aCfg,absen:aAbsen,jadwal:aJadwal,usulan:aUsulan,tugas:aTugas,user:aUser,kop:aKop,tpl:aTpl,log:aLog,nilai:vNilai,nilaimgr:aNilaiMgr,siswa:aNilaiSw,tahfidz:vTahfidz,perangkat:vPerangkat,soal:vSoal,absmapel:vAbsMapel,abseskul:vAbsEkskul,izinver:vIzinAdmin,izinset:vIzinAdmin,bksesi:vBKSesi,bksp:vBKSP,saraduadm:vSarAduanAdmin,sarpinjamadm:vSarPinjamAdmin,sarinven:vSarInven,kespelanggaran:vKesLanggarAdmin,kesprest:vKesPrest,kespoin:vKesPoin,keskegiatan:vKesKeg}[S.tab]||vDbd)();
+  return({dbd:vDbd,pengaturan:aCfg,absen:aAbsen,jadwal:aJadwal,usulan:aUsulan,tugas:aTugas,user:aUser,kop:aKop,tpl:aTpl,log:aLog,nilai:vNilai,nilaimgr:aNilaiMgr,siswa:aNilaiSw,pengkur:aPengKur,tahfidz:vTahfidz,perangkat:vPerangkat,soal:vSoal,absmapel:vAbsMapel,abseskul:vAbsEkskul,izinver:vIzinAdmin,izinset:vIzinAdmin,bksesi:vBKSesi,bksp:vBKSP,saraduadm:vSarAduanAdmin,sarpinjamadm:vSarPinjamAdmin,sarinven:vSarInven,kespelanggaran:vKesLanggarAdmin,kesprest:vKesPrest,kespoin:vKesPoin,keskegiatan:vKesKeg}[S.tab]||vDbd)();
 }
 
 /* ===== Dashboard: rekap laporan, rekap perangkat ajar, rekap soal (+ analisis kinerja untuk Admin Operator) ===== */
@@ -5211,7 +5228,7 @@ function vBKSP(){
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Surat perjanjian siswa</h2></div></div>`;
   if(SPGL===null)return head+`<div class="card mu">${lbar('Memuat…')}</div>`;
   const kandidat=!canBK()?'':(el.length?`<div class="card"><h3 style="margin:0 0 8px">Siswa mencapai ambang ${th} poin (${el.length})</h3><div class="mcl">${el.map(x=>{const nl=lgd.filter(l=>l.sid===x.sid).length;return`<div class="dnav" style="justify-content:space-between;align-items:center;margin:6px 0;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;flex-wrap:wrap;gap:6px"><span><b>${esc(x.sn)}</b> <span class="tag">Kelas ${esc(x.k||'-')}</span> <span class="badge b-er">${x.p} poin</span> <span class="mu">· ${nl} pelanggaran</span></span><button class="btn pri sm" onclick="spBuat('${esc(x.sid)}')">Buat &amp; unduh surat perjanjian</button></div>`;}).join('')}</div></div>`:`<div class="card mu">Belum ada siswa yang mencapai ambang ${th} poin.</div>`);
-  const arsip=sp.length?`<div class="mcl">${sp.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${esc(x.sn)}</b> <span class="tag">Kelas ${esc(x.k||'-')}</span><div class="mc-sub"><span class="tag">${esc(x.p)} poin</span> · dibuat ${esc(tglS(x.t))} · oleh ${esc(x.ol)}</div></div></div><div class="mc-f" style="justify-content:flex-end"><button class="btn ghost sm" onclick="spPdf('${esc(x.s)}','${esc(x.id)}')">Unduh ulang surat</button>${canBK()?`<button class="btn dng sm" style="color:var(--er)" onclick="spDel('${esc(x.id)}')">Hapus</button>`:''}</div></div>`).join('')}</div>`:`<div class="card mu">Belum ada surat perjanjian yang dibuat.</div>`;
+  const arsip=sp.length?`<div class="mcl">${sp.map(x=>`<div class="mcard"><div class="mc-h"><div><b>${esc(x.sn)}</b> <span class="tag">Kelas ${esc(x.k||'-')}</span><div class="mc-sub"><span class="tag">${esc(x.p)} poin</span> · dibuat ${esc(tglS(x.t))} · oleh ${esc(x.ol)}</div></div></div><div class="mc-f" style="justify-content:flex-end"><button class="btn ghost sm" onclick="spPdf('${esc(x.s)}','${esc(x.id)}')">Unduh ulang surat</button>${canBK()?ib('del',`spDel('${esc(x.id)}')`,'trash','Hapus arsip surat'):''}</div></div>`).join('')}</div>`:`<div class="card mu">Belum ada surat perjanjian yang dibuat.</div>`;
   return head+kandidat+`<h3 style="margin:16px 0 8px">Arsip surat perjanjian</h3>`+arsip;
 }
 
@@ -5231,12 +5248,12 @@ function vBKSesi(){
   const riwayat=`<h3 style="margin:16px 0 8px">Riwayat sesi</h3>`;
   if(isMob())return head+riwayat+`<div class="mcl">${ses.map(bksCard).join('')}</div>`;
   return head+riwayat+`<div class="card tw"><table><thead><tr><th>Tanggal<th>Jenis<th>Peserta<th>Ringkasan / hasil<th>Petugas<th>Aksi</thead><tbody>`+
-    ses.map(x=>`<tr><td class="nw">${esc(tglS(x.t))}<td><span class="tag">${esc(x.jn)}</span><td><b>${esc(part(x))}</b><td>${esc(trunc(x.mt,70))}${x.hs?`<div class="mu">${esc(trunc(x.hs,70))}</div>`:''}<td>${esc(x.ol)}<td class="nw"><button class="btn ghost sm" onclick="bksDet('${esc(x.id)}')">Detail</button>${canBK()?` <button class="btn dng sm" onclick="bksDel('${esc(x.id)}')">Hapus</button>`:''}</tr>`).join('')+
+    ses.map(x=>`<tr><td class="nw">${esc(tglS(x.t))}<td><span class="tag">${esc(x.jn)}</span><td><b>${esc(part(x))}</b><td>${esc(trunc(x.mt,70))}${x.hs?`<div class="mu">${esc(trunc(x.hs,70))}</div>`:''}<td>${esc(x.ol)}<td class="nw"><button class="btn ghost sm" onclick="bksDet('${esc(x.id)}')">Detail</button>${canBK()?` ${ib('del',`bksDel('${esc(x.id)}')`,'trash','Hapus catatan sesi')}`:''}</tr>`).join('')+
     `</tbody></table></div>`;
 }
 function bksCard(x){
   const part=x.jn==='Klasikal'?'Kelas '+(x.k||'-'):(x.sn||'-');
-  return`<div class="mcard"><div class="mc-h"><div><b>${esc(x.jn)}</b> <span class="tag">${esc(tglS(x.t))}</span><div class="mc-sub">Peserta: ${esc(part)} · petugas: ${esc(x.ol)}</div><div class="mbody mt">${esc(x.mt)}</div>${x.hs?`<div class="mc-sub mt">Hasil: ${esc(trunc(x.hs,120))}</div>`:''}</div></div>${canBK()?`<div class="mc-f" style="justify-content:flex-end"><button class="btn ghost sm" onclick="bksDet('${esc(x.id)}')">Detail</button><button class="btn dng sm" style="color:var(--er)" onclick="bksDel('${esc(x.id)}')">Hapus</button></div>`:''}</div>`;
+  return`<div class="mcard"><div class="mc-h"><div><b>${esc(x.jn)}</b> <span class="tag">${esc(tglS(x.t))}</span><div class="mc-sub">Peserta: ${esc(part)} · petugas: ${esc(x.ol)}</div><div class="mbody mt">${esc(x.mt)}</div>${x.hs?`<div class="mc-sub mt">Hasil: ${esc(trunc(x.hs,120))}</div>`:''}</div></div>${canBK()?`<div class="mc-f" style="justify-content:flex-end"><button class="btn ghost sm" onclick="bksDet('${esc(x.id)}')">Detail</button>${ib('del',`bksDel('${esc(x.id)}')`,'trash','Hapus catatan sesi')}</div>`:''}</div>`;
 }
 function bksM(){
   const ks=kelasUnik();
@@ -5705,11 +5722,12 @@ function kesLanggarLoad(){
 function vKesLanggarAdmin(){
   const ro=S.user.r==='PIMPINAN';
   if(KSPL===null&&!KSPLB)kesLanggarLoad();
-  const lg=KSPL||[],tab=S.kltab||'baru';
+  const lg=KSPL||[],tab=(S.kltab==='jenis'&&!canKes())?'baru':(S.kltab||'baru');
   const n={baru:lg.filter(x=>x.st==='BARU').length,proses:lg.filter(x=>x.st==='DIPROSES').length,selesai:lg.filter(x=>x.st==='SELESAI').length};
   const list=lg.filter(x=>x.st===(tab==='baru'?'BARU':tab==='proses'?'DIPROSES':'SELESAI'));
-  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pelanggaran siswa</h2></div>${canKes()?`<div class="row"><button class="btn ghost" onclick="kesJenisM()">Jenis &amp; poin</button><button class="btn pri" onclick="kesLanggarM()">+ Tambah pelanggaran</button></div>`:''}</div>`;
-  const tabs=`<div class="dnav" style="margin:12px 0"><button class="btn ${tab==='baru'?'pri':'ghost'}" onclick="S.kltab='baru';render(true)">Menunggu diproses (${n.baru})</button><button class="btn ${tab==='proses'?'pri':'ghost'}" onclick="S.kltab='proses';render(true)">Sedang diproses (${n.proses})</button><button class="btn ${tab==='selesai'?'pri':'ghost'}" onclick="S.kltab='selesai';render(true)">Selesai (${n.selesai})</button></div>`;
+  const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pelanggaran siswa</h2></div>${canKes()&&tab!=='jenis'?`<div class="row"><button class="btn pri" onclick="kesLanggarM()">+ Tambah pelanggaran</button></div>`:''}</div>`;
+  const tabs=`<div class="dnav" style="margin:12px 0"><button class="btn ${tab==='baru'?'pri':'ghost'}" onclick="S.kltab='baru';render(true)">Menunggu diproses (${n.baru})</button><button class="btn ${tab==='proses'?'pri':'ghost'}" onclick="S.kltab='proses';render(true)">Sedang diproses (${n.proses})</button><button class="btn ${tab==='selesai'?'pri':'ghost'}" onclick="S.kltab='selesai';render(true)">Selesai (${n.selesai})</button>${canKes()?`<button class="btn ${tab==='jenis'?'pri':'ghost'}" onclick="S.kltab='jenis';S.kjed='';render(true)">Jenis &amp; poin</button>`:''}</div>`;
+  if(tab==='jenis')return head+tabs+vKesJenis();
   if(KSPL===null)return head+tabs+`<div class="card mu">${lbar('Memuat…')}</div>`;
   return head+tabs+kesLanggarListHTML(list);
 }
@@ -5769,39 +5787,39 @@ function kesSelesaiM(id){
     }}]);
 }
 
-function kesJenisM(){
-  if(KJLS===null&&!KJLSB){kesJenisLoad(kesJenisM);return;}
-  if(KJLSB)return;
-  const rows=(KJLS||[]).map(j=>`<div class="dnav" style="justify-content:space-between;align-items:center;margin:3px 0;padding:6px 8px;border:1px solid var(--bd);border-radius:8px"><span><span class="tag">${esc(j.p)} poin</span> <b>${esc(j.n)}</b></span><span style="white-space:nowrap"><button class="btn ghost sm" onclick="kesJenisEditM('${esc(j.id)}')">Ubah</button> <button class="btn dng sm" style="color:var(--er)" onclick="kesJenisDelF('${esc(j.id)}')">Hapus</button></span></div>`).join('');
-  modal('Kelola jenis pelanggaran &amp; poin',
-    `<div style="max-height:40vh;overflow-y:auto">${rows||'<p class="mu">Belum ada jenis pelanggaran.</p>'}</div>`+
-    `<p class="mu" style="margin-top:8px">Jenis yang masih dipakai laporan yang belum selesai tidak bisa dihapus. Poin yang berlaku untuk laporan baru; poin laporan lama tidak ikut berubah.</p>`+
-    `<label for="kj-n">Nama jenis baru</label><input id="kj-n" class="in" maxlength="80" placeholder="Contoh: Tidur saat pembelajaran">`+
-    `<label for="kj-p">Poin</label><input id="kj-p" type="number" class="in" min="0" max="9999" placeholder="10">`,
-    [CANCEL,{t:'Tambah jenis',c:'pri',f:kesJenisTambah}]);
+function kesJenisM(){S.kltab='jenis';S.kjed='';render(true);}
+function vKesJenis(){
+  if(KJLS===null){
+    if(!KJLSB)kesJenisLoad(()=>render(true));
+    return`<div class="card mu">${lbar('Memuat…')}</div>`;
+  }
+  const jl=KJLS||[],ed=S.kjed?jl.find(x=>x.id===S.kjed):null;
+  const form=`<div class="card" id="kj-form"><h3 style="margin:0 0 4px">${ed?'Ubah jenis pelanggaran':'Tambah jenis pelanggaran'}</h3>`+
+    `<p class="mu" style="margin:0 0 6px">Poin berlaku untuk laporan baru; poin laporan lama tidak ikut berubah. Jenis yang masih dipakai laporan yang belum selesai tidak bisa dihapus.</p>`+
+    `<label for="kj-n">Nama jenis</label><input id="kj-n" class="in" maxlength="80" placeholder="Contoh: Tidur saat pembelajaran" value="${ed?esc(ed.n):''}">`+
+    `<label for="kj-p">Poin</label><input id="kj-p" type="number" inputmode="numeric" class="in" min="0" max="9999" placeholder="10" value="${ed?esc(ed.p):''}">`+
+    `<div class="row" style="margin-top:12px"><button class="btn pri" onclick="kesJenisSimpan()">${ed?'Simpan perubahan':'+ Tambah jenis'}</button>${ed?`<button class="btn ghost" onclick="kesJenisBatal()">Batal</button>`:''}</div></div>`;
+  const cards=jl.length
+    ?`<div class="kj-g">${jl.map(j=>`<div class="mcard${ed&&ed.id===j.id?' ed':''}"><div class="mc-h" style="flex:1;min-width:0"><div><b>${esc(j.n)}</b><div class="mc-sub"><span class="tag">${esc(j.p)} poin</span></div></div></div><span class="acts kjA">${ib('',`kesJenisEdit('${esc(j.id)}')`,'edit','Ubah jenis')}${ib('del',`kesJenisDelF('${esc(j.id)}')`,'trash','Hapus jenis')}</span></div>`).join('')}</div>`
+    :`<div class="card mu">Belum ada jenis pelanggaran. Tambahkan jenis pertama pada form di atas.</div>`;
+  return form+`<h3 style="margin:16px 0 8px">Daftar jenis pelanggaran (${jl.length})</h3>`+cards;
 }
-function kesJenisTambah(){
+function kesJenisEdit(id){
+  S.kjed=id;render(true);
+  setTimeout(()=>{const e=$('kj-form');if(e&&e.scrollIntoView)e.scrollIntoView({block:'start',behavior:'smooth'});},60);
+}
+function kesJenisBatal(){S.kjed='';render(true);}
+function kesJenisSimpan(){
   const n=$('kj-n')?$('kj-n').value.trim():'',poin=$('kj-p')?$('kj-p').value:'';
   if(!n)return toast('Isi nama jenis pelanggaran','er');
   if(poin===''||isNaN(+poin)||+poin<0||+poin>9999)return toast('Poin harus angka antara 0 dan 9999','er');
-  rpc('kesJenisSave',{n,poin}).then(()=>{toast('Jenis pelanggaran ditambahkan','ok');KJLS=null;kesJenisLoad(kesJenisM);}).catch(e=>toast(e.message,'er'));
-}
-function kesJenisEditM(id){
-  const j=(KJLS||[]).find(x=>x.id===id);if(!j)return;
-  modal('Ubah jenis pelanggaran',
-    `<label for="kje-n">Nama jenis</label><input id="kje-n" class="in" maxlength="80" value="${esc(j.n)}">`+
-    `<label for="kje-p">Poin</label><input id="kje-p" type="number" class="in" min="0" max="9999" value="${esc(j.p)}">`,
-    [CANCEL,{t:'Simpan',c:'pri',f:()=>{
-      const n=$('kje-n')?$('kje-n').value.trim():'',poin=$('kje-p')?$('kje-p').value:'';
-      if(!n)return toast('Isi nama jenis pelanggaran','er');
-      if(poin===''||isNaN(+poin)||+poin<0||+poin>9999)return toast('Poin harus angka antara 0 dan 9999','er');
-      rpc('kesJenisSave',{id,n,poin}).then(()=>{closeM();toast('Jenis pelanggaran diperbarui','ok');KJLS=null;kesJenisLoad(kesJenisM);}).catch(e=>toast(e.message,'er'));
-    }}]);
+  const id=S.kjed||'',d=id?{id,n,poin}:{n,poin};
+  rpc('kesJenisSave',d).then(()=>{toast(id?'Jenis pelanggaran diperbarui':'Jenis pelanggaran ditambahkan','ok');S.kjed='';KJLS=null;kesJenisLoad(()=>render(true));render(true);}).catch(e=>toast(e.message,'er'));
 }
 function kesJenisDelF(id){
   const j=(KJLS||[]).find(x=>x.id===id);if(!j)return;
   confirmM('Hapus jenis pelanggaran','Jenis "'+j.n+'" akan dihapus dari daftar. Jenis yang masih dipakai laporan yang belum selesai tidak bisa dihapus. Lanjutkan?',
-    ()=>rpc('kesJenisDel',{id}).then(()=>{toast('Jenis pelanggaran dihapus','ok');KJLS=null;kesJenisLoad(kesJenisM);}).catch(e=>toast(e.message,'er')));
+    ()=>rpc('kesJenisDel',{id}).then(()=>{toast('Jenis pelanggaran dihapus','ok');if(S.kjed===id)S.kjed='';KJLS=null;kesJenisLoad(()=>render(true));render(true);}).catch(e=>toast(e.message,'er')));
 }
 
 function kesPrestLoad(){
