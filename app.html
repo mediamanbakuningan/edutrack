@@ -2349,7 +2349,7 @@ function vSoalUnggah(){
   const tools=`<div class="row" style="flex-wrap:wrap"><input class="in" style="max-width:190px" placeholder="Cari judul/keterangan…" aria-label="Cari unggahan soal" value="${esc(S.suq||'')}" oninput="S.suq=this.value;suRefreshList()">`+
     `<select class="in" style="width:auto" aria-label="Filter jenis soal" onchange="S.suj=this.value;suRefreshList()"><option value="">Semua jenis</option>${(SJL||[]).map(j=>`<option value="${esc(j.n)}" ${S.suj===j.n?'selected':''}>${esc(j.n)}</option>`).join('')}</select>`+
     `${guru?`<button class="btn pri" onclick="suM()">+ Unggah soal</button>`:''}${adm?`<button class="btn ghost" onclick="sjM()">Kelola jenis soal</button>`:''}</div>`;
-  return tools+`<div id="su-list" style="margin-top:12px">${suListHTML()}</div>`;
+  return tools+`<div id="su-list" style="margin-top:12px">${suListHTML()}</div>`+spkHTML();
 }
 function suListHTML(){
   const q=String(S.suq||'').trim().toLowerCase();
@@ -2360,7 +2360,7 @@ function suListHTML(){
 const suRefreshList=()=>{const e=$('su-list');if(e)e.innerHTML=suListHTML();};
 function suCard(x){
   const own=S.user.r==='GURU'&&x.g===S.user.id,del=S.user.r==='ADMIN'||own;
-  const files=(x.f||[]).map(f=>`<div class="att-i">${ico('clip')}<span class="att-n" title="${esc(f.n)}">${esc(f.n)}</span><span class="mu nw">${fmtSize(f.s)}</span><button type="button" class="btn ghost sm" onclick="suDl('${esc(x.id)}','${esc(f.id)}')">Unduh</button></div>`).join('');
+  const files=(x.f||[]).map(f=>`<div class="att-i">${ico('clip')}<span class="att-n" title="${esc(f.n)}">${esc(f.n)}</span><span class="mu nw">${fmtSize(f.s)}</span><button type="button" class="btn ghost sm" onclick="suDl('${esc(x.id)}','${esc(f.id)}')">Unduh</button>${(own||isPAAdm())&&/\.docx$/i.test(f.n||'')?`<button type="button" class="btn ghost sm" onclick="suImp('${esc(x.id)}','${esc(f.id)}')">Impor ke ujian</button>`:''}</div>`).join('');
   return`<div class="mcard"><div class="mc-h"><div><b>${esc(x.t)}</b>${x.jn?` <span class="badge b-ok">${esc(x.jn)}</span>`:''}${x.k?`<div class="mc-sub">${esc(x.k)}</div>`:''}<div class="mc-sub">${S.user.r!=='GURU'?'Pembuat: '+esc(screator(x.g))+' · ':''}${esc(x.mp||S.sm)} · Kelas ${esc(x.kl||S.sk)}</div></div></div>`+
     `<div style="margin-top:8px">${files||'<p class="mu">Tidak ada berkas.</p>'}</div>`+
     `<div class="mc-f"><span class="mu">${timeShow(x.u)}</span><span class="acts">${own?ib('',`suM('${esc(x.id)}')`,'edit','Ubah unggahan soal'):''}${del?ib('del',`suDel('${esc(x.id)}')`,'trash','Hapus unggahan soal'):''}</span></div></div>`;
@@ -3757,6 +3757,332 @@ function rkPGo(){
   if(!n)return toast('Centang minimal satu berkas','er');
   const list=P.list,k=P.k;RKP=null;
   rkZip(k,{list:list,sel:sel});
+}
+/* ===== Pembaca soal Word (.docx) → soal terstruktur (PG, PG Kompleks, Benar/Salah, Uraian) ===== */
+const SQ_JENIS={PG:'Pilihan Ganda',PGK:'Pilihan Ganda Kompleks',BS:'Benar/Salah',URAIAN:'Uraian'};
+const sqKids=e=>Array.prototype.filter.call(e.childNodes,c=>c.nodeType===1);
+function sqOmml(n){
+  const find=(e,t)=>sqKids(e).find(c=>c.localName===t),all=e=>sqKids(e).map(sqOmml).join(''),part=(e,t)=>{const c=find(e,t);return c?all(c):'';};
+  const wrap=x=>/^[\w.,]+$/.test(x)?x:'('+x+')',ln=n.localName;
+  if(ln==='t')return n.textContent;
+  if(/Pr$/.test(ln))return '';
+  if(ln==='f')return wrap(part(n,'num'))+'/'+wrap(part(n,'den'));
+  if(ln==='sSup')return part(n,'e')+'^'+wrap(part(n,'sup'));
+  if(ln==='sSub')return part(n,'e')+'_'+wrap(part(n,'sub'));
+  if(ln==='sSubSup')return part(n,'e')+'_'+wrap(part(n,'sub'))+'^'+wrap(part(n,'sup'));
+  if(ln==='rad')return '\u221a('+part(n,'e')+')';
+  if(ln==='d')return '('+sqKids(n).filter(c=>c.localName==='e').map(all).join(', ')+')';
+  return all(n);
+}
+function sqText(p){
+  let s='',img=false;
+  (function w(e){
+    sqKids(e).forEach(c=>{
+      const l=c.localName;
+      if(l==='pPr'||l==='rPr')return;
+      if(l==='t')s+=c.textContent;
+      else if(l==='tab')s+='\t';
+      else if(l==='br'||l==='cr')s+='\n';
+      else if(l==='oMath')s+=sqOmml(c);
+      else if(l==='drawing'||l==='pict'||l==='object')img=true;
+      else w(c);
+    });
+  })(p);
+  return{t:s,img};
+}
+function sqParseXml(docXml,numXml,DP){
+  DP=DP||new DOMParser();
+  const doc=DP.parseFromString(docXml,'text/xml'),fmtOf={};
+  if(numXml){
+    const nd=DP.parseFromString(numXml,'text/xml'),abs={};
+    Array.prototype.forEach.call(nd.getElementsByTagNameNS('*','abstractNum'),a=>{
+      const m={};Array.prototype.forEach.call(a.getElementsByTagNameNS('*','lvl'),l=>{
+        const f=sqKids(l).find(c=>c.localName==='numFmt');m[l.getAttribute('w:ilvl')]=f?f.getAttribute('w:val'):'';});
+      abs[a.getAttribute('w:abstractNumId')]=m;});
+    Array.prototype.forEach.call(nd.getElementsByTagNameNS('*','num'),n=>{
+      const a=sqKids(n).find(c=>c.localName==='abstractNumId');
+      if(a)fmtOf[n.getAttribute('w:numId')]=abs[a.getAttribute('w:val')]||{};});
+  }
+  const blocks=[];
+  const body=sqKids(doc.documentElement).find(c=>c.localName==='body');
+  function numFmt(p){
+    const ppr=sqKids(p).find(c=>c.localName==='pPr'),np=ppr&&sqKids(ppr).find(c=>c.localName==='numPr');
+    if(!np)return null;
+    const il=sqKids(np).find(c=>c.localName==='ilvl'),id=sqKids(np).find(c=>c.localName==='numId');
+    return((fmtOf[id&&id.getAttribute('w:val')]||{})[il?il.getAttribute('w:val'):'0'])||'decimal';
+  }
+  function walk(parent){
+    sqKids(parent).forEach(c=>{
+      if(c.localName==='p'){const x=sqText(c);blocks.push({t:x.t.replace(/\u00a0/g,' '),img:x.img,nf:numFmt(c)});}
+      else if(c.localName==='tbl')sqKids(c).filter(r=>r.localName==='tr').forEach(r=>{
+        const cells=sqKids(r).filter(x=>x.localName==='tc');
+        const nested=cells.some(x=>sqKids(x).some(y=>y.localName==='tbl'));
+        if(cells.length===1||nested)cells.forEach(walk);
+        else{
+          const xs=cells.map(x=>sqKids(x).filter(y=>y.localName==='p').map(sqText)),
+            tx=xs.map(a=>a.map(z=>z.t).join(' ').trim()).filter(Boolean);
+          blocks.push({t:tx.join('\t'),img:xs.some(a=>a.some(z=>z.img)),nf:null,row:true,lead:!xs[0].map(z=>z.t).join('').trim()});
+        }
+      });
+      else if(c.localName==='sdt'||c.localName==='sdtContent')walk(c);
+    });
+  }
+  walk(body);
+  /* ---- susun jadi soal ---- */
+  const HEAD=/^(soal\s+)?(pilihan\s*ganda(\s*kom\w*)?|benar\s*[-\u2013\u2014\/]?\s*salah|uraian(\s+singkat)?|essay|esai)\b/i;
+  const jenisOf=h=>/kom/i.test(h)?'PGK':/pilihan/i.test(h)?'PG':/benar|salah/i.test(h)?'BS':'URAIAN';
+  const heading=t=>{
+    t=t.trim();if(!t||t.length>(key?160:60)||/\?$/.test(t))return null;
+    const s=t.replace(/^([IVX]+|[A-D])\s*[.)]\s*/,'').trim();
+    return HEAD.test(s)?jenisOf(s):null;
+  };
+  const meta={},res={meta:meta,soal:[],petunjuk:{},warn:[]};
+  let sec=null,key=false,cur=null,count=0,ksec=null,kcur=null;
+  const KEYS={};
+  const ex=[];
+  blocks.forEach(b=>{
+    if(b.t.indexOf('\n')<0){ex.push(b);return;}
+    const ls=b.t.split('\n');
+    if(ls.some(l=>l.trim().length<=160&&/^\s*(([IVX]+|[A-D])\s*[.)]\s*)?(soal\s+)?(pilihan\s*ganda|benar\s*[-\u2013\u2014\/]?\s*salah|uraian|kunci\s+jawaban)/i.test(l)))
+      ls.forEach((l,i)=>ex.push({t:l,img:b.img&&i===0,nf:i===0?b.nf:null,row:b.row,lead:b.lead}));
+    else ex.push(b);
+  });
+  ex.forEach(b=>{
+    const t=b.t.replace(/[ \t]+$/,''),tt=t.trim();
+    if(!tt&&!b.img)return;
+    if(/^kunci\s+jawaban/i.test(tt)){key=true;sec=null;cur=null;return;}
+    const h=heading(tt);
+    if(h){sec=h;ksec=h;kcur=null;cur=null;return;}
+    if(!key){
+      if(!sec){
+        tt.split('|').forEach(x=>{
+          const m=x.trim().match(/^(mata\s*pelajaran|mapel|kelas|waktu)\s*:\s*(.*)$/i);
+          if(m)meta[/kelas|waktu/i.test(m[1])?m[1].toLowerCase():'mapel']=m[2].trim();
+        });
+        return;
+      }
+      const nf=b.nf,isOpt=sec==='PG'||sec==='PGK';
+      let m;
+      if(isOpt&&cur&&b.row&&b.lead){
+        const lt=String.fromCharCode(65+cur.opsi.length);
+        cur.opsi.push({h:lt,t:tt.replace(/^([A-Ea-e]\s*[.)]|[\u2610\u25a1\u2611\u2612\u2713\u2022\u25cb\u25cf])\s*/,'').trim(),img:b.img});
+        return;
+      }
+      if(nf==='decimal'||(!nf&&(m=tt.match(/^(\d+)\s*(?:\.(?!\d)|\t)\s*(.*)$/s)))){
+        let txt=tt;
+        if(!nf){count=+m[1];txt=m[2];}else count++;
+        cur={no:count,jenis:sec,teks:txt.trim(),opsi:[],kunci:null,rubrik:'',img:b.img,warn:[]};
+        if(sec==='BS')cur.teks=cur.teks.replace(/\s*\(\s*B\s*\/\s*S\s*\)\s*$/,'');
+        res.soal.push(cur);return;
+      }
+      if(isOpt&&cur&&(((nf==='lowerLetter'||nf==='upperLetter'))||(!nf&&(m=tt.match(/^([A-Ea-e])\s*(?:[.)]|\t)\s*(.*)$/s))))){
+        const lt=String.fromCharCode(65+cur.opsi.length);
+        cur.opsi.push({h:lt,t:(m?m[2]:tt).trim(),img:b.img});
+        return;
+      }
+      if(!cur){res.petunjuk[sec]=((res.petunjuk[sec]||'')+' '+tt).trim();return;}
+      if(cur.opsi.length&&isOpt){if(b.row&&cur.warn.indexOf('Ada baris tabel yang tidak dikenali (opsi mungkin tergabung)')<0)cur.warn.push('Ada baris tabel yang tidak dikenali (opsi mungkin tergabung)');const o=cur.opsi[cur.opsi.length-1];o.t=(o.t+' '+tt).trim();if(b.img)o.img=true;}
+      else{cur.teks=(cur.teks+'\n'+tt).trim();if(b.img)cur.img=true;}
+      return;
+    }
+    /* ---- bagian kunci jawaban ---- */
+    if(!ksec)return;
+    const K=KEYS[ksec]||(KEYS[ksec]={});
+    if(ksec==='PG'){
+      const tk=tt.split('\t');
+      for(let i=0;i<tk.length-1;i++)if(/^\d+$/.test(tk[i])&&/^[A-E]$/i.test(tk[i+1])){K[+tk[i]]=tk[i+1].toUpperCase();}
+      return;
+    }
+    const m=tt.match(/^(\d+)\s*(?:\.(?!\d)|\))\s*(.*)$/s);
+    if(m){kcur=+m[1];K[kcur]=m[2].trim();}
+    else if(kcur&&ksec==='URAIAN')K[kcur]=(K[kcur]+'\n'+tt).trim();
+  });
+  /* ---- terapkan kunci ---- */
+  const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]+/g,'');
+  res.soal.forEach(q=>{
+    const k=(KEYS[q.jenis]||{})[q.no];
+    if(k!=null){
+      if(q.jenis==='PG'){if(q.opsi.some(o=>o.h===String(k).toUpperCase()))q.kunci=[String(k).toUpperCase()];else q.warn.push('Kunci di berkas ('+k+') tidak cocok dengan opsi yang ada');}
+      else if(q.jenis==='PGK'){
+        if(/^[A-E](\s*[,;&]\s*[A-E])*$/i.test(k))q.kunci=k.toUpperCase().match(/[A-E]/g);
+        else{
+          const ks=k.split(/;|\n/).map(norm).filter(Boolean),hit=[];
+          q.opsi.forEach(o=>{const n=norm(o.t);if(n&&ks.some(x=>x===n||(x.length>6&&(n.indexOf(x)===0||x.indexOf(n)===0))))hit.push(o.h);});
+          if(hit.length)q.kunci=hit;
+        }
+      }else if(q.jenis==='BS'){
+        const m=String(k).match(/^(benar|salah|b|s)\b/i);
+        if(m)q.kunci=[/^b/i.test(m[1])?'B':'S'];
+      }else q.rubrik=k;
+    }
+    /* ---- peringatan untuk pratinjau ---- */
+    if(!q.teks&&!q.img)q.warn.push('Teks soal kosong');
+    if(q.img)q.warn.push('Ada gambar/objek di soal (tidak ikut terimpor)');
+    if(q.jenis==='PG'||q.jenis==='PGK'){
+      if(q.opsi.length<2)q.warn.push('Opsi kurang dari 2');
+      q.opsi.forEach(o=>{if(!o.t)q.warn.push('Opsi '+o.h+' kosong'+(o.img?' (berisi gambar)':' (mungkin rumus/gambar)'));});
+    }
+    if(q.jenis!=='URAIAN'&&!q.kunci)q.warn.push('Kunci belum ada');
+  });
+  const seen={};
+  res.soal.forEach(q=>{const n=norm(q.teks);if(n.length>12){if(seen[n])q.warn.push('Mirip dengan soal no. '+seen[n]);else seen[n]=q.no;}});
+  
+  return res;
+}
+async function soalParseDocx(buf){
+  if(typeof JSZip==='undefined')throw new Error('Pustaka ZIP belum termuat');
+  const z=await JSZip.loadAsync(buf),d=z.file('word/document.xml');
+  if(!d)throw new Error('Bukan berkas Word (.docx) yang valid');
+  const n=z.file('word/numbering.xml');
+  return sqParseXml(await d.async('string'),n?await n.async('string'):'');
+}
+/* ===== Impor soal Word → pratinjau & koreksi ===== */
+let SIM=null;
+const SIM_SKOR={PG:1,PGK:2,BS:1,URAIAN:4};
+const simL=j=>String.fromCharCode(65+j);
+function simNorm(q){
+  return{jenis:q.jenis,teks:q.teks||'',skor:q.skor!=null?q.skor:SIM_SKOR[q.jenis],rubrik:q.rubrik||'',
+    bs:q.jenis==='BS'&&q.kunci?q.kunci[0]:'',
+    opsi:q.opsi.map(o=>({t:o.t,k:!!(q.kunci&&q.kunci.indexOf(o.h)>=0)})),
+    w0:q.warn.filter(w=>/gambar|tabel|Mirip|Kunci di berkas/.test(w))};
+}
+function suImp(pid,fid){
+  if(typeof JSZip==='undefined')return toast('Pustaka ZIP belum termuat. Periksa koneksi internet lalu muat ulang halaman.','er');
+  toast('Membaca berkas Word…');
+  rpc('soUGet',{id:pid,fileId:fid}).then(r=>{
+    const i=r.info||{};
+    if(!/\.docx$/i.test(i.n||''))throw new Error('Impor hanya untuk berkas Word (.docx)');
+    return b64Blob(i.d,i.t).arrayBuffer().then(soalParseDocx).then(res=>({res:res,i:i}));
+  }).then(x=>{
+    if(!x.res.soal.length)return toast('Tidak ada soal yang terbaca dari berkas ini.','er');
+    const up=(SUL||[]).find(t=>t.id===pid);
+    SIM={pid:pid,fid:fid,uploadId:pid,paketId:'',nama:(up&&up.t)||String(x.i.n||'').replace(/\.docx$/i,''),nm:x.i.n,meta:x.res.meta,soal:x.res.soal.map(simNorm)};
+    simShow();
+  }).catch(e=>toast(e.message||'Gagal membaca berkas','er'));
+}
+function simWarns(q){
+  const w=q.w0.slice(),opt=q.jenis==='PG'||q.jenis==='PGK';
+  if(!String(q.teks).trim())w.push('Teks soal kosong');
+  if(opt){
+    if(q.opsi.length<2)w.push('Opsi kurang dari 2');
+    q.opsi.forEach((o,j)=>{if(!String(o.t).trim())w.push('Opsi '+simL(j)+' kosong');});
+    if(!q.opsi.some(o=>o.k))w.push('Kunci belum dipilih');
+  }else if(q.jenis==='BS'&&!q.bs)w.push('Kunci belum dipilih');
+  return w;
+}
+const simWarnHTML=q=>simWarns(q).map(w=>`<div class="mc-sub" style="color:var(--er)">• ${esc(w)}</div>`).join('');
+function simSum(){
+  const e=$('sim-sum');if(!e||!SIM)return;
+  const c={},S0=SIM.soal;let belum=0,cek=0,tot=0;
+  S0.forEach(q=>{c[q.jenis]=(c[q.jenis]||0)+1;const w=simWarns(q);if(w.length)cek++;if(w.some(x=>/Kunci belum/.test(x)))belum++;tot+=+q.skor||0;});
+  e.innerHTML=`<div class="mc-sub" style="margin-bottom:8px"><b>${S0.length} soal</b> · ${Object.keys(SQ_JENIS).filter(k=>c[k]).map(k=>SQ_JENIS[k]+' '+c[k]).join(' · ')} · Total skor ${Math.round(tot*100)/100}<br>${belum?`<span style="color:var(--er)">${belum} soal belum berkunci</span> · `:''}${cek?`<span style="color:var(--er)">${cek} soal perlu dicek</span>`:'Semua soal siap'}</div>`;
+}
+function simCard(i){
+  const q=SIM.soal[i],opt=q.jenis==='PG'||q.jenis==='PGK';
+  let b='';
+  if(opt)b=q.opsi.map((o,j)=>`<div class="dr"><input type="${q.jenis==='PG'?'radio':'checkbox'}" name="sk${i}" ${o.k?'checked':''} aria-label="Kunci ${simL(j)}" onchange="simK(${i},${j},this.checked)"><b style="width:18px">${simL(j)}</b><input class="in" value="${esc(o.t)}" aria-label="Opsi ${simL(j)}" oninput="simO(${i},${j},this.value)"><button type="button" class="btn ghost sm" onclick="simDelO(${i},${j})" aria-label="Hapus opsi ${simL(j)}">✕</button></div>`).join('')+
+    `<button type="button" class="btn ghost sm" onclick="simAddO(${i})">+ Opsi</button><div class="mc-sub" style="margin-top:4px">${q.jenis==='PG'?'Pilih satu kunci jawaban.':'Centang semua jawaban yang benar.'}</div>`;
+  else if(q.jenis==='BS')b=['B','S'].map(v=>`<label style="display:inline-flex;gap:6px;align-items:center;margin-right:16px;font-weight:500;cursor:pointer"><input type="radio" name="sk${i}" ${q.bs===v?'checked':''} onchange="simF(${i},'bs','${v}')">${v==='B'?'Benar':'Salah'}</label>`).join('');
+  else b=`<label for="sr${i}" style="font-weight:500">Kunci / rubrik penilaian (opsional)</label><textarea id="sr${i}" class="in" rows="2" oninput="simF(${i},'rubrik',this.value)">${esc(q.rubrik)}</textarea>`;
+  return`<div class="mcard" id="sq-${i}" style="margin-bottom:10px"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>No. ${i+1}</b>`+
+    `<select class="in" style="width:auto" aria-label="Tipe soal" onchange="simJ(${i},this.value)">${Object.keys(SQ_JENIS).map(k=>`<option value="${k}" ${q.jenis===k?'selected':''}>${SQ_JENIS[k]}</option>`).join('')}</select>`+
+    `<label style="margin:0;font-weight:400">Skor</label><input class="in" type="number" min="0" step="0.5" style="width:72px" value="${q.skor}" aria-label="Skor" oninput="simF(${i},'skor',this.value)">`+
+    `<button type="button" class="btn ghost sm" style="margin-left:auto;color:var(--er)" onclick="simDelQ(${i})">Hapus soal</button></div>`+
+    `<textarea class="in" rows="3" style="margin:8px 0" aria-label="Teks soal" oninput="simF(${i},'teks',this.value)">${esc(q.teks)}</textarea>${b}<div id="sqw-${i}" style="margin-top:6px">${simWarnHTML(q)}</div></div>`;
+}
+const simList=()=>{const e=$('sim-list');if(e)e.innerHTML=SIM.soal.map((q,i)=>simCard(i)).join('');simSum();};
+function simShow(){
+  const m=SIM.meta||{};
+  modal('Pratinjau impor soal',
+    `<p class="mu" style="margin-top:0">${esc(SIM.nm)}${m.mapel?' · '+esc(m.mapel):''}${m.kelas?' · Kelas '+esc(m.kelas):''}. Periksa tipe soal, opsi, dan isi kunci jawaban, lalu klik Simpan ke bank soal.</p>`+
+    `<label for="sim-nm">Nama paket soal *</label><input id="sim-nm" class="in" maxlength="150" value="${esc(SIM.nama||'')}" oninput="SIM.nama=this.value" style="margin-bottom:10px"><div id="sim-sum"></div>`+
+    `<div id="sim-list" style="max-height:58vh;overflow:auto">${SIM.soal.map((q,i)=>simCard(i)).join('')}</div>`+
+    `<button type="button" class="btn ghost sm" style="margin-top:8px" onclick="simAddQ()">+ Tambah soal</button>`,
+    [{t:'Tutup',c:'ghost',f:()=>{SIM=null;closeM();}},{t:'Unduh JSON',c:'ghost',f:simJson},{t:'Simpan ke bank soal',c:'pri',f:simSave}]);
+  simSum();
+}
+function simRef(i){const e=$('sqw-'+i);if(e)e.innerHTML=simWarnHTML(SIM.soal[i]);simSum();}
+function simF(i,f,v){if(!SIM)return;SIM.soal[i][f]=v;simRef(i);}
+function simO(i,j,v){if(!SIM)return;SIM.soal[i].opsi[j].t=v;simRef(i);}
+function simK(i,j,on){
+  const q=SIM&&SIM.soal[i];if(!q)return;
+  if(q.jenis==='PG')q.opsi.forEach((o,x)=>{o.k=x===j;});else q.opsi[j].k=!!on;
+  simRef(i);
+}
+function simJ(i,v){
+  const q=SIM.soal[i];q.jenis=v;q.skor=SIM_SKOR[v];
+  if(v==='PG'){let f=false;q.opsi.forEach(o=>{if(o.k){if(f)o.k=false;f=true;}});}
+  $('sq-'+i).outerHTML=simCard(i);simSum();
+}
+function simAddO(i){SIM.soal[i].opsi.push({t:'',k:false});$('sq-'+i).outerHTML=simCard(i);simSum();}
+function simDelO(i,j){SIM.soal[i].opsi.splice(j,1);$('sq-'+i).outerHTML=simCard(i);simSum();}
+function simDelQ(i){SIM.soal.splice(i,1);simList();}
+function simAddQ(){SIM.soal.push({jenis:'PG',teks:'',skor:1,rubrik:'',bs:'',w0:[],opsi:[{t:'',k:false},{t:'',k:false},{t:'',k:false},{t:'',k:false}]});simList();const l=$('sim-list');if(l)l.scrollTop=l.scrollHeight;}
+function simBuild(){
+  return SIM.soal.map((q,i)=>{
+    const opt=q.jenis==='PG'||q.jenis==='PGK',o={no:i+1,jenis:q.jenis,teks:String(q.teks).trim(),skor:+q.skor||0};
+    if(opt){o.opsi=q.opsi.map((x,j)=>({h:simL(j),t:String(x.t).trim()}));o.kunci=q.opsi.map((x,j)=>x.k?simL(j):'').filter(Boolean);}
+    else if(q.jenis==='BS')o.kunci=q.bs?[q.bs]:[];
+    else o.rubrik=String(q.rubrik||'').trim();
+    return o;});
+}
+let SIMBUSY=false;
+function simSave(){
+  if(!SIM||SIMBUSY)return;
+  const nama=String(SIM.nama||'').trim();
+  if(!nama)return toast('Nama paket soal wajib diisi','er');
+  const bad=SIM.soal.filter(q=>simWarns(q).some(w=>!/gambar|tabel|Mirip|Kunci di berkas/.test(w))).length;
+  if(bad)return toast(bad+' soal belum lengkap (teks, opsi, atau kunci). Lihat tulisan merah pada kartu soal.','er');
+  SIMBUSY=true;
+  rpc('soalPaketSave',{id:SIM.paketId||'',uploadId:SIM.uploadId||'',nama:nama,soal:simBuild()}).then(r=>{
+    SIMBUSY=false;SIM=null;closeM();
+    toast('Paket soal tersimpan ('+((r.info&&r.info.n)||0)+' soal)','ok');
+    SPKK='';spkLoad();
+  }).catch(e=>{SIMBUSY=false;toast(e.message,'er');});
+}
+/* ===== Daftar paket soal terstruktur di halaman Bank soal ===== */
+let SPKL=null,SPKK='',SPKB=false;
+function spkLoad(){
+  if(SPKB)return;
+  const m=S.sm,k=S.sk,key=m+'|'+k;
+  SPKB=true;
+  rpc('soalPaketList',{m:m,k:k}).then(r=>{
+    SPKB=false;if(m!==S.sm||k!==S.sk)return;
+    SPKL=(r.info&&r.info.pk)||[];SPKK=key;spkDraw();
+  }).catch(e=>{SPKB=false;SPKL=[];SPKK=key;spkDraw();toast(e.message,'er');});
+}
+function spkDraw(){const e=$('spk-l');if(e)e.innerHTML=spkListHTML();}
+function spkListHTML(){
+  const can=S.user.r==='GURU'||isPAAdm();
+  return SPKL===null?lbar('Memuat…'):!SPKL.length?'<p class="mu">Belum ada paket soal. Buka berkas Word pada daftar unggahan di atas, lalu klik "Impor ke ujian".</p>':
+    SPKL.map(x=>{
+      const own=S.user.r==='GURU'&&x.g===S.user.id,del=S.user.r==='ADMIN'||own;
+      return`<div class="att-i"><span class="att-n" title="${esc(x.nm)}"><b>${esc(x.nm)}</b><span class="mc-sub">${x.n} soal${S.user.r!=='GURU'?' · '+esc(x.gn):''} · ${timeShow(x.u)}</span></span><span class="acts">`+
+        (can?`<button type="button" class="btn ghost sm" onclick="spkOpen('${esc(x.id)}')">Buka</button>`:'')+
+        (del?`<button type="button" class="btn ghost sm" style="color:var(--er)" onclick="spkDel('${esc(x.id)}')">Hapus</button>`:'')+`</span></div>`;
+    }).join('');
+}
+function spkHTML(){
+  if(SPKK!==S.sm+'|'+S.sk&&!SPKB){SPKL=null;setTimeout(spkLoad,0);}
+  return`<div class="card" style="margin-top:16px"><h3 style="margin-bottom:8px">Paket soal terstruktur</h3><div id="spk-l">${spkListHTML()}</div></div>`;
+}
+function spkOpen(id){
+  rpc('soalPaketGet',{id:id}).then(r=>{
+    const x=r.info||{};
+    SIM={pid:'',fid:'',uploadId:'',paketId:x.id,nama:x.nm,nm:x.nm,meta:{mapel:x.mp,kelas:x.kl},soal:(x.soal||[]).map(simNorm)};
+    simShow();
+  }).catch(e=>toast(e.message,'er'));
+}
+function spkDel(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  confirmM('Hapus paket soal','Paket "'+x.nm+'" beserta '+x.n+' soalnya akan dihapus. Berkas Word aslinya tidak terpengaruh. Lanjutkan?',
+    ()=>rpc('soalPaketDel',{id:id}).then(()=>{toast('Paket soal dihapus','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er')));
+}
+function simJson(){
+  const out={sumber:SIM.nm,meta:SIM.meta,soal:simBuild()};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download='soal-terstruktur-'+String(SIM.nm).replace(/\.docx$/i,'').replace(/[\\\/:*?"<>|]+/g,'-')+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
 }
 function rkPdf(k){
   if(!canDbdPdf())return noDbdPdf();
