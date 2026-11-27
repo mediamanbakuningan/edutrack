@@ -183,6 +183,30 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
   .dnav.dtabs .btn{flex:0 0 auto;white-space:nowrap;scroll-snap-align:center}
 }
 
+.spk{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:700px){.spk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1180px){.spk{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.spk-c{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card);min-width:0}
+.spk-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.spk-t{font-weight:700;font-size:.92rem;line-height:1.3;min-width:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.spk-m{display:flex;flex-wrap:wrap;gap:2px 12px;color:var(--mu);font-size:.78rem}
+.spk-chs{display:flex;flex-wrap:wrap;gap:6px}
+.spk-ch{font-size:.72rem;padding:3px 9px;border-radius:999px;background:var(--bd);color:var(--tx);white-space:nowrap}
+.spk-ch b{font-weight:700}
+.spk-ch.g{background:var(--okb);color:var(--ok)}
+.spk-a{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:auto;padding-top:2px}
+.spk-a .btn{width:100%;padding:8px 6px;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spk-a .w{grid-column:1/-1}
+.spk-a .dg{color:var(--er)}
+.sim-im{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 8px}
+.sim-th{position:relative;display:inline-block}
+.sim-th img{display:block;max-width:100%;max-height:120px;border:1px solid var(--bd);border-radius:8px;background:#fff}
+.sim-x{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:0;background:var(--er);color:#fff;cursor:pointer;font-size:.72rem;line-height:26px;padding:0}
+.sim-oth{margin:0 0 6px 24px}
+.sim-oth img{max-height:76px;max-width:160px}
+.sim-oi{cursor:pointer;margin:0}
+.sim-oi.on{color:var(--pr);border-color:var(--pr)}
+.sim-add{margin:0;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
 .att-i{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--bd);border-radius:10px;margin:6px 0;background:var(--bg)}
 .att-i svg{flex:none;color:var(--mu)}
 .att-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.84rem;font-weight:500}
@@ -3759,6 +3783,7 @@ function rkPGo(){
   rkZip(k,{list:list,sel:sel});
 }
 /* ===== Pembaca soal Word (.docx) → soal terstruktur (PG, PG Kompleks, Benar/Salah, Uraian) ===== */
+const SQ_IMG_LIM=160000,SQ_IMG_TOT=6000000;
 const SQ_JENIS={PG:'Pilihan Ganda',PGK:'Pilihan Ganda Kompleks',BS:'Benar/Salah',URAIAN:'Uraian'};
 const sqKids=e=>Array.prototype.filter.call(e.childNodes,c=>c.nodeType===1);
 function sqOmml(n){
@@ -3871,24 +3896,24 @@ function sqParseXml(docXml,numXml,DP,hdr){
       let m;
       if(isOpt&&cur&&b.row&&b.lead){
         const lt=String.fromCharCode(65+cur.opsi.length);
-        cur.opsi.push({h:lt,t:tt.replace(/^([A-Ea-e]\s*[.)]|[\u2610\u25a1\u2611\u2612\u2713\u2022\u25cb\u25cf])\s*/,'').trim(),img:b.img});
+        cur.opsi.push({h:lt,t:tt.replace(/^([A-Ea-e]\s*[.)]|[\u2610\u25a1\u2611\u2612\u2713\u2022\u25cb\u25cf])\s*/,'').trim(),img:b.img,ids:(b.ids||[]).slice()});
         return;
       }
       if(nf==='decimal'||(!nf&&(m=tt.match(/^(\d+)\s*(?:\.(?!\d)|\t)\s*(.*)$/s)))){
         let txt=tt;
         if(!nf){count=+m[1];txt=m[2];}else count++;
-        cur={no:count,jenis:sec,teks:txt.trim(),opsi:[],kunci:null,rubrik:'',img:b.img,warn:[]};
+        cur={no:count,jenis:sec,teks:txt.trim(),opsi:[],kunci:null,rubrik:'',img:b.img,ids:(b.ids||[]).slice(),warn:[]};
         if(sec==='BS')cur.teks=cur.teks.replace(/\s*\(\s*B\s*\/\s*S\s*\)\s*$/,'');
         res.soal.push(cur);return;
       }
       if(isOpt&&cur&&(((nf==='lowerLetter'||nf==='upperLetter'))||(!nf&&(m=tt.match(/^([A-Ea-e])\s*(?:[.)]|\t)\s*(.*)$/s))))){
         const lt=String.fromCharCode(65+cur.opsi.length);
-        cur.opsi.push({h:lt,t:(m?m[2]:tt).trim(),img:b.img});
+        cur.opsi.push({h:lt,t:(m?m[2]:tt).trim(),img:b.img,ids:(b.ids||[]).slice()});
         return;
       }
       if(!cur){res.petunjuk[sec]=((res.petunjuk[sec]||'')+' '+tt).trim();return;}
-      if(cur.opsi.length&&isOpt){if(b.row&&cur.warn.indexOf('Ada baris tabel yang tidak dikenali (opsi mungkin tergabung)')<0)cur.warn.push('Ada baris tabel yang tidak dikenali (opsi mungkin tergabung)');const o=cur.opsi[cur.opsi.length-1];o.t=(o.t+' '+tt).trim();if(b.img)o.img=true;}
-      else{cur.teks=(cur.teks+'\n'+tt).trim();if(b.img)cur.img=true;}
+      if(cur.opsi.length&&isOpt){if(b.row&&cur.warn.indexOf('Ada baris tabel yang tidak dikenali (opsi mungkin tergabung)')<0)cur.warn.push('Ada baris tabel yang tidak dikenali (opsi mungkin tergabung)');const o=cur.opsi[cur.opsi.length-1];o.t=(o.t+' '+tt).trim();if(b.img){o.img=true;o.ids=(o.ids||[]).concat(b.ids||[]);}}
+      else{cur.teks=(cur.teks+'\n'+tt).trim();if(b.img){cur.img=true;cur.ids=(cur.ids||[]).concat(b.ids||[]);}}
       return;
     }
     /* ---- bagian kunci jawaban ---- */
@@ -3924,7 +3949,7 @@ function sqParseXml(docXml,numXml,DP,hdr){
     }
     /* ---- peringatan untuk pratinjau ---- */
     if(!q.teks&&!q.img)q.warn.push('Teks soal kosong');
-    if(q.img)q.warn.push('Ada gambar/objek di soal (tidak ikut terimpor)');
+    if(q.img)q.warn.push('Ada gambar/objek di soal yang tidak terbaca (rumus atau format khusus). Tambahkan gambarnya secara manual.');
     if(q.jenis==='PG'||q.jenis==='PGK'){
       if(q.opsi.length<2)q.warn.push('Opsi kurang dari 2');
       q.opsi.forEach(o=>{if(!o.t)q.warn.push('Opsi '+o.h+' kosong'+(o.img?' (berisi gambar)':' (mungkin rumus/gambar)'));});
@@ -3937,14 +3962,14 @@ function sqParseXml(docXml,numXml,DP,hdr){
   return res;
 }
 /* Perkecil gambar (maks. lebar 700 px, JPEG) agar ringan dikirim & muat di Google Form */
-function sqImgScale(b64,mime,maxW){
+function sqImgScale(b64,mime,maxW,lim){
   return new Promise(ok=>{
     const im=new Image();
     im.onload=()=>{try{
       if(!im.naturalWidth)return ok(null);
       const w=Math.min(im.naturalWidth,maxW||700),hh=Math.max(1,Math.round(im.naturalHeight*w/im.naturalWidth)),c=document.createElement('canvas');
       c.width=w;c.height=hh;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,hh);x.drawImage(im,0,0,w,hh);
-      let d=c.toDataURL('image/jpeg',.9);if(d.length>700000)d=c.toDataURL('image/jpeg',.7);
+      const L=lim||700000;let d=c.toDataURL('image/jpeg',.9);if(d.length>L)d=c.toDataURL('image/jpeg',.7);if(d.length>L)d=c.toDataURL('image/jpeg',.5);
       ok({d:d.split(',')[1],t:'image/jpeg'});
     }catch(e){ok(null);}};
     im.onerror=()=>ok(null);
@@ -3995,6 +4020,43 @@ async function soalParseDocx(buf){
       }
     }
   }catch(e){res.kopGbr=null;}
+  /* gambar pada soal & opsi (JPG/PNG/GIF/BMP/WebP; EMF/WMF dan rumus objek tidak terbaca) */
+  try{
+    const rf=z.file('word/_rels/document.xml.rels'),relD={};
+    if(rf){const x=DP.parseFromString(await rf.async('string'),'text/xml');
+      Array.prototype.forEach.call(x.getElementsByTagNameNS('*','Relationship'),r=>{relD[r.getAttribute('Id')]=r.getAttribute('Target');});}
+    const MIME={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',bmp:'image/bmp',webp:'image/webp'},cache={};
+    let total=0;
+    const imgOf=async(rid,maxW)=>{
+      const src=relD[rid];if(!src)return null;
+      const key=rid+'|'+maxW;if(cache[key]!==undefined)return cache[key];
+      const parts=(src.charAt(0)==='/'?src.slice(1):'word/'+src).split('/'),pth=[];
+      parts.forEach(s=>{if(s==='..')pth.pop();else if(s&&s!=='.')pth.push(s);});
+      const f=z.file(pth.join('/')),ext=(pth[pth.length-1].split('.').pop()||'').toLowerCase();
+      let r=null;
+      if(f&&MIME[ext])r=await sqImgScale(await f.async('base64'),MIME[ext],maxW,SQ_IMG_LIM);
+      return(cache[key]=r);
+    };
+    const pick=async(ids,maxW,n)=>{
+      const out=[],seen={};
+      for(const id of (ids||[])){
+        if(out.length>=n)break;if(seen[id])continue;seen[id]=1;
+        const g=await imgOf(id,maxW);
+        if(g&&total+g.d.length<=SQ_IMG_TOT){total+=g.d.length;out.push(g);}
+      }
+      return out;
+    };
+    for(const q of res.soal){
+      q.gq=await pick(q.ids,560,3);
+      for(const o of q.opsi){const a=await pick(o.ids,420,1);o.g=a[0]||null;}
+      q.warn=q.warn.filter(w=>{
+        if(/^Ada gambar\/objek di soal/.test(w))return !q.gq.length;
+        const m=/^Opsi ([A-E]) kosong/.exec(w);
+        if(m){const o=q.opsi.find(x=>x.h===m[1]);return !(o&&o.g);}
+        return true;
+      });
+    }
+  }catch(e){res.soal.forEach(q=>{q.gq=[];q.opsi.forEach(o=>{o.g=null;});});}
   return res;
 }
 /* ===== Impor soal Word → pratinjau & koreksi ===== */
@@ -4004,8 +4066,9 @@ const simL=j=>String.fromCharCode(65+j);
 function simNorm(q){
   return{jenis:q.jenis,teks:q.teks||'',skor:q.skor!=null?q.skor:SIM_SKOR[q.jenis],rubrik:q.rubrik||'',
     bs:q.jenis==='BS'&&q.kunci?q.kunci[0]:'',
-    opsi:q.opsi.map(o=>({t:o.t,k:!!(q.kunci&&q.kunci.indexOf(o.h)>=0)})),
-    w0:q.warn.filter(w=>/gambar|tabel|Mirip|Kunci di berkas/.test(w))};
+    gq:(q.gq||[]).slice(),
+    opsi:q.opsi.map(o=>({t:o.t,k:!!(q.kunci&&q.kunci.indexOf(o.h)>=0),g:o.g||null})),
+    w0:q.warn.filter(w=>/gambar|tabel|Mirip|Kunci di berkas/.test(w)&&!/^Opsi [A-E] kosong/.test(w))};
 }
 function suImp(pid,fid){
   if(typeof JSZip==='undefined')return toast('Pustaka ZIP belum termuat. Periksa koneksi internet lalu muat ulang halaman.','er');
@@ -4022,11 +4085,11 @@ function suImp(pid,fid){
   }).catch(e=>toast(e.message||'Gagal membaca berkas','er'));
 }
 function simWarns(q){
-  const w=q.w0.slice(),opt=q.jenis==='PG'||q.jenis==='PGK';
-  if(!String(q.teks).trim())w.push('Teks soal kosong');
+  const hasG=(q.gq||[]).length>0,w=q.w0.filter(x=>!(hasG&&/^Ada gambar\/objek di soal/.test(x))),opt=q.jenis==='PG'||q.jenis==='PGK';
+  if(!String(q.teks).trim()&&!hasG)w.push('Teks soal kosong');
   if(opt){
     if(q.opsi.length<2)w.push('Opsi kurang dari 2');
-    q.opsi.forEach((o,j)=>{if(!String(o.t).trim())w.push('Opsi '+simL(j)+' kosong');});
+    q.opsi.forEach((o,j)=>{if(!String(o.t).trim()&&!o.g)w.push('Opsi '+simL(j)+' kosong');});
     if(!q.opsi.some(o=>o.k))w.push('Kunci belum dipilih');
   }else if(q.jenis==='BS'&&!q.bs)w.push('Kunci belum dipilih');
   return w;
@@ -4041,7 +4104,7 @@ function simSum(){
 function simCard(i){
   const q=SIM.soal[i],opt=q.jenis==='PG'||q.jenis==='PGK';
   let b='';
-  if(opt)b=q.opsi.map((o,j)=>`<div class="dr"><input type="${q.jenis==='PG'?'radio':'checkbox'}" name="sk${i}" ${o.k?'checked':''} aria-label="Kunci ${simL(j)}" onchange="simK(${i},${j},this.checked)"><b style="width:18px">${simL(j)}</b><input class="in" value="${esc(o.t)}" aria-label="Opsi ${simL(j)}" oninput="simO(${i},${j},this.value)"><button type="button" class="btn ghost sm" onclick="simDelO(${i},${j})" aria-label="Hapus opsi ${simL(j)}">✕</button></div>`).join('')+
+  if(opt)b=q.opsi.map((o,j)=>`<div class="dr"><input type="${q.jenis==='PG'?'radio':'checkbox'}" name="sk${i}" ${o.k?'checked':''} aria-label="Kunci ${simL(j)}" onchange="simK(${i},${j},this.checked)"><b style="width:18px">${simL(j)}</b><input class="in" value="${esc(o.t)}" aria-label="Opsi ${simL(j)}" oninput="simO(${i},${j},this.value)"><label class="btn ghost ib sim-oi ${o.g?'on':''}" title="Gambar opsi ${simL(j)}" aria-label="Gambar opsi ${simL(j)}">${ico('clip')}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none" onchange="simGPick(${i},${j},this)"></label><button type="button" class="btn ghost sm" onclick="simDelO(${i},${j})" aria-label="Hapus opsi ${simL(j)}">✕</button></div>${o.g?`<div class="sim-oth"><div class="sim-th"><img src="${simImgSrc(o.g)}" alt="Gambar opsi ${simL(j)}"><button type="button" class="sim-x" onclick="simGDel(${i},${j},1)" aria-label="Hapus gambar opsi ${simL(j)}">✕</button></div></div>`:''}`).join('')+
     `<button type="button" class="btn ghost sm" onclick="simAddO(${i})">+ Opsi</button><div class="mc-sub" style="margin-top:4px">${q.jenis==='PG'?'Pilih satu kunci jawaban.':'Centang semua jawaban yang benar.'}</div>`;
   else if(q.jenis==='BS')b=['B','S'].map(v=>`<label style="display:inline-flex;gap:6px;align-items:center;margin-right:16px;font-weight:500;cursor:pointer"><input type="radio" name="sk${i}" ${q.bs===v?'checked':''} onchange="simF(${i},'bs','${v}')">${v==='B'?'Benar':'Salah'}</label>`).join('');
   else b=`<label for="sr${i}" style="font-weight:500">Kunci / rubrik penilaian (opsional)</label><textarea id="sr${i}" class="in" rows="2" oninput="simF(${i},'rubrik',this.value)">${esc(q.rubrik)}</textarea>`;
@@ -4049,7 +4112,36 @@ function simCard(i){
     `<select class="in" style="width:auto" aria-label="Tipe soal" onchange="simJ(${i},this.value)">${Object.keys(SQ_JENIS).map(k=>`<option value="${k}" ${q.jenis===k?'selected':''}>${SQ_JENIS[k]}</option>`).join('')}</select>`+
     `<label style="margin:0;font-weight:400">Skor</label><input class="in" type="number" min="0" step="0.5" style="width:72px" value="${q.skor}" aria-label="Skor" oninput="simF(${i},'skor',this.value)">`+
     `<button type="button" class="btn ghost sm" style="margin-left:auto;color:var(--er)" onclick="simDelQ(${i})">Hapus soal</button></div>`+
-    `<textarea class="in" rows="3" style="margin:8px 0" aria-label="Teks soal" oninput="simF(${i},'teks',this.value)">${esc(q.teks)}</textarea>${b}<div id="sqw-${i}" style="margin-top:6px">${simWarnHTML(q)}</div></div>`;
+    `<textarea class="in" rows="3" style="margin:8px 0" aria-label="Teks soal" oninput="simF(${i},'teks',this.value)">${esc(q.teks)}</textarea><div class="sim-im" id="sqg-${i}">${simGqHTML(i)}</div>${b}<div id="sqw-${i}" style="margin-top:6px">${simWarnHTML(q)}</div></div>`;
+}
+const simImgSrc=g=>'data:'+(g.t||'image/jpeg')+';base64,'+g.d;
+function simImgTot(){let n=0;SIM.soal.forEach(q=>{(q.gq||[]).forEach(g=>{n+=g.d?g.d.length:0;});q.opsi.forEach(o=>{if(o.g&&o.g.d)n+=o.g.d.length;});});return n;}
+function simGqHTML(i){
+  const gs=SIM.soal[i].gq||[];
+  return gs.map((g,j)=>`<div class="sim-th"><img src="${simImgSrc(g)}" alt="Gambar soal ${i+1}"><button type="button" class="sim-x" onclick="simGDel(${i},${j},0)" aria-label="Hapus gambar soal">✕</button></div>`).join('')+
+    (gs.length<3?`<label class="btn ghost sm sim-add">${ico('clip')}<span>${gs.length?'Tambah gambar':'Gambar soal'}</span><input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none" onchange="simGPick(${i},-1,this)"></label>`:'');
+}
+const simRerender=i=>{const e=$('sq-'+i);if(e)e.outerHTML=simCard(i);simSum();};
+function simGPick(i,j,inp){
+  const f=inp.files&&inp.files[0];inp.value='';
+  if(!f||!SIM)return;
+  if(!/^image\/(png|jpeg|gif|webp)$/.test(f.type))return toast('Gunakan gambar JPG, PNG, GIF, atau WebP','er');
+  if(f.size>8000000)return toast('Gambar terlalu besar (maks. 8 MB sebelum dikecilkan)','er');
+  const rd=new FileReader();
+  rd.onload=()=>sqImgScale(String(rd.result).split(',')[1],f.type,j<0?560:420,SQ_IMG_LIM).then(g=>{
+    if(!g)return toast('Gambar tidak dapat dibaca','er');
+    if(!SIM)return;
+    if(simImgTot()+g.d.length>SQ_IMG_TOT)return toast('Total gambar dalam satu paket sudah terlalu besar. Kurangi jumlah atau ukuran gambar.','er');
+    const q=SIM.soal[i];if(!q)return;
+    if(j<0)q.gq=(q.gq||[]).concat([g]).slice(0,3);else if(q.opsi[j])q.opsi[j].g=g;
+    simRerender(i);
+  });
+  rd.readAsDataURL(f);
+}
+function simGDel(i,j,isOpt){
+  const q=SIM&&SIM.soal[i];if(!q)return;
+  if(isOpt){if(q.opsi[j])q.opsi[j].g=null;}else (q.gq||[]).splice(j,1);
+  simRerender(i);
 }
 const simList=()=>{const e=$('sim-list');if(e)e.innerHTML=SIM.soal.map((q,i)=>simCard(i)).join('');simSum();};
 function simKgHTML(){
@@ -4076,7 +4168,7 @@ function simKgPick(inp){
 function simShow(){
   const m=SIM.meta||{};
   modal('Pratinjau impor soal',
-    `<p class="mu" style="margin-top:0">${esc(SIM.nm)}${m.mapel?' · '+esc(m.mapel):''}${m.kelas?' · Kelas '+esc(m.kelas):''}. Periksa tipe soal, opsi, dan isi kunci jawaban, lalu klik Simpan ke bank soal.</p>`+
+    `<p class="mu" style="margin-top:0">${esc(SIM.nm)}${m.mapel?' · '+esc(m.mapel):''}${m.kelas?' · Kelas '+esc(m.kelas):''}. Periksa tipe soal, opsi, gambar, dan kunci jawaban, lalu klik Simpan ke bank soal. Gambar di soal dan opsi ikut terimpor; pakai ikon klip atau tombol gambar untuk menambah atau mengganti.</p>`+
     `<label for="sim-nm">Nama paket soal *</label><input id="sim-nm" class="in" maxlength="150" value="${esc(SIM.nama||'')}" oninput="SIM.nama=this.value" style="margin-bottom:10px"><label for="sim-kop">Kop / identitas soal (ikut tampil di Google Form)</label><textarea id="sim-kop" class="in" rows="4" maxlength="1500" placeholder="Satu baris per baris kop, mis. nama madrasah, jenis ujian, mapel, kelas, waktu" oninput="SIM.kop=this.value" style="margin-bottom:4px">${esc(SIM.kop||'')}</textarea><div class="mc-sub" style="margin-bottom:10px">Periksa dan rapikan teks kop di atas.</div><div id="sim-kg" style="margin-bottom:10px">${simKgHTML()}</div><div id="sim-sum"></div>`+
     `<div id="sim-list" style="max-height:58vh;overflow:auto">${SIM.soal.map((q,i)=>simCard(i)).join('')}</div>`+
     `<button type="button" class="btn ghost sm" style="margin-top:8px" onclick="simAddQ()">+ Tambah soal</button>`,
@@ -4099,11 +4191,13 @@ function simJ(i,v){
 function simAddO(i){SIM.soal[i].opsi.push({t:'',k:false});$('sq-'+i).outerHTML=simCard(i);simSum();}
 function simDelO(i,j){SIM.soal[i].opsi.splice(j,1);$('sq-'+i).outerHTML=simCard(i);simSum();}
 function simDelQ(i){SIM.soal.splice(i,1);simList();}
-function simAddQ(){SIM.soal.push({jenis:'PG',teks:'',skor:1,rubrik:'',bs:'',w0:[],opsi:[{t:'',k:false},{t:'',k:false},{t:'',k:false},{t:'',k:false}]});simList();const l=$('sim-list');if(l)l.scrollTop=l.scrollHeight;}
+function simAddQ(){SIM.soal.push({jenis:'PG',teks:'',skor:1,rubrik:'',bs:'',w0:[],gq:[],opsi:[{t:'',k:false},{t:'',k:false},{t:'',k:false},{t:'',k:false}]});simList();const l=$('sim-list');if(l)l.scrollTop=l.scrollHeight;}
 function simBuild(){
   return SIM.soal.map((q,i)=>{
     const opt=q.jenis==='PG'||q.jenis==='PGK',o={no:i+1,jenis:q.jenis,teks:String(q.teks).trim(),skor:+q.skor||0};
-    if(opt){o.opsi=q.opsi.map((x,j)=>({h:simL(j),t:String(x.t).trim()}));o.kunci=q.opsi.map((x,j)=>x.k?simL(j):'').filter(Boolean);}
+    const gO=g=>g.id?{id:g.id}:{d:g.d,t:g.t};
+    if((q.gq||[]).length)o.gq=q.gq.map(gO);
+    if(opt){o.opsi=q.opsi.map((x,j)=>{const r={h:simL(j),t:String(x.t).trim()};if(x.g)r.g=gO(x.g);return r;});o.kunci=q.opsi.map((x,j)=>x.k?simL(j):'').filter(Boolean);}
     else if(q.jenis==='BS')o.kunci=q.bs?[q.bs]:[];
     else o.rubrik=String(q.rubrik||'').trim();
     return o;});
@@ -4134,20 +4228,26 @@ function spkLoad(){
   }).catch(e=>{SPKB=false;SPKL=[];SPKK=key;spkDraw();toast(e.message,'er');});
 }
 function spkDraw(){const e=$('spk-l');if(e)e.innerHTML=spkListHTML();}
-function spkListHTML(){
-  const can=S.user.r==='GURU'||isPAAdm();
-  return SPKL===null?lbar('Memuat…'):!SPKL.length?'<p class="mu">Belum ada paket soal. Buka berkas Word pada daftar unggahan di atas, lalu klik "Impor ke ujian".</p>':
-    SPKL.map(x=>{
-      const own=S.user.r==='GURU'&&x.g===S.user.id,del=S.user.r==='ADMIN'||own;
-      return`<div class="att-i"><span class="att-n" title="${esc(x.nm)}"><b>${esc(x.nm)}</b><span class="mc-sub">${x.n} soal${S.user.r!=='GURU'?' · '+esc(x.gn):''} · ${timeShow(x.u)}</span></span><span class="acts">`+
-        (can?(x.fu?
-          `${bd(x.fs||'BUKA')}<button type="button" class="btn ghost sm" onclick="spkCopy('${esc(x.id)}')">Salin tautan</button><button type="button" class="btn ghost sm" onclick="spkStatus('${esc(x.id)}')">${x.fs==='TUTUP'?'Buka Form':'Tutup Form'}</button><button type="button" class="btn pri sm" onclick="spkHasil('${esc(x.id)}')">Hasil &amp; Nilai</button>`:
-          `<button type="button" class="btn pri sm" onclick="spkForm('${esc(x.id)}')">Buat Form</button>`)+
-          `<button type="button" class="btn ghost sm" onclick="spkOpen('${esc(x.id)}')">${x.fu?'Lihat':'Buka'}</button>`:'')+
-        (del?`<button type="button" class="btn ghost sm" style="color:var(--er)" onclick="spkDel('${esc(x.id)}')">Hapus</button>`:'')+`</span></div>`;
-    }).join('');
+const SPK_JN=[['PG','PG'],['PGK','PG Kompleks'],['BS','Benar/Salah'],['URAIAN','Uraian']];
+function spkCard(x){
+  const can=S.user.r==='GURU'||isPAAdm(),own=S.user.r==='GURU'&&x.g===S.user.id,del=S.user.r==='ADMIN'||own,jn=x.jn||{},id=esc(x.id);
+  const chips=SPK_JN.filter(j=>jn[j[0]]).map(j=>`<span class="spk-ch">${j[1]} <b>${jn[j[0]]}</b></span>`).join('')+(x.gb?`<span class="spk-ch g">Bergambar <b>${x.gb}</b></span>`:'');
+  const btn=(t,f,c,w)=>`<button type="button" class="btn ${c||'ghost'} sm${w?' w':''}" onclick="${f}">${t}</button>`;
+  let acts='';
+  if(can){
+    acts=x.fu
+      ?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Form':'Tutup Form',`spkStatus('${id}')`)+btn('Lihat soal',`spkOpen('${id}')`)
+      :btn('Buat Form',`spkForm('${id}')`,'pri',1)+btn('Ubah soal',`spkOpen('${id}')`);
+    if(del)acts+=btn('Hapus',`spkDel('${id}')`,'ghost dg');
+  }else if(del)acts=btn('Hapus',`spkDel('${id}')`,'ghost dg',1);
+  const meta=`<span>${x.n} soal</span><span>Skor ${x.sk!=null?x.sk:'-'}</span>${S.user.r!=='GURU'?`<span>${esc(x.gn)}</span>`:''}<span>${timeShow(x.u)}</span>`;
+  return`<div class="spk-c"><div class="spk-h"><div class="spk-t" title="${esc(x.nm)}">${esc(x.nm)}</div>${x.fu?bd(x.fs||'BUKA'):''}</div><div class="spk-m">${meta}</div>${chips?`<div class="spk-chs">${chips}</div>`:''}${acts?`<div class="spk-a">${acts}</div>`:''}</div>`;
 }
-
+function spkListHTML(){
+  if(SPKL===null)return lbar('Memuat…');
+  if(!SPKL.length)return'<p class="mu">Belum ada paket soal. Buka berkas Word pada daftar unggahan di atas, lalu klik "Impor ke ujian".</p>';
+  return'<div class="spk">'+SPKL.map(spkCard).join('')+'</div>';
+}
 /* ===== Google Form dari paket soal + penarikan hasil ke menu Nilai ===== */
 function spkForm(id){
   const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
@@ -4276,7 +4376,7 @@ function spkDel(id){
 }
 function simJson(){
   const out={sumber:SIM.nm,meta:SIM.meta,soal:simBuild()};
-  const url=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));
+  const url=URL.createObjectURL(new Blob([JSON.stringify(out,(k,v)=>k==='d'&&typeof v==='string'&&v.length>200?'(data gambar tidak disertakan)':v,2)],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download='soal-terstruktur-'+String(SIM.nm).replace(/\.docx$/i,'').replace(/[\\\/:*?"<>|]+/g,'-')+'.json';
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
 }
