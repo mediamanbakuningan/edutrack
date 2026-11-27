@@ -952,8 +952,9 @@ function tabsFor(r){
   if(r==='ADMIN'||r==='ADMIN_SARPRAS'||r==='PIMPINAN')o.push({k:'saraduadm',l:'Pengaduan sarana',i:'sar',g:'Sarana prasarana',b:(r!=='PIMPINAN'&&SPN&&SPN.a)||0},{k:'sarpinjamadm',l:'Peminjaman sarana',i:'box',g:'Sarana prasarana',b:(r!=='PIMPINAN'&&SPN&&SPN.p)||0},{k:'sarinven',l:'Inventaris sarana',i:'list',g:'Sarana prasarana'});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='PIMPINAN')o.push({k:'nilai',l:'Nilai siswa',i:'edit',g:NIL});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='TU')o.push({k:'nilaimgr',l:'Kelola penilaian',i:'list',g:NIL});
+  if(r==='KURIKULUM'||r==='TU')o.push({k:'siswa',l:'Daftar siswa',i:'users',g:SET});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='PIMPINAN')o.push({k:'tahfidz',l:'Tahfidz',i:'book',g:'Tahfidz'});
-  if(r==='ADMIN')o.push({k:'pengaturan',l:'Pengaturan aplikasi',i:'gear',g:SET},{k:'user',l:'Master user',i:'user',g:SET},{k:'kop',l:'Pengaturan kop',i:'tpl',g:SET},{k:'log',l:'Log aktivitas',i:'log',g:SET});
+  if(r==='ADMIN')o.push({k:'pengaturan',l:'Pengaturan aplikasi',i:'gear',g:SET},{k:'user',l:'Master user',i:'user',g:SET},{k:'siswa',l:'Daftar siswa',i:'users',g:SET},{k:'kop',l:'Pengaturan kop',i:'tpl',g:SET},{k:'log',l:'Log aktivitas',i:'log',g:SET});
   return o;
 }
 const roleBadge=s=>String(s||'').split(',').map(x=>x.trim()).filter(Boolean).map(r=>`<span class="badge ${r==='GURU'?'b-ok':r==='PIMPINAN'||r==='WALIKELAS'?'b-wa':'b-er'}">${ROLE_L[r]||r}</span>`).join(' ');
@@ -1273,7 +1274,7 @@ const NAVK={
   kesprest:'ksw',keskegiatan:'ksw',
   saradu:'sar',sarpinjam:'sar',saraduadm:'sar',sarpinjamadm:'sar',sarinven:'sar',
   nilai:'nil',nilaimgr:'nil',
-  pengaturan:'set',user:'set',kop:'set',log:'set'
+  pengaturan:'set',user:'set',siswa:'set',kop:'set',log:'set'
 };
 let NVO=[],NVL='';
 try{NVO=JSON.parse(localStorage.getItem('er-nvo')||'[]');if(!Array.isArray(NVO))NVO=[];}catch(_){NVO=[];}
@@ -2126,7 +2127,7 @@ function ampuCards(view){
   if(!AMP.length)return`<div class="note">${S.user.r==='GURU'?'Belum ada mata pelajaran yang Anda ampu. Hubungi Admin Operator agar mapel & kelas Anda diatur di menu Kelola penilaian.':'Belum ada mata pelajaran. Atur dulu di menu Kelola penilaian (tab Mata pelajaran).'}</div>`;
   AMPC=[];
   AMP.forEach(a=>(a.ks||[]).forEach(k=>AMPC.push({m:a.m,k})));
-  if(!AMPC.length)return`<div class="note">Belum ada kelas siswa. Tambahkan data kelas & siswa terlebih dahulu di menu Kelola penilaian.</div>`;
+  if(!AMPC.length)return`<div class="note">Belum ada kelas siswa. Tambahkan data kelas & siswa terlebih dahulu di menu Pengaturan → Daftar siswa.</div>`;
   const isSoal=view==='soal';
   return`<div class="mcl">${AMPC.map((c,i)=>{
     let sub='Kelas '+esc(c.k),bdg='';
@@ -2629,7 +2630,7 @@ function absIsiBody(ro){
   const day=`<div class="dnav"><button class="btn ghost ib" onclick="absShift(-1)" aria-label="Hari sebelumnya">‹</button><input type="date" class="in" value="${S.amd}" max="${t0}" aria-label="Tanggal absensi" onchange="absSetTgl(this.value)"><button class="btn ghost ib" onclick="absShift(1)" aria-label="Hari berikutnya">›</button></div>`;
   if(S.amd>t0)return`<div class="card">${day}<div class="note">Tanggal ini belum tiba, absensi belum bisa diisi.</div></div>`;
   if(AML===null)return`<div class="card">${day}<div class="mt">${lbar('Memuat daftar siswa…')}</div></div>`;
-  if(!AML.sw.length)return`<div class="card">${day}<div class="note">Tidak ada siswa terdaftar di kelas ${esc(S.ak)}. Tambahkan di menu Kelola penilaian (tab Daftar siswa).</div></div>`;
+  if(!AML.sw.length)return`<div class="card">${day}<div class="note">Tidak ada siswa terdaftar di kelas ${esc(S.ak)}. Tambahkan di menu Pengaturan → Daftar siswa.</div></div>`;
   const filled=AML.sw.filter(s=>hasOwn(AML.st,s.id)).length;
   const info=`<div class="mu"><b>${esc(tglL(S.amd))}</b><br>${filled} dari ${AML.sw.length} siswa sudah diisi${AML.oleh?' · terakhir diisi: '+esc(AML.oleh):''}</div>`;
   const tbl=isMob()
@@ -2885,7 +2886,7 @@ function vTahfidz(){
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Tahfidz</h2></div>${mgr&&kl.length?`<button class="btn pri" onclick="thMateriM('')">+ Tambah materi</button>`:''}</div>`;
   if(!kl.length)return head+(thGuru()
     ?`<div class="note">Anda belum ditetapkan sebagai pengampu materi tahfidz. Hubungi Admin Operator atau Admin Kurikulum untuk menetapkan pengampu pada materi.</div>`
-    :`<div class="note">Belum ada data siswa. Tambahkan siswa dan kelas terlebih dahulu di menu Kelola penilaian.</div>`);
+    :`<div class="note">Belum ada data siswa. Tambahkan siswa dan kelas terlebih dahulu di menu Pengaturan → Daftar siswa.</div>`);
   if(S.thm){
     const m=thVis().find(x=>x.id===S.thm);
     if(m)return thMateriView(m);
@@ -3037,7 +3038,7 @@ function anggotaPicker(sel){
     (kl.map(k=>{const l=SW.filter(s=>s.k===k);if(!l.length)return'';
       return`<div class="ag-g" data-g="${esc(k)}"><div class="mu" style="margin:6px 0 2px">Kelas ${esc(k)}</div>`+
         l.map(s=>`<label class="ag-i" data-n="${esc(s.n.toLowerCase())}" style="display:flex;align-items:center;gap:8px;margin:2px 0;font-weight:400;cursor:pointer"><input type="checkbox" class="ag-c" value="${esc(s.id)}" ${sel.indexOf(s.id)>=0?'checked':''}>${esc(s.n)}</label>`).join('')+`</div>`;
-    }).join('')||'<p class="mu">Belum ada siswa. Tambahkan di menu Kelola penilaian.</p>')+`</div>`;
+    }).join('')||'<p class="mu">Belum ada siswa. Tambahkan di menu Pengaturan → Daftar siswa.</p>')+`</div>`;
 }
 function agFilter(q){
   q=String(q||'').trim().toLowerCase();
@@ -3107,7 +3108,7 @@ function aklLoad(){
 function absKelasCards(){
   const wk=S.user.r==='GURU'||S.user.r==='WALIKELAS';
   const head=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Absensi kelas</h2></div></div>`;
-  if(!AKL.length)return head+`<div class="note">${wk?'Belum ada kelas siswa.':'Belum ada kelas siswa. Tambahkan data kelas &amp; siswa terlebih dahulu di menu Kelola penilaian.'}</div>`;
+  if(!AKL.length)return head+`<div class="note">${wk?'Belum ada kelas siswa.':'Belum ada kelas siswa. Tambahkan data kelas &amp; siswa terlebih dahulu di menu Pengaturan → Daftar siswa.'}</div>`;
   return head+`<div class="mcl">${AKL.map((k,i)=>`<div class="mcard tap" role="button" tabindex="0" onclick="absKelasGo(${i})"><div class="mc-h"><div><b>Kelas ${esc(k)}</b><div class="mc-sub">Rekap otomatis dari absensi mapel</div></div><div class="mc-more">Buka rekap ›</div></div></div>`).join('')}</div>`;
 }
 let AKP=null,AKPB=false,AKPM='';
@@ -3489,7 +3490,7 @@ function vAdmin(){
   if(S.user.mc){setTimeout(autoAkun,80);return`<div class="card"><h2>Keamanan akun</h2><p class="mu mt">Anda wajib mengganti kata sandi bawaan sebelum dapat menggunakan aplikasi. Username bawaan juga dapat Anda ubah.</p><button class="btn pri" style="margin-top:16px" onclick="akunM()">Atur akun sekarang</button></div>`;}
   const al=tabsFor(S.user.r).map(t=>t.k);
   if(al.indexOf(S.tab)<0)S.tab=al[0]||'dbd';
-  return({dbd:vDbd,pengaturan:aCfg,absen:aAbsen,jadwal:aJadwal,usulan:aUsulan,tugas:aTugas,user:aUser,kop:aKop,tpl:aTpl,log:aLog,nilai:vNilai,nilaimgr:aNilaiMgr,tahfidz:vTahfidz,perangkat:vPerangkat,soal:vSoal,absmapel:vAbsMapel,abseskul:vAbsEkskul,izinver:vIzinAdmin,izinset:vIzinAdmin,bksesi:vBKSesi,bksp:vBKSP,saraduadm:vSarAduanAdmin,sarpinjamadm:vSarPinjamAdmin,sarinven:vSarInven,kespelanggaran:vKesLanggarAdmin,kesprest:vKesPrest,kespoin:vKesPoin,keskegiatan:vKesKeg}[S.tab]||vDbd)();
+  return({dbd:vDbd,pengaturan:aCfg,absen:aAbsen,jadwal:aJadwal,usulan:aUsulan,tugas:aTugas,user:aUser,kop:aKop,tpl:aTpl,log:aLog,nilai:vNilai,nilaimgr:aNilaiMgr,siswa:aNilaiSw,tahfidz:vTahfidz,perangkat:vPerangkat,soal:vSoal,absmapel:vAbsMapel,abseskul:vAbsEkskul,izinver:vIzinAdmin,izinset:vIzinAdmin,bksesi:vBKSesi,bksp:vBKSP,saraduadm:vSarAduanAdmin,sarpinjamadm:vSarPinjamAdmin,sarinven:vSarInven,kespelanggaran:vKesLanggarAdmin,kesprest:vKesPrest,kespoin:vKesPoin,keskegiatan:vKesKeg}[S.tab]||vDbd)();
 }
 
 /* ===== Dashboard: rekap laporan, rekap perangkat ajar, rekap soal (+ analisis kinerja untuk Admin Operator) ===== */
@@ -5214,7 +5215,7 @@ function bksCard(x){
 }
 function bksM(){
   const ks=kelasUnik();
-  if(!SW.length&&!ks.length)return toast('Belum ada data siswa. Minta Admin mengisi data siswa di menu Kelola penilaian.','er');
+  if(!SW.length&&!ks.length)return toast('Belum ada data siswa. Minta Admin mengisi data siswa di menu Pengaturan → Daftar siswa.','er');
   modal('Catat sesi konseling',
     `<label for="bks-t">Tanggal sesi *</label><input id="bks-t" type="date" class="in" value="${today()}" max="${today()}">`+
     `<label for="bks-j">Jenis sesi *</label><select id="bks-j" class="in" onchange="bksJtog()">${BK_SJ.map(j=>`<option>${esc(j)}</option>`).join('')}</select>`+
@@ -5644,7 +5645,7 @@ function kesCardGuru(x){
     (x.st==='BARU'?`<div class="mc-f" style="justify-content:flex-end"><button class="btn ghost sm" style="color:var(--er)" onclick="kesLanggarBatalF('${esc(x.id)}')">Batalkan laporan</button></div>`:'')+`</div>`;
 }
 function kesLanggarM(){
-  if(!SW.length)return toast('Belum ada data siswa. Minta Admin mengisi data siswa di menu Kelola penilaian.','er');
+  if(!SW.length)return toast('Belum ada data siswa. Minta Admin mengisi data siswa di menu Pengaturan → Daftar siswa.','er');
   if(KJLS===null&&!KJLSB){kesJenisLoad(kesLanggarM);return;}
   if(KJLSB)return;
   if(!KJLS||!KJLS.length)return toast('Belum ada jenis pelanggaran. Minta Admin Keamanan mengaturnya di menu Pelanggaran siswa.','er');
@@ -6106,12 +6107,12 @@ function nilaiPdf(){
   toast('PDF nilai diunduh','ok');
 }
 
-const NT_TABS=[['sem','Semester aktif'],['sw','Daftar siswa'],['mp','Mata pelajaran'],['jd','Jadwal mapel'],['jn','Jenis penilaian']];
+const NT_TABS=[['sem','Semester aktif'],['mp','Mata pelajaran'],['jd','Jadwal mapel'],['jn','Jenis penilaian']];
 function aNilaiMgr(){
   if(!NT_TABS.some(t=>t[0]===S.nt))S.nt='sem';
   return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Kelola penilaian</h2></div></div>`+
   `<div class="dnav" style="margin-bottom:6px">${NT_TABS.map(t=>`<button class="btn ${S.nt===t[0]?'pri':'ghost'}" onclick="S.nt='${t[0]}';render(true)">${t[1]}</button>`).join('')}</div>`+
-  (S.nt==='sem'?aNilaiSem():S.nt==='sw'?aNilaiSw():S.nt==='mp'?aNilaiMp():S.nt==='jd'?aNilaiJd():aNilaiJn());
+  (S.nt==='sem'?aNilaiSem():S.nt==='mp'?aNilaiMp():S.nt==='jd'?aNilaiJd():aNilaiJn());
 }
 function aNilaiSem(){
   return`<div class="card"><h3>Semester aktif</h3><div class="row mt"><input id="ns" class="in" style="max-width:260px" value="${esc(NS)}" placeholder="2026/2027 Ganjil" aria-label="Semester aktif"><button class="btn pri" onclick="saveSem()">Simpan</button></div></div>`;
@@ -6175,13 +6176,6 @@ function swPdf(kls,ket){
       columnStyles:cs,
       didParseCell:d=>{if(d.section==='head')d.cell.styles.halign='center';}});
   });
-  const n=doc.internal.getNumberOfPages(),d=new Date();
-  const cetak='Dicetak: '+d.getDate()+' '+BLN[d.getMonth()]+' '+d.getFullYear();
-  for(let i=1;i<=n;i++){
-    doc.setPage(i);doc.setFont('times','italic');doc.setFontSize(8.5);doc.setTextColor(100,116,139);
-    doc.text(cetak,10,H-8);
-    doc.text('Halaman '+i+' dari '+n,W-10,H-8,{align:'right'});
-  }
   const safe=x=>String(x).replace(/[\\\/:*?"<>|]+/g,'-').trim();
   doc.save('daftar-siswa-'+(grp.length===1?safe(grp[0].k):grp.length+'-kelas')+'.pdf');
   toast('PDF daftar siswa diunduh ('+grp.length+' kelas, '+grp.reduce((a,g)=>a+g.l.length,0)+' siswa)','ok');
@@ -6344,7 +6338,7 @@ function aNilaiJd(){
   const intro=`<div><h3>Jadwal mapel</h3></div>`;
   if(JDML===null)return`<div class="card">${intro}<div class="mt">${lbar('Memuat jadwal…')}</div></div>`;
   const kls=[...new Set(kelasList().concat(JDML.map(r=>r.k)))].filter(Boolean).sort(jdNum);
-  if(!kls.length)return`<div class="card">${intro}<div class="note">Belum ada kelas. Tambahkan siswa dulu di tab <b>Daftar siswa</b>, lalu atur jadwalnya di sini.</div></div>`;
+  if(!kls.length)return`<div class="card">${intro}<div class="note">Belum ada kelas. Tambahkan siswa dulu di menu <b>Pengaturan → Daftar siswa</b>, lalu atur jadwalnya di sini.</div></div>`;
   if(kls.indexOf(S.jdk)<0)S.jdk=kls[0];
   if(S.jdv==='all')return jdAllView(kls);
   const k=S.jdk,d=jdDraft(k);
