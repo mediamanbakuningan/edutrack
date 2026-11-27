@@ -1420,9 +1420,9 @@ function gsCall(action,token,p){
   return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,token:token||null,p:p||{}})})
     .then(res=>{if(!res.ok)throw new Error('Koneksi gagal ('+res.status+')');lpBump(70);return res.json();}).then(d=>{lpBump(90);return d;});
 }
-const SVW={};"soalFormNilai saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
+const SVW={};"soalPaketSave soalPaketDel soalFormBuat soalFormStatus soalFormNilai saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
 const SVP={v:0,t:0,n:0,h:0};
-const svLabel=a=>a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
+const svLabel=a=>a==='soalFormBuat'?'Membuat Google Form\u2026':a==='soalFormNilai'?'Menyimpan nilai ke menu Nilai\u2026':a==='soalFormStatus'?'Mengubah status Form\u2026':a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
 function svEl(){
   let e=document.getElementById('svp');
   if(!e){
@@ -3790,7 +3790,7 @@ function sqText(p){
   })(p);
   return{t:s,img};
 }
-function sqParseXml(docXml,numXml,DP){
+function sqParseXml(docXml,numXml,DP,hdr){
   DP=DP||new DOMParser();
   const doc=DP.parseFromString(docXml,'text/xml'),fmtOf={};
   if(numXml){
@@ -3836,7 +3836,8 @@ function sqParseXml(docXml,numXml,DP){
     const s=t.replace(/^([IVX]+|[A-D])\s*[.)]\s*/,'').trim();
     return HEAD.test(s)?jenisOf(s):null;
   };
-  const meta={},res={meta:meta,soal:[],petunjuk:{},warn:[]};
+  const meta={},res={meta:meta,soal:[],petunjuk:{},warn:[],kop:[],kopImg:false};
+  const kopL=(hdr||[]).slice();
   let sec=null,key=false,cur=null,count=0,ksec=null,kcur=null;
   const KEYS={};
   const ex=[];
@@ -3850,11 +3851,14 @@ function sqParseXml(docXml,numXml,DP){
   ex.forEach(b=>{
     const t=b.t.replace(/[ \t]+$/,''),tt=t.trim();
     if(!tt&&!b.img)return;
+    if(!sec&&!key&&!tt&&b.img){res.kopImg=true;return;}
     if(/^kunci\s+jawaban/i.test(tt)){key=true;sec=null;cur=null;return;}
     const h=heading(tt);
     if(h){sec=h;ksec=h;kcur=null;cur=null;return;}
     if(!key){
       if(!sec){
+        if(tt)kopL.push(tt.replace(/[ \t]*\t[ \t]*/g,'   '));
+        if(b.img)res.kopImg=true;
         tt.split('|').forEach(x=>{
           const m=x.trim().match(/^(mata\s*pelajaran|mapel|kelas|waktu)\s*:\s*(.*)$/i);
           if(m)meta[/kelas|waktu/i.test(m[1])?m[1].toLowerCase():'mapel']=m[2].trim();
@@ -3897,6 +3901,7 @@ function sqParseXml(docXml,numXml,DP){
     if(m){kcur=+m[1];K[kcur]=m[2].trim();}
     else if(kcur&&ksec==='URAIAN')K[kcur]=(K[kcur]+'\n'+tt).trim();
   });
+  kopL.forEach(l=>{l=String(l).replace(/\s+/g,' ').trim();if(l&&l.length<=200&&res.kop.length<15&&res.kop[res.kop.length-1]!==l)res.kop.push(l);});
   /* ---- terapkan kunci ---- */
   const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]+/g,'');
   res.soal.forEach(q=>{
@@ -3934,7 +3939,16 @@ async function soalParseDocx(buf){
   const z=await JSZip.loadAsync(buf),d=z.file('word/document.xml');
   if(!d)throw new Error('Bukan berkas Word (.docx) yang valid');
   const n=z.file('word/numbering.xml');
-  return sqParseXml(await d.async('string'),n?await n.async('string'):'');
+  const hdr=[],seenH={},DP=new DOMParser();
+  const hf=Object.keys(z.files).filter(k=>/^word\/header\d*\.xml$/.test(k)).sort();
+  for(const k of hf){
+    const x=DP.parseFromString(await z.file(k).async('string'),'text/xml');
+    Array.prototype.forEach.call(x.getElementsByTagNameNS('*','p'),p=>{
+      const t=sqText(p).t.replace(/\s+/g,' ').trim();
+      if(t&&!/^(halaman|page)\b/i.test(t)&&!/^\d+$/.test(t)&&!seenH[t]){seenH[t]=1;hdr.push(t);}
+    });
+  }
+  return sqParseXml(await d.async('string'),n?await n.async('string'):'',DP,hdr);
 }
 /* ===== Impor soal Word → pratinjau & koreksi ===== */
 let SIM=null;
@@ -3956,7 +3970,7 @@ function suImp(pid,fid){
   }).then(x=>{
     if(!x.res.soal.length)return toast('Tidak ada soal yang terbaca dari berkas ini.','er');
     const up=(SUL||[]).find(t=>t.id===pid);
-    SIM={pid:pid,fid:fid,uploadId:pid,paketId:'',nama:(up&&up.t)||String(x.i.n||'').replace(/\.docx$/i,''),nm:x.i.n,meta:x.res.meta,soal:x.res.soal.map(simNorm)};
+    SIM={pid:pid,fid:fid,uploadId:pid,paketId:'',nama:(up&&up.t)||String(x.i.n||'').replace(/\.docx$/i,''),nm:x.i.n,meta:x.res.meta,kop:(x.res.kop||[]).join('\n'),kopImg:!!x.res.kopImg,soal:x.res.soal.map(simNorm)};
     simShow();
   }).catch(e=>toast(e.message||'Gagal membaca berkas','er'));
 }
@@ -3995,7 +4009,7 @@ function simShow(){
   const m=SIM.meta||{};
   modal('Pratinjau impor soal',
     `<p class="mu" style="margin-top:0">${esc(SIM.nm)}${m.mapel?' · '+esc(m.mapel):''}${m.kelas?' · Kelas '+esc(m.kelas):''}. Periksa tipe soal, opsi, dan isi kunci jawaban, lalu klik Simpan ke bank soal.</p>`+
-    `<label for="sim-nm">Nama paket soal *</label><input id="sim-nm" class="in" maxlength="150" value="${esc(SIM.nama||'')}" oninput="SIM.nama=this.value" style="margin-bottom:10px"><div id="sim-sum"></div>`+
+    `<label for="sim-nm">Nama paket soal *</label><input id="sim-nm" class="in" maxlength="150" value="${esc(SIM.nama||'')}" oninput="SIM.nama=this.value" style="margin-bottom:10px"><label for="sim-kop">Kop / identitas soal (ikut tampil di Google Form)</label><textarea id="sim-kop" class="in" rows="4" maxlength="1500" placeholder="Satu baris per baris kop, mis. nama madrasah, jenis ujian, mapel, kelas, waktu" oninput="SIM.kop=this.value" style="margin-bottom:4px">${esc(SIM.kop||'')}</textarea><div class="mc-sub" style="margin-bottom:10px">${SIM.kopImg?'Logo/gambar pada kop tidak ikut terimpor, hanya teksnya. ':''}Periksa dan rapikan teks kop di atas.</div><div id="sim-sum"></div>`+
     `<div id="sim-list" style="max-height:58vh;overflow:auto">${SIM.soal.map((q,i)=>simCard(i)).join('')}</div>`+
     `<button type="button" class="btn ghost sm" style="margin-top:8px" onclick="simAddQ()">+ Tambah soal</button>`,
     [{t:'Tutup',c:'ghost',f:()=>{SIM=null;closeM();}},{t:'Unduh JSON',c:'ghost',f:simJson},{t:'Simpan ke bank soal',c:'pri',f:simSave}]);
@@ -4034,7 +4048,7 @@ function simSave(){
   const bad=SIM.soal.filter(q=>simWarns(q).some(w=>!/gambar|tabel|Mirip|Kunci di berkas/.test(w))).length;
   if(bad)return toast(bad+' soal belum lengkap (teks, opsi, atau kunci). Lihat tulisan merah pada kartu soal.','er');
   SIMBUSY=true;
-  rpc('soalPaketSave',{id:SIM.paketId||'',uploadId:SIM.uploadId||'',nama:nama,soal:simBuild()}).then(r=>{
+  rpc('soalPaketSave',{id:SIM.paketId||'',uploadId:SIM.uploadId||'',nama:nama,kop:SIM.kop||'',soal:simBuild()}).then(r=>{
     SIMBUSY=false;SIM=null;closeM();
     toast('Paket soal tersimpan ('+((r.info&&r.info.n)||0)+' soal)','ok');
     SPKK='';spkLoad();
@@ -4183,7 +4197,7 @@ function spkHTML(){
 function spkOpen(id){
   rpc('soalPaketGet',{id:id}).then(r=>{
     const x=r.info||{};
-    SIM={pid:'',fid:'',uploadId:'',paketId:x.id,nama:x.nm,nm:x.nm,meta:{mapel:x.mp,kelas:x.kl},soal:(x.soal||[]).map(simNorm)};
+    SIM={pid:'',fid:'',uploadId:'',paketId:x.id,nama:x.nm,nm:x.nm,meta:{mapel:x.mp,kelas:x.kl},kop:x.kop||'',kopImg:false,soal:(x.soal||[]).map(simNorm)};
     simShow();
   }).catch(e=>toast(e.message,'er'));
 }
