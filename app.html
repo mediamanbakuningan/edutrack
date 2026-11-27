@@ -1560,7 +1560,7 @@ function needP(fn,args){
   pickKop(k=>{KOPUSE=k;try{fn.apply(null,args||[]);}finally{KOPUSE=null;}},pdfLabel(fn,args));
   return true;
 }
-const PDFLBL={exp:'Unduh rekap laporan',expAbsen:'Unduh rekap absen guru',absKelasPdf:'Unduh absensi kelas',absRankPdf:'Unduh ranking antar kelas',absRankSiswaPdf:'Unduh ranking antar siswa',agrPdf:'Unduh ranking antar guru',absMapelPdf:'Unduh rekap absensi mapel',absEkskulPdf:'Unduh rekap absensi ekskul',thPdf:'Unduh rekap tahfidz',nilaiPdf:'Unduh daftar nilai',jdPdf:'Unduh jadwal kelas ini',jdAllPdf:'Unduh jadwal semua kelas',unduhKred:'Unduh lembar username & sandi',spPdf:'Unduh surat perjanjian'};
+const PDFLBL={exp:'Unduh rekap laporan',expAbsen:'Unduh rekap absen guru',absKelasPdf:'Unduh absensi kelas',absRankPdf:'Unduh ranking antar kelas',absRankSiswaPdf:'Unduh ranking antar siswa',agrPdf:'Unduh ranking antar guru',absMapelPdf:'Unduh rekap absensi mapel',absEkskulPdf:'Unduh rekap absensi ekskul',thPdf:'Unduh rekap tahfidz',nilaiPdf:'Unduh daftar nilai',jdPdf:'Unduh jadwal kelas ini',jdAllPdf:'Unduh jadwal semua kelas',unduhKred:'Unduh lembar username & sandi',swPdf:'Unduh daftar siswa',spPdf:'Unduh surat perjanjian'};
 const pdfLabel=(fn,args)=>fn&&fn.name==='rkPdf'?((args&&args[0])==='pa'?'Unduh rekap perangkat ajar':'Unduh rekap soal'):(fn&&PDFLBL[fn.name])||'Unduh dokumen';
 function pickKop(cb,lbl){
   let sel='';try{sel=localStorage.getItem('er-kop')||'';}catch(_){}
@@ -4236,7 +4236,7 @@ function spkCard(x){
   let acts='';
   if(can){
     acts=x.fu
-      ?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Form':'Tutup Form',`spkStatus('${id}')`)+btn('Lihat soal',`spkOpen('${id}')`)
+      ?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Form':'Tutup Form',`spkStatus('${id}')`)+btn('Edit di Google Form',`spkEdit('${id}')`,'ghost',1)+btn('Lihat soal',`spkOpen('${id}')`)
       :btn('Buat Form',`spkForm('${id}')`,'pri',1)+btn('Ubah soal',`spkOpen('${id}')`);
     if(del)acts+=btn('Hapus',`spkDel('${id}')`,'ghost dg');
   }else if(del)acts=btn('Hapus',`spkDel('${id}')`,'ghost dg',1);
@@ -4263,6 +4263,23 @@ function spkLink(url){
     [{t:'Tutup',c:'ghost',f:()=>closeM()},{t:'Salin',c:'pri',f:()=>{
       const e=$('spk-url');if(!e)return;e.select();
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Tautan disalin','ok')).catch(()=>{try{document.execCommand('copy');toast('Tautan disalin','ok');}catch(x){toast('Salin manual dari kotak tautan','er');}});
+    }}]);
+}
+function spkEdit(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  modal('Edit di Google Form',
+    `<p class="mu" style="margin-top:0">Form dimiliki akun Google pemilik skrip. Agar akun Google Anda bisa mengeditnya, tulis email Google Anda; Anda akan ditambahkan sebagai editor. Kosongkan bila akun Anda sudah punya akses.</p>`+
+    `<label for="spk-em">Email Google Anda (opsional)</label><input id="spk-em" class="in" type="email" inputmode="email" autocomplete="email" placeholder="nama@gmail.com" value="${esc(sessionStorage.getItem('spkEm')||'')}">`+
+    `<p class="mu mt"><b>Catatan:</b> aman untuk menambah soal, mengubah teks soal, menambah atau mengganti gambar, dan mengatur tampilan Form. Jangan mengubah teks pilihan jawaban dan jangan menghapus atau memindah soal yang sudah ada, karena nilai otomatis dicocokkan dengan teks pilihan dan urutan soal asli. Soal yang ditambah langsung di Google Form tidak ikut dinilai otomatis di aplikasi.</p>`,
+    [CANCEL,{t:'Buka editor',c:'pri',f:()=>{
+      const em=($('spk-em')||{}).value||'';
+      rpc('soalFormEdit',{paketId:id,email:em.trim()}).then(r=>{
+        const i=r.info||{};try{if(em.trim())sessionStorage.setItem('spkEm',em.trim());}catch(e){}
+        closeM();
+        const w=window.open(i.url,'_blank','noopener');
+        if(!w)modal('Editor Google Form',`<p class="mu" style="margin-top:0">Browser memblokir tab baru. Buka editor lewat tautan ini:</p><p><a href="${esc(i.url)}" target="_blank" rel="noopener">Buka editor Google Form</a></p>`,[{t:'Tutup',c:'ghost',f:()=>closeM()}]);
+        else if(i.email)toast('Anda ditambahkan sebagai editor Form','ok');
+      }).catch(e=>toast(e.message,'er'));
     }}]);
 }
 function spkCopy(id){const x=(SPKL||[]).find(t=>t.id===id);if(x&&x.fu)spkLink(x.fu);}
@@ -6106,13 +6123,68 @@ function aNilaiSw(){
   const list=SW.filter(s=>s.k===S.nf);
   return`<div class="card"><div class="bt" style="flex-wrap:wrap"><h3>Daftar siswa</h3><div class="row">`+
   `<select class="in" style="width:auto" aria-label="Kelas" onchange="S.nf=this.value;render(true)">${kl.map(k=>`<option ${k===S.nf?'selected':''}>${esc(k)}</option>`).join('')||'<option value="">(belum ada kelas)</option>'}</select>`+
-  `<button class="btn ghost" onclick="impSw()">Impor siswa</button>${S.nf?'<button class="btn ghost" style="color:var(--er)" onclick="delKls()">Hapus kelas</button>':''}</div></div>`+
+  `<button class="btn ghost" onclick="swPdfM()">Unduh PDF</button><button class="btn ghost" onclick="impSw()">Impor siswa</button>${S.nf?'<button class="btn ghost" style="color:var(--er)" onclick="delKls()">Hapus kelas</button>':''}</div></div>`+
   `<p class="mu" style="margin:8px 0 0">NISN wajib diisi agar wali murid bisa masuk ke aplikasi menggunakan NISN anak (tanpa kata sandi).</p>`+
   (isMob()
     ?`<div class="mcl" style="margin-top:12px">`+(list.map(s=>`<div class="mcard"><div class="mc-h"><div><b>${esc(s.n)}</b><div class="mc-sub">Kelas ${esc(s.k)} · NISN ${s.nisn?esc(s.nisn):'<span style="color:var(--er)">belum diisi</span>'}</div></div></div><div class="mc-f" style="justify-content:flex-end"><span class="acts">${ib('',`editSw('${s.id}')`,'edit','Ubah siswa')}${ib('del',`delSw('${s.id}')`,'trash','Hapus siswa')}</span></div></div>`).join('')||'<div class="mcard"><span class="mu">Belum ada siswa. Klik Impor siswa.</span></div>')+`</div>`
     :`<div class="tw" style="margin-top:12px"><table class="tu"><thead><tr><th>No<th>NISN<th>Nama<th>Kelas<th>Aksi</thead><tbody>`+
   (list.map((s,i)=>`<tr><td>${i+1}<td>${s.nisn?esc(s.nisn):'<span class="mu">-</span>'}<td><b>${esc(s.n)}</b><td>${esc(s.k)}<td><div class="acts">${ib('',`editSw('${s.id}')`,'edit','Ubah siswa')}${ib('del',`delSw('${s.id}')`,'trash','Hapus siswa')}</div>`).join('')||'<tr><td colspan="5" class="mu">Belum ada siswa. Klik Impor siswa.</tr>')+
   `</tbody></table></div>`)+`</div>`;
+}
+/* Unduh daftar siswa (PDF potret A4): satu atau beberapa kelas, tiap kelas mulai di halaman baru */
+function swPdfM(){
+  const kl=kelasList();
+  if(!kl.length)return toast('Belum ada data siswa','er');
+  const sel=kl.indexOf(S.nf)>=0?[S.nf]:[];
+  modal('Unduh daftar siswa (PDF)',
+    `<p class="mu" style="margin-top:0">Pilih satu atau beberapa kelas. Setiap kelas dicetak pada halaman baru, ukuran A4 potret, berurutan sesuai abjad nama.</p>`+
+    `<div class="row" style="gap:8px 16px;flex-wrap:wrap;margin:8px 0">${klBoxes('swp',kl,sel)}</div>`+
+    `<label style="display:flex;align-items:center;gap:6px;font-weight:500;margin-top:12px;cursor:pointer"><input type="checkbox" id="swp-ket">Tambah kolom Keterangan (kosong, untuk catatan)</label>`,
+    [CANCEL,{t:'Unduh PDF',c:'pri',f:()=>{
+      const k=klRead('swp');
+      if(!k.length)return toast('Pilih minimal satu kelas','er');
+      const ket=!!($('swp-ket')&&$('swp-ket').checked);
+      closeM();swPdf(k,ket);
+    }}]);
+}
+function swPdf(kls,ket){
+  if(needP(swPdf,arguments))return;
+  kls=(kls||[]).slice().sort((a,b)=>String(a).localeCompare(String(b),'id',{numeric:true}));
+  const grp=kls.map(k=>({k:k,l:SW.filter(s=>s.k===k).sort((a,b)=>String(a.n).localeCompare(String(b.n),'id'))})).filter(g=>g.l.length);
+  if(!grp.length)return toast('Kelas yang dipilih belum memiliki siswa','er');
+  const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  const widths=ket?[12,36,92,50]:[12,40,138];
+  const head=ket?['No','NISN','Nama Siswa','Keterangan']:['No','NISN','Nama Siswa'];
+  const cs={};widths.forEach((w,i)=>{cs[i]={cellWidth:w};});
+  cs[0].halign='center';cs[1].halign='center';
+  grp.forEach((g,gi)=>{
+    if(gi>0)doc.addPage();
+    let y=kopPdf(doc,W,10,10)+8;
+    doc.setFont('times','bold');doc.setFontSize(13);doc.setTextColor(0,0,0);
+    doc.text('DAFTAR SISWA',W/2,y,{align:'center'});
+    y+=6;doc.setFont('times','normal');doc.setFontSize(10.5);doc.setTextColor(71,85,105);
+    doc.text('Kelas '+g.k+' \u00b7 '+g.l.length+' siswa',W/2,y,{align:'center'});
+    doc.setTextColor(0,0,0);
+    doc.autoTable({startY:y+5,head:[head],
+      body:g.l.map((s,i)=>ket?[i+1,s.nisn||'-',s.n,'']:[i+1,s.nisn||'-',s.n]),
+      theme:'grid',margin:{left:10,right:10,top:12,bottom:16},
+      styles:{font:'times',fontSize:10.5,cellPadding:{top:1.6,bottom:1.6,left:2.5,right:2.5},overflow:'linebreak',valign:'middle',lineColor:[150,150,150],lineWidth:.2,textColor:[0,0,0],minCellHeight:7},
+      headStyles:{font:'times',fontStyle:'bold',fillColor:[230,230,230],textColor:[0,0,0],halign:'center',valign:'middle'},
+      alternateRowStyles:{fillColor:[247,248,250]},
+      columnStyles:cs,
+      didParseCell:d=>{if(d.section==='head')d.cell.styles.halign='center';}});
+  });
+  const n=doc.internal.getNumberOfPages(),d=new Date();
+  const cetak='Dicetak: '+d.getDate()+' '+BLN[d.getMonth()]+' '+d.getFullYear();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);doc.setFont('times','italic');doc.setFontSize(8.5);doc.setTextColor(100,116,139);
+    doc.text(cetak,10,H-8);
+    doc.text('Halaman '+i+' dari '+n,W-10,H-8,{align:'right'});
+  }
+  const safe=x=>String(x).replace(/[\\\/:*?"<>|]+/g,'-').trim();
+  doc.save('daftar-siswa-'+(grp.length===1?safe(grp[0].k):grp.length+'-kelas')+'.pdf');
+  toast('PDF daftar siswa diunduh ('+grp.length+' kelas, '+grp.reduce((a,g)=>a+g.l.length,0)+' siswa)','ok');
 }
 function aNilaiMp(){
   const tagKelas=m=>`<span class="tag">${m.kl&&m.kl.length?esc(m.kl.join(', ')):'Semua kelas'}</span>`+(kkmOf(m)!==null?`<span class="tag">KKM ${kkmOf(m)}</span>`:'');
