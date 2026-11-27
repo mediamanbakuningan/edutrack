@@ -3775,7 +3775,7 @@ function sqOmml(n){
   return all(n);
 }
 function sqText(p){
-  let s='',img=false;
+  let s='',img=false;const ids=[];
   (function w(e){
     sqKids(e).forEach(c=>{
       const l=c.localName;
@@ -3784,11 +3784,13 @@ function sqText(p){
       else if(l==='tab')s+='\t';
       else if(l==='br'||l==='cr')s+='\n';
       else if(l==='oMath')s+=sqOmml(c);
-      else if(l==='drawing'||l==='pict'||l==='object')img=true;
+      else if(l==='drawing'||l==='pict'||l==='object'){img=true;
+        Array.prototype.forEach.call(c.getElementsByTagNameNS('*','blip'),b=>{const r=b.getAttribute('r:embed');if(r)ids.push(r);});
+        Array.prototype.forEach.call(c.getElementsByTagNameNS('*','imagedata'),b=>{const r=b.getAttribute('r:id');if(r)ids.push(r);});}
       else w(c);
     });
   })(p);
-  return{t:s,img};
+  return{t:s,img,ids};
 }
 function sqParseXml(docXml,numXml,DP,hdr){
   DP=DP||new DOMParser();
@@ -3813,7 +3815,7 @@ function sqParseXml(docXml,numXml,DP,hdr){
   }
   function walk(parent){
     sqKids(parent).forEach(c=>{
-      if(c.localName==='p'){const x=sqText(c);blocks.push({t:x.t.replace(/\u00a0/g,' '),img:x.img,nf:numFmt(c)});}
+      if(c.localName==='p'){const x=sqText(c);blocks.push({t:x.t.replace(/\u00a0/g,' '),img:x.img,ids:x.ids,nf:numFmt(c)});}
       else if(c.localName==='tbl')sqKids(c).filter(r=>r.localName==='tr').forEach(r=>{
         const cells=sqKids(r).filter(x=>x.localName==='tc');
         const nested=cells.some(x=>sqKids(x).some(y=>y.localName==='tbl'));
@@ -3821,7 +3823,7 @@ function sqParseXml(docXml,numXml,DP,hdr){
         else{
           const xs=cells.map(x=>sqKids(x).filter(y=>y.localName==='p').map(sqText)),
             tx=xs.map(a=>a.map(z=>z.t).join(' ').trim()).filter(Boolean);
-          blocks.push({t:tx.join('\t'),img:xs.some(a=>a.some(z=>z.img)),nf:null,row:true,lead:!xs[0].map(z=>z.t).join('').trim()});
+          blocks.push({t:tx.join('\t'),img:xs.some(a=>a.some(z=>z.img)),ids:xs.reduce((a,c)=>a.concat(c.reduce((b,z)=>b.concat(z.ids||[]),[])),[]),nf:null,row:true,lead:!xs[0].map(z=>z.t).join('').trim()});
         }
       });
       else if(c.localName==='sdt'||c.localName==='sdtContent')walk(c);
@@ -3836,7 +3838,7 @@ function sqParseXml(docXml,numXml,DP,hdr){
     const s=t.replace(/^([IVX]+|[A-D])\s*[.)]\s*/,'').trim();
     return HEAD.test(s)?jenisOf(s):null;
   };
-  const meta={},res={meta:meta,soal:[],petunjuk:{},warn:[],kop:[],kopImg:false};
+  const meta={},res={meta:meta,soal:[],petunjuk:{},warn:[],kop:[],kopImg:false,kopIds:[]};
   const kopL=(hdr||[]).slice();
   let sec=null,key=false,cur=null,count=0,ksec=null,kcur=null;
   const KEYS={};
@@ -3845,20 +3847,20 @@ function sqParseXml(docXml,numXml,DP,hdr){
     if(b.t.indexOf('\n')<0){ex.push(b);return;}
     const ls=b.t.split('\n');
     if(ls.some(l=>l.trim().length<=160&&/^\s*(([IVX]+|[A-D])\s*[.)]\s*)?(soal\s+)?(pilihan\s*ganda|benar\s*[-\u2013\u2014\/]?\s*salah|uraian|kunci\s+jawaban)/i.test(l)))
-      ls.forEach((l,i)=>ex.push({t:l,img:b.img&&i===0,nf:i===0?b.nf:null,row:b.row,lead:b.lead}));
+      ls.forEach((l,i)=>ex.push({t:l,img:b.img&&i===0,ids:i===0?b.ids:[],nf:i===0?b.nf:null,row:b.row,lead:b.lead}));
     else ex.push(b);
   });
   ex.forEach(b=>{
     const t=b.t.replace(/[ \t]+$/,''),tt=t.trim();
     if(!tt&&!b.img)return;
-    if(!sec&&!key&&!tt&&b.img){res.kopImg=true;return;}
+    if(!sec&&!key&&!tt&&b.img){res.kopImg=true;res.kopIds.push.apply(res.kopIds,b.ids||[]);return;}
     if(/^kunci\s+jawaban/i.test(tt)){key=true;sec=null;cur=null;return;}
     const h=heading(tt);
     if(h){sec=h;ksec=h;kcur=null;cur=null;return;}
     if(!key){
       if(!sec){
         if(tt)kopL.push(tt.replace(/[ \t]*\t[ \t]*/g,'   '));
-        if(b.img)res.kopImg=true;
+        if(b.img){res.kopImg=true;res.kopIds.push.apply(res.kopIds,b.ids||[]);}
         tt.split('|').forEach(x=>{
           const m=x.trim().match(/^(mata\s*pelajaran|mapel|kelas|waktu)\s*:\s*(.*)$/i);
           if(m)meta[/kelas|waktu/i.test(m[1])?m[1].toLowerCase():'mapel']=m[2].trim();
@@ -3934,6 +3936,21 @@ function sqParseXml(docXml,numXml,DP,hdr){
   
   return res;
 }
+/* Perkecil gambar (maks. lebar 700 px, JPEG) agar ringan dikirim & muat di Google Form */
+function sqImgScale(b64,mime,maxW){
+  return new Promise(ok=>{
+    const im=new Image();
+    im.onload=()=>{try{
+      if(!im.naturalWidth)return ok(null);
+      const w=Math.min(im.naturalWidth,maxW||700),hh=Math.max(1,Math.round(im.naturalHeight*w/im.naturalWidth)),c=document.createElement('canvas');
+      c.width=w;c.height=hh;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,hh);x.drawImage(im,0,0,w,hh);
+      let d=c.toDataURL('image/jpeg',.9);if(d.length>700000)d=c.toDataURL('image/jpeg',.7);
+      ok({d:d.split(',')[1],t:'image/jpeg'});
+    }catch(e){ok(null);}};
+    im.onerror=()=>ok(null);
+    im.src='data:'+(mime||'image/png')+';base64,'+b64;
+  });
+}
 async function soalParseDocx(buf){
   if(typeof JSZip==='undefined')throw new Error('Pustaka ZIP belum termuat');
   const z=await JSZip.loadAsync(buf),d=z.file('word/document.xml');
@@ -3941,14 +3958,44 @@ async function soalParseDocx(buf){
   const n=z.file('word/numbering.xml');
   const hdr=[],seenH={},DP=new DOMParser();
   const hf=Object.keys(z.files).filter(k=>/^word\/header\d*\.xml$/.test(k)).sort();
+  let hImg=null;
   for(const k of hf){
     const x=DP.parseFromString(await z.file(k).async('string'),'text/xml');
     Array.prototype.forEach.call(x.getElementsByTagNameNS('*','p'),p=>{
       const t=sqText(p).t.replace(/\s+/g,' ').trim();
       if(t&&!/^(halaman|page)\b/i.test(t)&&!/^\d+$/.test(t)&&!seenH[t]){seenH[t]=1;hdr.push(t);}
     });
+    if(!hImg){
+      const b=x.getElementsByTagNameNS('*','blip')[0],v=x.getElementsByTagNameNS('*','imagedata')[0],id=(b&&b.getAttribute('r:embed'))||(v&&v.getAttribute('r:id'));
+      if(id)hImg={part:k,id:id};
+    }
   }
-  return sqParseXml(await d.async('string'),n?await n.async('string'):'',DP,hdr);
+  const res=sqParseXml(await d.async('string'),n?await n.async('string'):'',DP,hdr);
+  res.kopGbr=null;
+  if(hImg)res.kopImg=true;
+  /* gambar kop paling atas: gambar di header halaman lebih dulu, jika tidak ada ambil gambar pertama sebelum bagian soal */
+  try{
+    const relOf=async part=>{
+      const f=z.file(part.replace(/([^\/]+)$/,'_rels/$1.rels'));if(!f)return{};
+      const x=DP.parseFromString(await f.async('string'),'text/xml'),m={};
+      Array.prototype.forEach.call(x.getElementsByTagNameNS('*','Relationship'),r=>{m[r.getAttribute('Id')]=r.getAttribute('Target');});
+      return m;
+    };
+    let src=null;
+    if(hImg){const m=await relOf(hImg.part);src=m[hImg.id]||null;}
+    if(!src&&res.kopIds.length){const m=await relOf('word/document.xml');src=m[res.kopIds[0]]||null;}
+    if(src){
+      const parts=(src.charAt(0)==='/'?src.slice(1):'word/'+src).split('/'),pth=[];
+      parts.forEach(s=>{if(s==='..')pth.pop();else if(s&&s!=='.')pth.push(s);});
+      const f=z.file(pth.join('/'));
+      if(f){
+        const ext=(pth[pth.length-1].split('.').pop()||'').toLowerCase();
+        const mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',bmp:'image/bmp',webp:'image/webp'}[ext];
+        if(mime)res.kopGbr=await sqImgScale(await f.async('base64'),mime,700);
+      }
+    }
+  }catch(e){res.kopGbr=null;}
+  return res;
 }
 /* ===== Impor soal Word → pratinjau & koreksi ===== */
 let SIM=null;
@@ -3970,7 +4017,7 @@ function suImp(pid,fid){
   }).then(x=>{
     if(!x.res.soal.length)return toast('Tidak ada soal yang terbaca dari berkas ini.','er');
     const up=(SUL||[]).find(t=>t.id===pid);
-    SIM={pid:pid,fid:fid,uploadId:pid,paketId:'',nama:(up&&up.t)||String(x.i.n||'').replace(/\.docx$/i,''),nm:x.i.n,meta:x.res.meta,kop:(x.res.kop||[]).join('\n'),kopImg:!!x.res.kopImg,soal:x.res.soal.map(simNorm)};
+    SIM={pid:pid,fid:fid,uploadId:pid,paketId:'',nama:(up&&up.t)||String(x.i.n||'').replace(/\.docx$/i,''),nm:x.i.n,meta:x.res.meta,kop:(x.res.kop||[]).join('\n'),kopImg:!!x.res.kopImg,kopGbr:x.res.kopGbr||null,kopAda:false,kopGbrDel:false,soal:x.res.soal.map(simNorm)};
     simShow();
   }).catch(e=>toast(e.message||'Gagal membaca berkas','er'));
 }
@@ -4005,11 +4052,32 @@ function simCard(i){
     `<textarea class="in" rows="3" style="margin:8px 0" aria-label="Teks soal" oninput="simF(${i},'teks',this.value)">${esc(q.teks)}</textarea>${b}<div id="sqw-${i}" style="margin-top:6px">${simWarnHTML(q)}</div></div>`;
 }
 const simList=()=>{const e=$('sim-list');if(e)e.innerHTML=SIM.soal.map((q,i)=>simCard(i)).join('');simSum();};
+function simKgHTML(){
+  const b=(t,f)=>`<button type="button" class="btn ghost sm" onclick="${f}">${t}</button>`;
+  let x;
+  if(SIM.kopGbr)x=`<div><img src="data:${SIM.kopGbr.t};base64,${SIM.kopGbr.d}" alt="Gambar kop" style="max-width:100%;max-height:130px;border:1px solid var(--bd,#ddd);border-radius:6px;background:#fff"></div><div class="mc-sub">Gambar ini menjadi kop paling atas pada Google Form.</div>`;
+  else if(SIM.kopAda)x='<div class="mc-sub">Gambar kop sudah tersimpan pada paket ini.</div>';
+  else x=`<div class="mc-sub">${SIM.kopImg?'Ada gambar pada kop berkas Word, tetapi formatnya tidak dapat dibaca. Pilih gambar kop secara manual.':'Belum ada gambar kop.'}</div>`;
+  return`<label style="margin-bottom:4px">Gambar kop (opsional, JPG/PNG)</label>${x}<div class="row" style="gap:6px;margin-top:4px;flex-wrap:wrap"><label class="btn ghost sm" style="margin:0;cursor:pointer">${SIM.kopGbr||SIM.kopAda?'Ganti gambar':'Pilih gambar'}<input type="file" accept="image/png,image/jpeg,image/gif" style="display:none" onchange="simKgPick(this)"></label>${SIM.kopGbr||SIM.kopAda?b('Hapus gambar','simKgDel()'):''}</div>`;
+}
+function simKgRef(){const e=$('sim-kg');if(e)e.innerHTML=simKgHTML();}
+function simKgDel(){if(!SIM)return;if(SIM.kopAda){SIM.kopGbrDel=true;SIM.kopAda=false;}SIM.kopGbr=null;simKgRef();}
+function simKgPick(inp){
+  const f=inp.files&&inp.files[0];inp.value='';
+  if(!f||!SIM)return;
+  if(!/^image\/(png|jpeg|gif)$/.test(f.type))return toast('Gunakan gambar JPG, PNG, atau GIF','er');
+  const rd=new FileReader();
+  rd.onload=()=>sqImgScale(String(rd.result).split(',')[1],f.type,700).then(g=>{
+    if(!g)return toast('Gambar tidak dapat dibaca','er');
+    if(!SIM)return;SIM.kopGbr=g;SIM.kopGbrDel=false;simKgRef();
+  });
+  rd.readAsDataURL(f);
+}
 function simShow(){
   const m=SIM.meta||{};
   modal('Pratinjau impor soal',
     `<p class="mu" style="margin-top:0">${esc(SIM.nm)}${m.mapel?' · '+esc(m.mapel):''}${m.kelas?' · Kelas '+esc(m.kelas):''}. Periksa tipe soal, opsi, dan isi kunci jawaban, lalu klik Simpan ke bank soal.</p>`+
-    `<label for="sim-nm">Nama paket soal *</label><input id="sim-nm" class="in" maxlength="150" value="${esc(SIM.nama||'')}" oninput="SIM.nama=this.value" style="margin-bottom:10px"><label for="sim-kop">Kop / identitas soal (ikut tampil di Google Form)</label><textarea id="sim-kop" class="in" rows="4" maxlength="1500" placeholder="Satu baris per baris kop, mis. nama madrasah, jenis ujian, mapel, kelas, waktu" oninput="SIM.kop=this.value" style="margin-bottom:4px">${esc(SIM.kop||'')}</textarea><div class="mc-sub" style="margin-bottom:10px">${SIM.kopImg?'Logo/gambar pada kop tidak ikut terimpor, hanya teksnya. ':''}Periksa dan rapikan teks kop di atas.</div><div id="sim-sum"></div>`+
+    `<label for="sim-nm">Nama paket soal *</label><input id="sim-nm" class="in" maxlength="150" value="${esc(SIM.nama||'')}" oninput="SIM.nama=this.value" style="margin-bottom:10px"><label for="sim-kop">Kop / identitas soal (ikut tampil di Google Form)</label><textarea id="sim-kop" class="in" rows="4" maxlength="1500" placeholder="Satu baris per baris kop, mis. nama madrasah, jenis ujian, mapel, kelas, waktu" oninput="SIM.kop=this.value" style="margin-bottom:4px">${esc(SIM.kop||'')}</textarea><div class="mc-sub" style="margin-bottom:10px">Periksa dan rapikan teks kop di atas.</div><div id="sim-kg" style="margin-bottom:10px">${simKgHTML()}</div><div id="sim-sum"></div>`+
     `<div id="sim-list" style="max-height:58vh;overflow:auto">${SIM.soal.map((q,i)=>simCard(i)).join('')}</div>`+
     `<button type="button" class="btn ghost sm" style="margin-top:8px" onclick="simAddQ()">+ Tambah soal</button>`,
     [{t:'Tutup',c:'ghost',f:()=>{SIM=null;closeM();}},{t:'Unduh JSON',c:'ghost',f:simJson},{t:'Simpan ke bank soal',c:'pri',f:simSave}]);
@@ -4048,7 +4116,7 @@ function simSave(){
   const bad=SIM.soal.filter(q=>simWarns(q).some(w=>!/gambar|tabel|Mirip|Kunci di berkas/.test(w))).length;
   if(bad)return toast(bad+' soal belum lengkap (teks, opsi, atau kunci). Lihat tulisan merah pada kartu soal.','er');
   SIMBUSY=true;
-  rpc('soalPaketSave',{id:SIM.paketId||'',uploadId:SIM.uploadId||'',nama:nama,kop:SIM.kop||'',soal:simBuild()}).then(r=>{
+  rpc('soalPaketSave',{id:SIM.paketId||'',uploadId:SIM.uploadId||'',nama:nama,kop:SIM.kop||'',kopGbr:SIM.kopGbr||undefined,kopGbrDel:!!SIM.kopGbrDel,soal:simBuild()}).then(r=>{
     SIMBUSY=false;SIM=null;closeM();
     toast('Paket soal tersimpan ('+((r.info&&r.info.n)||0)+' soal)','ok');
     SPKK='';spkLoad();
@@ -4197,7 +4265,7 @@ function spkHTML(){
 function spkOpen(id){
   rpc('soalPaketGet',{id:id}).then(r=>{
     const x=r.info||{};
-    SIM={pid:'',fid:'',uploadId:'',paketId:x.id,nama:x.nm,nm:x.nm,meta:{mapel:x.mp,kelas:x.kl},kop:x.kop||'',kopImg:false,soal:(x.soal||[]).map(simNorm)};
+    SIM={pid:'',fid:'',uploadId:'',paketId:x.id,nama:x.nm,nm:x.nm,meta:{mapel:x.mp,kelas:x.kl},kop:x.kop||'',kopImg:false,kopGbr:null,kopAda:!!x.ki,kopGbrDel:false,soal:(x.soal||[]).map(simNorm)};
     simShow();
   }).catch(e=>toast(e.message,'er'));
 }
