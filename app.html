@@ -1420,7 +1420,7 @@ function gsCall(action,token,p){
   return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,token:token||null,p:p||{}})})
     .then(res=>{if(!res.ok)throw new Error('Koneksi gagal ('+res.status+')');lpBump(70);return res.json();}).then(d=>{lpBump(90);return d;});
 }
-const SVW={};"saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
+const SVW={};"soalFormNilai saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
 const SVP={v:0,t:0,n:0,h:0};
 const svLabel=a=>a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
 function svEl(){
@@ -4058,9 +4058,123 @@ function spkListHTML(){
     SPKL.map(x=>{
       const own=S.user.r==='GURU'&&x.g===S.user.id,del=S.user.r==='ADMIN'||own;
       return`<div class="att-i"><span class="att-n" title="${esc(x.nm)}"><b>${esc(x.nm)}</b><span class="mc-sub">${x.n} soal${S.user.r!=='GURU'?' · '+esc(x.gn):''} · ${timeShow(x.u)}</span></span><span class="acts">`+
-        (can?`<button type="button" class="btn ghost sm" onclick="spkOpen('${esc(x.id)}')">Buka</button>`:'')+
+        (can?(x.fu?
+          `${bd(x.fs||'BUKA')}<button type="button" class="btn ghost sm" onclick="spkCopy('${esc(x.id)}')">Salin tautan</button><button type="button" class="btn ghost sm" onclick="spkStatus('${esc(x.id)}')">${x.fs==='TUTUP'?'Buka Form':'Tutup Form'}</button><button type="button" class="btn pri sm" onclick="spkHasil('${esc(x.id)}')">Hasil &amp; Nilai</button>`:
+          `<button type="button" class="btn pri sm" onclick="spkForm('${esc(x.id)}')">Buat Form</button>`)+
+          `<button type="button" class="btn ghost sm" onclick="spkOpen('${esc(x.id)}')">${x.fu?'Lihat':'Buka'}</button>`:'')+
         (del?`<button type="button" class="btn ghost sm" style="color:var(--er)" onclick="spkDel('${esc(x.id)}')">Hapus</button>`:'')+`</span></div>`;
     }).join('');
+}
+
+/* ===== Google Form dari paket soal + penarikan hasil ke menu Nilai ===== */
+function spkForm(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  confirmM('Buat Google Form','Form untuk paket "'+x.nm+'" ('+x.n+' soal) akan dibuat atas nama pemilik skrip. Siswa mengisi tanpa login dan wajib menulis NISN. Setelah Form dibuat, isi soal paket tidak dapat diubah lagi. Lanjutkan?',
+    ()=>rpc('soalFormBuat',{paketId:id}).then(r=>{
+      const i=r.info||{};toast(i.ada?'Form untuk paket ini sudah ada':'Form berhasil dibuat','ok');
+      SPKK='';spkLoad();
+      if(i.url)spkLink(i.url);
+    }).catch(e=>toast(e.message,'er')));
+}
+function spkLink(url){
+  modal('Tautan Form ujian',`<p class="mu" style="margin-top:0">Bagikan tautan ini kepada siswa. Siswa diminta mengisi NISN pada pertanyaan pertama.</p><input id="spk-url" class="in" readonly value="${esc(url)}" onfocus="this.select()"><p class="mu"><a href="${esc(url)}" target="_blank" rel="noopener">Buka Form di tab baru</a></p>`,
+    [{t:'Tutup',c:'ghost',f:()=>closeM()},{t:'Salin',c:'pri',f:()=>{
+      const e=$('spk-url');if(!e)return;e.select();
+      (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Tautan disalin','ok')).catch(()=>{try{document.execCommand('copy');toast('Tautan disalin','ok');}catch(x){toast('Salin manual dari kotak tautan','er');}});
+    }}]);
+}
+function spkCopy(id){const x=(SPKL||[]).find(t=>t.id===id);if(x&&x.fu)spkLink(x.fu);}
+function spkStatus(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  const buka=x.fs==='TUTUP';
+  confirmM(buka?'Buka Form':'Tutup Form',buka?'Form akan kembali menerima jawaban siswa. Lanjutkan?':'Form tidak lagi menerima jawaban baru. Jawaban yang sudah masuk tetap aman. Lanjutkan?',
+    ()=>rpc('soalFormStatus',{paketId:id,buka:buka}).then(()=>{toast(buka?'Form dibuka':'Form ditutup','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er')));
+}
+let HSL=null;
+const hsNum=v=>{const t=String(v==null?'':v).trim().replace(',','.');return t===''||isNaN(+t)?null:+t;};
+function spkHasil(id){
+  rpc('soalFormHasil',{paketId:id}).then(r=>{
+    const h=r.info||{};
+    const gur=S.user.r==='GURU';
+    const mp=MP.find(m=>(!gur||mpMine(m,S.user.id))&&String(m.n).trim().toLowerCase()===String(h.mp||'').trim().toLowerCase());
+    const kls=[...new Set((h.baris||[]).map(b=>b.kelas))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
+    HSL={id:id,h:h,mp:mp?mp.id:'',kl:kls.length===1?kls[0]:'',kode:'',ur:{},kls:kls};
+    spkHasilShow();
+  }).catch(e=>toast(e.message,'er'));
+}
+function hsKodeList(){const o=[];nj().forEach(j=>{for(let i=1;i<=j.n;i++)o.push({k:j.k+'-'+i,l:j.n>1?j.l+' '+i:j.l,sc:skalaOf(j)});});return o;}
+function hsRowNilai(b){
+  const H=HSL.h,k=hsKodeList().find(x=>x.k===HSL.kode);if(!k)return null;
+  const tot=(H.maxAuto||0)+(H.maxUr||0);if(!(tot>0))return null;
+  let ur=0;
+  for(const x of H.ur){const v=hsNum(((HSL.ur[b.sid]||{})[x.id]));if(v===null||v<0||v>x.p)return null;ur+=v;}
+  return Math.round((k.sc.mn+(b.auto+ur)/tot*(k.sc.mx-k.sc.mn))*100)/100;
+}
+function hsRows(){return(HSL.h.baris||[]).filter(b=>b.kelas===HSL.kl);}
+function hsTblHTML(){
+  const H=HSL.h,rows=hsRows();
+  if(!HSL.kl)return'<p class="mu">Pilih kelas untuk menampilkan daftar siswa.</p>';
+  if(!rows.length)return'<p class="mu">Belum ada siswa kelas '+esc(HSL.kl)+' yang mengirim jawaban.</p>';
+  const thU=H.ur.map(x=>`<th class="ctr" title="${esc(x.t)}">Uraian ${x.n}<br><span class="mu">maks ${x.p}</span></th>`).join('');
+  const body=rows.map((b,i)=>{
+    const tdU=H.ur.map((x,j)=>{
+      const v=((HSL.ur[b.sid]||{})[x.id]);
+      return`<td style="min-width:150px"><div class="mu" style="max-width:240px;max-height:72px;overflow:auto;white-space:pre-wrap">${esc(b.uj[j]||'(tidak dijawab)')}</div><input type="number" class="in" min="0" max="${x.p}" step="any" inputmode="decimal" style="width:72px;padding:6px;text-align:center;margin-top:4px" value="${esc(v==null?'':v)}" oninput="hsUr('${esc(b.sid)}','${esc(x.id)}',this.value)" aria-label="Skor uraian ${x.n} ${esc(b.nama)}"></td>`;
+    }).join('');
+    return`<tr><td>${i+1}</td><td class="nw"><b>${esc(b.nama)}</b>${b.dup>1?`<div class="mu">mengirim ${b.dup}×, dihitung yang terakhir</div>`:''}</td><td class="ctr">${b.auto}</td>${tdU}<td class="ctr"><b id="hn-${esc(b.sid)}">${hsNilaiTxt(b)}</b></td></tr>`;
+  }).join('');
+  return`<div class="tw" style="max-height:46vh;overflow:auto"><table><thead><tr><th>No</th><th>Siswa</th><th class="ctr">Skor otomatis<br><span class="mu">maks ${H.maxAuto}</span></th>${thU}<th class="ctr">Nilai</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function hsNilaiTxt(b){
+  if(!HSL.kode)return'-';
+  const v=hsRowNilai(b);
+  return v===null?'<span class="mu">menunggu</span>':String(v);
+}
+function hsUr(sid,qid,v){
+  (HSL.ur[sid]=HSL.ur[sid]||{})[qid]=v;
+  const b=(HSL.h.baris||[]).find(x=>x.sid===sid),e=$('hn-'+sid);
+  if(b&&e)e.innerHTML=hsNilaiTxt(b);
+}
+function hsSet(f,v){HSL[f]=v;const t=$('hs-t');if(t)t.innerHTML=hsTblHTML();}
+function spkHasilShow(){
+  const H=HSL.h,gur=S.user.r==='GURU';
+  const mps=MP.filter(m=>!gur||mpMine(m,S.user.id));
+  const kodes=hsKodeList();
+  const info=`${bd(H.status||'BUKA')} <span class="mu">${(H.baris||[]).length} siswa terbaca · ${H.belum} siswa belum mengirim · skor maksimum ${Math.round(((H.maxAuto||0)+(H.maxUr||0))*100)/100}${H.ur.length?' (termasuk '+H.ur.length+' uraian yang dinilai guru)':''}</span>`;
+  const tak=(H.tak||[]).length?`<p class="mu" style="color:var(--er)">${H.tak.length} jawaban dengan NISN yang tidak dikenali tidak ikut dihitung: ${esc(H.tak.map(t=>t.nisn||'(kosong)').join(', '))}.</p>`:'';
+  const tn=H.tanpaNisn?`<p class="mu">${H.tanpaNisn} siswa pada kelas paket ini belum memiliki NISN di data siswa, sehingga tidak dapat dicocokkan.</p>`:'';
+  const sel=(id,lab,opts,cur,fn,dis)=>`<select id="${id}" class="in" style="width:auto" aria-label="${lab}" onchange="${fn}" ${dis?'disabled':''}><option value="">${lab}</option>${opts}</select>`;
+  modal('Hasil Form · '+H.nm,
+    `<div style="margin-bottom:8px">${info}</div>${tak}${tn}`+
+    `<div class="row" style="margin:8px 0;flex-wrap:wrap">`+
+      sel('hs-m','Mapel tujuan',mps.map(m=>`<option value="${esc(m.id)}" ${m.id===HSL.mp?'selected':''}>${esc(m.n)}</option>`).join(''),HSL.mp,"hsSet('mp',this.value)")+
+      sel('hs-k','Kelas',HSL.kls.map(k=>`<option value="${esc(k)}" ${k===HSL.kl?'selected':''}>${esc(k)}</option>`).join(''),HSL.kl,"hsSet('kl',this.value)")+
+      sel('hs-j','Simpan sebagai penilaian',kodes.map(k=>`<option value="${esc(k.k)}" ${k.k===HSL.kode?'selected':''}>${esc(k.l)} (skala ${k.sc.lab})</option>`).join(''),HSL.kode,"hsSet('kode',this.value)")+
+    `</div><div id="hs-t">${hsTblHTML()}</div>`+
+    `<p class="mu">Nilai = skor siswa ÷ skor maksimum × skala penilaian. ${H.ur.length?'Siswa yang skor uraiannya belum diisi dilewati. ':''}Nilai yang sudah ada pada kolom tujuan akan diganti.</p>`,
+    [{t:'Tutup',c:'ghost',f:()=>{HSL=null;closeM();}},{t:'Muat ulang jawaban',c:'ghost',f:()=>{const keep=HSL;rpc('soalFormHasil',{paketId:keep.id}).then(r=>{keep.h=r.info||keep.h;keep.kls=[...new Set((keep.h.baris||[]).map(b=>b.kelas))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));spkHasilShow();}).catch(e=>toast(e.message,'er'));}},{t:'Simpan ke Nilai',c:'pri',f:spkHasilSimpan}]);
+}
+function spkHasilSimpan(){
+  if(!HSL)return;
+  if(!HSL.mp)return toast('Pilih mapel tujuan','er');
+  if(!HSL.kl)return toast('Pilih kelas','er');
+  if(!HSL.kode)return toast('Pilih penilaian tujuan','er');
+  const rows=hsRows();
+  if(!rows.length)return toast('Belum ada jawaban siswa pada kelas ini','er');
+  const siap=rows.filter(b=>hsRowNilai(b)!==null).length,lewat=rows.length-siap;
+  if(!siap)return toast('Skor uraian belum diisi untuk siswa mana pun','er');
+  const mp=MP.find(m=>m.id===HSL.mp),kd=hsKodeList().find(x=>x.k===HSL.kode);
+  modal('Simpan ke menu Nilai',`<p class="mu" style="margin-top:0">Nilai ${siap} siswa kelas ${esc(HSL.kl)} akan disimpan ke <b>${esc(mp?mp.n:'')}</b> · <b>${esc(kd?kd.l:'')}</b>.${lewat?` ${lewat} siswa dilewati karena skor uraian belum lengkap.`:''} Nilai yang sudah ada pada kolom itu akan diganti. Lanjutkan?</p>`,
+    [{t:'Kembali',c:'ghost',f:()=>spkHasilShow()},{t:'Ya, simpan',c:'pri',f:()=>{
+      const ur={};rows.forEach(b=>{if(HSL.h.ur.length)ur[b.sid]=HSL.ur[b.sid]||{};});
+      const keep=HSL;
+      rpc('soalFormNilai',{paketId:keep.id,mapelId:keep.mp,kelas:keep.kl,kode:keep.kode,ur:ur}).then(r=>{
+        const i=r.info||{};
+        toast('Nilai '+(i.siswa||0)+' siswa tersimpan ke menu Nilai'+(i.lewat?' ('+i.lewat+' dilewati)':''),'ok');
+        closeM();HSL=null;
+        if((S.user.r==='GURU'?S.view:S.tab)==='nilai'&&S.nm===keep.mp&&S.nk===keep.kl)nilLoad();
+      }).catch(e=>{toast(e.message,'er');spkHasilShow();});
+    }}]);
 }
 function spkHTML(){
   if(SPKK!==S.sm+'|'+S.sk&&!SPKB){SPKL=null;setTimeout(spkLoad,0);}
