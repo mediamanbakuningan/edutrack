@@ -5329,10 +5329,9 @@ function spPdf(sid,sp){
   let y=kopPdf(doc,W,14,14)+7;
   doc.setFont('times','bold');doc.setFontSize(13);doc.setTextColor(0,0,0);
   doc.text('SURAT PERJANJIAN SISWA',W/2,y,{align:'center'});y+=5.5;
-  doc.setFont('times','normal');doc.setFontSize(10);doc.setTextColor(90,90,90);
-  doc.text('Nomor: '+(sp||'SP')+'    ·    Tanggal: '+tglS(today()),W/2,y,{align:'center'});y+=3;
-  doc.setDrawColor(0,0,0);doc.setLineWidth(.3);doc.line(14,y,W-14,y);y+=7;
-  doc.setTextColor(0,0,0);doc.setFontSize(10.5);
+  doc.setFont('times','normal');doc.setFontSize(10.5);doc.setTextColor(0,0,0);
+  doc.text('Nomor: '+(sp||'SP'),W/2,y,{align:'center'});y+=9;
+  doc.setFontSize(10.5);
   const wrap=(t,x,yy,w,fs)=>{doc.setFontSize(fs||10.5);const ls=doc.splitTextToSize(String(t),w);ls.forEach(l=>{doc.text(l,x,yy);yy+=(fs||10.5)*0.5;});return yy;};
   y=wrap('Siswa yang bernama '+nama.toUpperCase()+', kelas '+kls+', telah melakukan pelanggaran tata tertib madrasah dengan TOTAL '+poin+' POIN (ambang surat perjanjian '+th+' poin). Sebagai tindak lanjut pembinaan, siswa, orang tua/wali, dan madrasah menyepakati perjanjian sebagai berikut:',14,y,W-28);y+=3;
   const butir=['Siswa berkomitmen tidak mengulangi pelanggaran yang sama maupun pelanggaran lainnya.',
@@ -5348,18 +5347,27 @@ function spPdf(sid,sp){
     body:rows.map((r,i)=>[i+1,tglS(r.t),r.jn,r.p,r.st==='BARU'?'Menunggu':r.st==='DIPROSES'?'Diproses':'Selesai']),
     theme:'grid',margin:{left:14,right:14},styles:{font:'times',fontSize:9,cellPadding:1.6,lineColor:[150,150,150],lineWidth:.2,textColor:[0,0,0]},
     headStyles:{font:'times',fontStyle:'bold',fillColor:[230,230,230],textColor:[0,0,0],halign:'center',valign:'middle'}});
-  y=doc.lastAutoTable.finalY+8;
-  if(y>H-45){doc.addPage();y=18;}
-  doc.setFont('times','normal');doc.setFontSize(10.5);
-  doc.text('Demikian surat perjanjian ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.',14,y,W-28);y+=16;
-  const col=W/2-20,x1=30,x2=W-30;
-  doc.setFontSize(10.5);
-  doc.text('Siswa',x1,y,{'baseline':'middle'});doc.text('Orang Tua/Wali',x2,y,{align:'right','baseline':'middle'});
-  doc.text('Petugas Bimbingan Konseling',x1,y+34);doc.text('Mengetahui, Kepala Madrasah',x2,y+34,{align:'right'});
-  const ln1=y+8,ln2=y+42;
-  doc.setDrawColor(0,0,0);doc.setLineWidth(.2);
-  doc.line(x1-6,ln1,x1+45,ln1);doc.line(x2-45,ln1,x2+6,ln1);
-  doc.line(x1-6,ln2,x1+45,ln2);doc.line(x2-45,ln2,x2+6,ln2);
+  y=doc.lastAutoTable.finalY+9;
+  /* blok penutup + tanda tangan dijaga satu halaman */
+  if(y>H-112){doc.addPage();y=20;}
+  doc.setFont('times','normal');doc.setFontSize(10.5);doc.setTextColor(0,0,0);
+  y=wrap('Demikian surat perjanjian ini dibuat dengan sebenarnya dan penuh kesadaran oleh para pihak, untuk dipergunakan sebagaimana mestinya.',14,y,W-28);y+=8;
+  const cx1=W*0.27,cx2=W*0.73,SLEN=52,SP=24;
+  doc.text('Tanggal: '+tglS(today()),cx2,y,{align:'center'});y+=9;
+  const blok=(ty,l1,l2,n1,n2)=>{
+    const lh=5.2,nl=Math.max(l1.length,l2.length);
+    l1.forEach((t,i)=>doc.text(t,cx1,ty+i*lh,{align:'center'}));
+    l2.forEach((t,i)=>doc.text(t,cx2,ty+i*lh,{align:'center'}));
+    const ly=ty+(nl-1)*lh+SP;
+    doc.setDrawColor(0,0,0);doc.setLineWidth(.25);
+    doc.line(cx1-SLEN/2,ly,cx1+SLEN/2,ly);doc.line(cx2-SLEN/2,ly,cx2+SLEN/2,ly);
+    if(n1)doc.text(n1,cx1,ly+4.6,{align:'center',maxWidth:SLEN+10});
+    if(n2)doc.text(n2,cx2,ly+4.6,{align:'center',maxWidth:SLEN+10});
+    return ly+(n1||n2?10:6);
+  };
+  y=blok(y,['Siswa'],['Orang Tua/Wali'],nama,'');
+  y+=6;
+  y=blok(y,['Petugas','Bimbingan Konseling'],['Mengetahui,','Kepala Madrasah'],'','');
   doc.save('Surat-Perjanjian-'+nama.replace(/[^A-Za-z0-9]+/g,'-')+'.pdf');
 }
 const SARKAT=['Ruang & Bangunan','Meubelair','Perangkat Elektronik','Alat Peraga & Olahraga','Buku & ATK','Lainnya'];
