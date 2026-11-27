@@ -2122,6 +2122,26 @@ function jenisLoad(){
   jenisReload();
 }
 const jenisReload=()=>{PJLB=true;rpc('paJenisList').then(r=>{PJL=(r.info&&r.info.js)||[];PJLB=false;jenisRefresh();render(true);}).catch(e=>{PJLB=false;toast(e.message,'er');});};
+const ampuKey=view=>view==='soal'?'fks':'fkp';
+const ampuKf=view=>String(S[ampuKey(view)]||'');
+function ampuKelasSel(view){
+  if(!AMP||!AMP.length)return'';
+  const ks=[...new Set(AMP.flatMap(a=>a.ks||[]))].sort((a,b)=>String(a).localeCompare(String(b),'id',{numeric:true}));
+  if(!ks.length)return'';
+  const cur=ampuKf(view);
+  return`<select class="in" style="width:auto" aria-label="Filter kelas" onchange="S['${ampuKey(view)}']=this.value;render(true)"><option value="">Semua kelas</option>${ks.map(k=>`<option value="${esc(k)}" ${cur===k?'selected':''}>Kelas ${esc(k)}</option>`).join('')}</select>`;
+}
+function ampuSwSel(view){
+  const m=view==='soal'?S.sm:S.pm,cur=view==='soal'?S.sk:S.pk;
+  const a=(AMP||[]).find(x=>x.m===m);
+  const ks=a?[...new Set(a.ks||[])].sort((x,y)=>String(x).localeCompare(String(y),'id',{numeric:true})):[];
+  if(ks.length<2)return'';
+  return`<select class="in" style="width:auto" aria-label="Pindah kelas" onchange="ampuSw('${view}',this.value)">${ks.map(k=>`<option value="${esc(k)}" ${k===cur?'selected':''}>Kelas ${esc(k)}</option>`).join('')}</select>`;
+}
+function ampuSw(view,k){
+  if(view==='perangkat'){if(!k||k===S.pk)return;S.pk=k;S.paq='';PAL=null;render();paLoad();}
+  else{if(!k||k===S.sk)return;S.sk=k;SUL=null;render();}
+}
 function ampuCards(view){
   if(AMP===null||(view==='soal'&&SQS===null))return`<div class="card mu">${lbar('Memuat…')}</div>`;
   if(!AMP.length)return`<div class="note">${S.user.r==='GURU'?'Belum ada mata pelajaran yang Anda ampu. Hubungi Admin Operator agar mapel & kelas Anda diatur di menu Kelola penilaian.':'Belum ada mata pelajaran. Atur dulu di menu Kelola penilaian (tab Mata pelajaran).'}</div>`;
@@ -2129,10 +2149,14 @@ function ampuCards(view){
   AMP.forEach(a=>(a.ks||[]).forEach(k=>AMPC.push({m:a.m,k})));
   if(!AMPC.length)return`<div class="note">Belum ada kelas siswa. Tambahkan data kelas & siswa terlebih dahulu di menu Pengaturan → Daftar siswa.</div>`;
   const isSoal=view==='soal';
-  return`<div class="mcl">${AMPC.map((c,i)=>{
+  const fk=ampuKf(view);
+  if(fk&&!AMPC.some(c=>c.k===fk))S[ampuKey(view)]='';
+  const fk2=ampuKf(view);
+  if(fk2&&!AMPC.some(c=>c.k===fk2))return`<div class="note">Tidak ada mata pelajaran untuk kelas ${esc(fk2)}.</div>`;
+  return`<div class="mcl">${AMPC.map((c,i)=>fk2&&c.k!==fk2?'':(()=>{
     let sub='Kelas '+esc(c.k),bdg='';
     if(isSoal){const t=sqsGet(c.m,c.k),ok=t.u>0;sub+=' · '+t.u+' unggahan';bdg=`<span class="badge ${ok?'b-ok':'b-er'}">${ok?'Sudah':'Belum'}</span>`;}
-    return`<div class="mcard tap" role="button" tabindex="0" onclick="ampuGo('${view}',${i})"><div class="mc-h"><div><b>${esc(c.m)}</b><div class="mc-sub">${sub}</div></div>${bdg}<div class="mc-more">${view==='perangkat'?'Buka folder ›':'Buka unggahan ›'}</div></div></div>`;}).join('')}</div>`;
+    return`<div class="mcard tap" role="button" tabindex="0" onclick="ampuGo('${view}',${i})"><div class="mc-h"><div><b>${esc(c.m)}</b><div class="mc-sub">${sub}</div></div>${bdg}<div class="mc-more">${view==='perangkat'?'Buka folder ›':'Buka unggahan ›'}</div></div></div>`;})()).join('')}</div>`;
 }
 function ampuGo(view,i){
   const c=AMPC[i];if(!c)return;
@@ -2142,15 +2166,16 @@ function ampuGo(view,i){
 const ampuBack=view=>{if(view==='perangkat'){S.pm='';S.pk='';S.pj='';S.pg='';}else{S.sm='';S.sk='';SQS=null;}render();};
 function paLoad(){
   PALB=true;render(true);
-  rpc('paList',{m:S.pm||'',k:S.pk||''}).then(r=>{PAL=(r.info&&r.info.pa)||[];PALB=false;render(true);})
-    .catch(e=>{PALB=false;PAL=[];toast(e.message,'er');render(true);});
+  const m=S.pm,k=S.pk;
+  rpc('paList',{m:m||'',k:k||''}).then(r=>{if(m!==S.pm||k!==S.pk)return;PAL=(r.info&&r.info.pa)||[];PALB=false;render(true);})
+    .catch(e=>{if(m!==S.pm||k!==S.pk)return;PALB=false;PAL=[];toast(e.message,'er');render(true);});
 }
 const paRefreshList=()=>{const e=$('pa-list');if(e)e.innerHTML=paFolderListBody();};
 const paGuruFilterHTML=()=>S.user.r==='GURU'?'':`<select class="in" style="width:auto" aria-label="Filter guru" onchange="S.pg=this.value;S.pj='';render(true)"><option value="">Semua guru</option>${G.filter(x=>hasR(x,'GURU')).map(x=>`<option value="${esc(x.id)}" ${S.pg===x.id?'selected':''}>${esc(x.n)}</option>`).join('')}</select>`;
 function vPerangkat(){
   ampLoad();jenisLoad();
   if(!S.pm||!S.pk){
-    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar</h2></div>${isPAAdm()?`<div class="row"><button class="btn ghost" onclick="rkPick('pa')">Pilih &amp; unduh sebagian</button><button class="btn ghost" onclick="rkZip('pa')">Unduh seluruh perangkat ajar (ZIP)</button></div>`:''}</div>`+
+    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar</h2></div><div class="row">${ampuKelasSel('perangkat')}${isPAAdm()?`<button class="btn ghost" onclick="rkPick('pa')">Pilih &amp; unduh sebagian</button><button class="btn ghost" onclick="rkZip('pa')">Unduh seluruh perangkat ajar (ZIP)</button>`:''}</div></div>`+
       ampuCards('perangkat');
   }
   if(PAL===null&&!PALB)paLoad();
@@ -2169,14 +2194,14 @@ function paFoldersHTML(){
     :`<div class="card mu">${adm?'Belum ada jenis perangkat ajar. Klik "Kelola jenis" untuk menambahkannya.':'Belum ada jenis perangkat ajar. Minta Admin menambahkan jenis melalui menu Perangkat ajar (Kelola jenis).'}</div>`;
   return`<button class="btn ghost" onclick="ampuBack('perangkat')">← Mapel & kelas lain</button>`+
     `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Perangkat ajar: ${esc(S.pm)} · Kelas ${esc(S.pk)}${S.pg?' · '+esc(gname(S.pg)):''}</h2></div>`+
-    `<div class="row">${paGuruFilterHTML()}${adm?`<button class="btn ghost" onclick="jenisM()">Kelola jenis</button>`:''}</div></div>`+folders;
+    `<div class="row">${ampuSwSel('perangkat')}${paGuruFilterHTML()}${adm?`<button class="btn ghost" onclick="jenisM()">Kelola jenis</button>`:''}</div></div>`+folders;
 }
 const paOpenJ=i=>{const j=PAJN[i];if(j===undefined)return;S.pj=j;S.paq='';render();};
 function paFolderList(){
   if(PAL===null&&!PALB)paLoad();
   return`<button class="btn ghost" onclick="S.pj='';render(true)">← Semua folder jenis</button>`+
     `<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>${esc(S.pj)}: ${esc(S.pm)} · Kelas ${esc(S.pk)}${S.pg?' · '+esc(gname(S.pg)):''}</h2></div>`+
-    `<div class="row">${paGuruFilterHTML()}${S.user.r==='GURU'?`<button class="btn pri" onclick="paM()">+ Unggah perangkat ajar</button>`:''}</div></div>`+
+    `<div class="row">${ampuSwSel('perangkat')}${paGuruFilterHTML()}${S.user.r==='GURU'?`<button class="btn pri" onclick="paM()">+ Unggah perangkat ajar</button>`:''}</div></div>`+
     `<div class="row" style="margin-bottom:10px"><input class="in" style="max-width:220px" placeholder="Cari judul/keterangan" aria-label="Cari perangkat ajar" value="${esc(S.paq||'')}" oninput="S.paq=this.value;paRefreshList()"></div>`+
     (PAL===null?`<div class="card mu">${lbar('Memuat…')}</div>`:`<div id="pa-list">${paFolderListBody()}</div>`);
 }
@@ -2350,7 +2375,7 @@ function suLoad(){
   SULB=true;
   rpc('soUList',{m:m||'',k:k||''}).then(r=>{
     SULB=false;
-    if(m!==S.sm||k!==S.sk)return;
+    if(m!==S.sm||k!==S.sk){if(S.sm&&S.sk&&SUL===null)suLoad();return;}
     SUL=(r.info&&r.info.su)||[];render(true);
   }).catch(e=>{SULB=false;SUL=[];toast(e.message,'er');render(true);});
 }
@@ -2361,9 +2386,9 @@ function vSoal(){
   const guru=S.user.r==='GURU';
   if(!S.sm||!S.sk){
     sqsLoad();
-    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal</h2></div>${isPAAdm()?`<div class="row"><button class="btn ghost" onclick="rkPick('so')">Pilih &amp; unduh sebagian</button><button class="btn ghost" onclick="rkZip('so')">Unduh seluruh soal (ZIP)</button></div>`:''}</div>`+ampuCards('soal');
+    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal</h2></div><div class="row">${ampuKelasSel('soal')}${isPAAdm()?`<button class="btn ghost" onclick="rkPick('so')">Pilih &amp; unduh sebagian</button><button class="btn ghost" onclick="rkZip('so')">Unduh seluruh soal (ZIP)</button>`:''}</div></div>`+ampuCards('soal');
   }
-  const ctx=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal: ${esc(S.sm)} · Kelas ${esc(S.sk)}</h2></div><button class="btn ghost" onclick="ampuBack('soal')">← Mapel & kelas lain</button></div>`;
+  const ctx=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Bank soal: ${esc(S.sm)} · Kelas ${esc(S.sk)}</h2></div><div class="row">${ampuSwSel('soal')}<button class="btn ghost" onclick="ampuBack('soal')">← Mapel & kelas lain</button></div></div>`;
   return ctx+vSoalUnggah();
 }
 function vSoalUnggah(){
