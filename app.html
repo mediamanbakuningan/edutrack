@@ -928,6 +928,213 @@ function installApp(){
 <nav id="mbn" hidden aria-label="Navigasi bawah"></nav>
 <div id="modal" class="ov"><div class="mc"><div class="bt"><h3 id="m-title"></h3><button class="btn ghost sm" onclick="closeM()" aria-label="Tutup">✕</button></div><div id="m-body"></div><div id="m-foot" class="row"></div></div></div>
 <div id="toasts" role="status" aria-live="polite"></div>
+<style id="uj-css">
+body.uj-mode>*:not(#uj){display:none!important}
+#uj{position:fixed;inset:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#f1f5f9;color:#0f172a;z-index:99999;font-size:15px;line-height:1.55}
+#uj *{box-sizing:border-box}
+.ujw{max-width:780px;margin:0 auto;padding:16px 14px 90px}
+.ujc{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:12px}
+.ujm{text-align:center;color:#64748b}
+.ujkop{display:block;max-width:100%;max-height:150px;margin:0 auto 10px;object-fit:contain}
+.ujkt{white-space:pre-wrap;text-align:center;font-weight:600;margin-bottom:10px}
+#uj h1{font-size:1.25rem;font-weight:700;text-align:center;margin:4px 0 6px}
+.ujmeta{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;color:#64748b;font-size:.85rem;margin-bottom:12px}
+.ujrules{background:#fffbeb;border:1px solid #fcd34d;color:#78350f;border-radius:12px;padding:12px 14px;font-size:.88rem;margin:12px 0}
+.ujrules b{color:#b45309}
+.ujrules ul{margin:6px 0 0 18px}.ujrules li{margin:3px 0}
+#uj label.ujl{display:block;font-weight:600;margin:12px 0 6px}
+.ujin{width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:1.05rem;letter-spacing:.06em;background:#fff;color:#0f172a}
+.ujin:focus,.ujta:focus{outline:none;border-color:#00674F;box-shadow:0 0 0 3px rgba(0,103,79,.15)}
+.uje{color:#dc2626;font-size:.88rem;margin-top:8px;min-height:1.2em}
+.ujgo{width:100%;padding:13px 16px;margin-top:10px;border:0;border-radius:11px;background:#00674F;color:#fff;font:700 1rem inherit;font-family:inherit;cursor:pointer}
+.ujgo:hover{background:#005340}.ujgo:disabled{opacity:.6;cursor:progress}
+.ujgh{background:#fff;color:#0f172a;border:1.5px solid #cbd5e1}.ujgh:hover{background:#f1f5f9}
+.ujal{padding:12px 14px;border-radius:10px;font-weight:600;text-align:center}
+.ujal.er{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.ujal.ok{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.ujb{position:sticky;top:0;z-index:5;background:#00674F;color:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px));box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.ujb b{font-size:.95rem}.ujb .sm{font-size:.76rem;opacity:.85}
+.ujr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.ujpill{background:rgba(255,255,255,.18);border-radius:999px;padding:4px 11px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.ujpill.low{background:#dc2626}.ujpill.kl{background:#b91c1c}
+.ujban{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:9px 12px;font-size:.83rem;margin-bottom:12px}
+.ujqh{display:flex;gap:10px;align-items:flex-start}
+.ujn{flex:none;min-width:30px;height:30px;border-radius:9px;background:#e6f2ee;color:#00674F;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.ujqt{white-space:pre-wrap;word-break:break-word;font-size:1rem;font-weight:500;flex:1}
+.ujimg{display:block;max-width:100%;max-height:340px;margin:10px auto;border-radius:8px}
+.ujo{display:flex;gap:10px;align-items:flex-start;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin-top:8px;cursor:pointer;background:#fff}
+.ujo:hover{border-color:#94a3b8}.ujo.on{border-color:#00674F;background:#ecfdf5}
+.ujo input{margin-top:4px;width:18px;height:18px;flex:none;accent-color:#00674F}
+.ujo span{flex:1;word-break:break-word;white-space:pre-wrap}
+.ujhint{color:#64748b;font-size:.82rem;margin-top:8px}
+.ujta{width:100%;margin-top:10px;padding:11px 13px;border:1.5px solid #cbd5e1;border-radius:10px;font:inherit;font-family:inherit;resize:vertical;min-height:110px}
+.ujov{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.78)}
+.ujov[hidden]{display:none!important}
+.ujbox{background:#fff;border-radius:16px;padding:22px 20px;max-width:430px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.ujbox h2{color:#b91c1c;font-size:1.2rem;margin-bottom:8px}.ujbox.n h2{color:#0f172a}
+.ujbox p{font-size:.92rem;margin:6px 0}
+.ujdone{text-align:center;padding:26px 16px}
+.ujdone .ck{width:64px;height:64px;border-radius:50%;background:#ecfdf5;color:#059669;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:2rem}
+</style>
+<script>
+/* ===== Halaman ujian siswa: dibuka dari tautan ?ujian=KODE (tanpa login) =====
+   Jawaban hanya disimpan di memori halaman ini (tidak di localStorage/sessionStorage). Menutup atau me-refresh halaman = jawaban hilang. */
+var UJ={};
+function ujAda(){try{return new URLSearchParams(location.search).has('ujian');}catch(e){return false;}}
+function ujEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function ujApi(a,p){
+  return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:a,token:null,p:p||{}})})
+    .then(function(r){if(!r.ok)throw new Error('Koneksi gagal ('+r.status+')');return r.json();})
+    .then(function(d){if(!d||!d.ok){var e=new Error((d&&d.error)||'Terjadi kesalahan');e.srv=1;throw e;}return d.data;});
+}
+function ujEl(i){return document.getElementById(i);}
+function ujShow(html){var r=ujEl('uj');if(!r){r=document.createElement('div');r.id='uj';document.body.appendChild(r);}r.innerHTML=html;r.scrollTop=0;}
+function ujErrHTML(m){return '<div class="ujw"><div class="ujc"><div class="ujal er">'+ujEsc(m)+'</div><p class="ujm" style="margin-top:12px">Periksa kembali tautan ujian dari guru Anda.</p></div></div>';}
+function ujBoot(){
+  document.body.classList.add('uj-mode');
+  var k=(new URLSearchParams(location.search).get('ujian')||'').toLowerCase();
+  UJ={kode:k,info:null,tk:'',soal:[],jw:{},kl:0,aktif:false,done:false,sending:false,timeUp:false,lastLeave:0,dlg:false,p0:0,dur:0,nama:'',kelas:'',tmr:0};
+  ujShow('<div class="ujw"><div class="ujc ujm">Memuat ujian…</div></div>');
+  if(!/^[a-z0-9]{6,20}$/.test(k)){ujShow(ujErrHTML('Tautan ujian tidak valid'));return;}
+  ujApi('ujianInfo',{kode:k}).then(function(d){UJ.info=d;ujGate('');}).catch(function(e){ujShow(ujErrHTML(e.message));});
+}
+function ujGate(msg){
+  var d=UJ.info,tutup=d.st!=='BUKA';
+  var kop=(d.gb?'<img class="ujkop" src="'+d.gb+'" alt="">':'')+(d.kop?'<div class="ujkt" dir="auto">'+ujEsc(d.kop)+'</div>':'');
+  var meta='<span>'+(d.mp?ujEsc(d.mp)+' · ':'')+'Kelas '+ujEsc(d.kl)+'</span><span>'+d.n+' soal</span><span>'+(d.dur?'Waktu '+d.dur+' menit':'Tanpa batas waktu')+'</span>';
+  var body;
+  if(tutup){body='<div class="ujal er">Ujian ini sedang ditutup oleh guru.</div>';}
+  else{
+    body='<div class="ujrules"><b>Baca sebelum mulai</b><ul>'+
+      '<li>Masukkan <b>NISN</b> Anda. Hanya NISN yang terdaftar yang dapat mengikuti ujian ini.</li>'+
+      '<li><b>Jangan menutup browser, menutup tab, atau me-refresh halaman</b> selama ujian.</li>'+
+      '<li>Bila halaman ditutup atau di-refresh, <b>semua jawaban HILANG</b> dan Anda harus mengulang dari awal.</li>'+
+      '<li>Berpindah tab atau aplikasi akan <b>dicatat dan dilaporkan kepada guru</b>.</li>'+
+      (d.dur?'<li>Waktu berjalan sejak NISN diverifikasi. Jawaban terkirim otomatis saat waktu habis.</li>':'')+
+      '</ul></div>'+
+      '<label class="ujl" for="uj-n">NISN</label><input id="uj-n" class="ujin" inputmode="numeric" autocomplete="off" placeholder="Tulis NISN Anda" onkeydown="if(event.key===\'Enter\')ujMulai()">'+
+      '<div id="uj-e" class="uje">'+ujEsc(msg||'')+'</div><button id="uj-go" class="ujgo" type="button" onclick="ujMulai()">Mulai Ujian</button>';
+  }
+  ujShow('<div class="ujw"><div class="ujc">'+kop+'<h1>'+ujEsc(d.nm)+'</h1><div class="ujmeta">'+meta+'</div>'+body+'</div></div>');
+  var n=ujEl('uj-n');if(n)setTimeout(function(){n.focus();},50);
+}
+function ujErr(m){var e=ujEl('uj-e');if(e)e.textContent=m||'';}
+function ujMulai(){
+  var el=ujEl('uj-n'),b=ujEl('uj-go');if(!el||!b||b.disabled)return;
+  var n=(el.value||'').replace(/\s+/g,'');
+  if(!n){ujErr('Isi NISN terlebih dahulu');return;}
+  ujErr('');b.disabled=true;b.textContent='Memverifikasi…';
+  ujApi('ujianMulai',{kode:UJ.kode,nisn:n}).then(function(d){
+    UJ.tk=d.tk;UJ.soal=d.soal||[];UJ.dur=d.dur||0;UJ.nama=d.nm;UJ.kelas=d.kl;UJ.jw={};UJ.kl=0;UJ.timeUp=false;UJ.sending=false;UJ.done=false;
+    UJ.p0=performance.now();UJ.aktif=true;
+    ujRender();ujAktif();
+  }).catch(function(e){b.disabled=false;b.textContent='Mulai Ujian';ujErr(e.message);});
+}
+function ujSoalHTML(q,i){
+  var h='<div class="ujc" id="uq-'+i+'"><div class="ujqh"><span class="ujn">'+(i+1)+'</span><div class="ujqt" dir="auto">'+ujEsc(q.s)+'</div></div>';
+  (q.gq||[]).forEach(function(g){h+='<img class="ujimg" src="'+g+'" alt="Gambar soal">';});
+  if(q.t==='PG'||q.t==='PGK'){
+    var ty=q.t==='PG'?'radio':'checkbox';
+    if(q.t==='PGK')h+='<div class="ujhint">Pilih semua jawaban yang benar.</div>';
+    (q.op||[]).forEach(function(o,j){
+      h+='<label class="ujo"><input type="'+ty+'" name="q'+i+'" value="'+j+'" onchange="ujPil('+i+')"><span dir="auto">'+ujEsc(o.t)+(o.g?'<img class="ujimg" src="'+o.g+'" alt="">':'')+'</span></label>';
+    });
+  }else if(q.t==='BS'){
+    ['Benar','Salah'].forEach(function(v){h+='<label class="ujo"><input type="radio" name="q'+i+'" value="'+v+'" onchange="ujPil('+i+')"><span>'+v+'</span></label>';});
+  }else{
+    h+='<textarea class="ujta" dir="auto" maxlength="3000" placeholder="Tulis jawaban Anda di sini…" oninput="ujUr('+i+',this.value)"></textarea>';
+  }
+  return h+'</div>';
+}
+function ujRender(){
+  var h='<div class="ujb"><div><b>'+ujEsc(UJ.nama)+'</b><div class="sm">Kelas '+ujEsc(UJ.kelas)+'</div></div><div class="ujr"><span id="uj-kl" class="ujpill kl" hidden></span>'+(UJ.dur?'<span id="uj-tm" class="ujpill">--:--</span>':'')+'<span id="uj-pr" class="ujpill"></span></div></div><div class="ujw">';
+  h+='<div class="ujban"><b>Jangan menutup atau me-refresh halaman ini.</b> Jawaban yang belum dikirim akan hilang dan Anda harus mengulang dari awal.</div>';
+  UJ.soal.forEach(function(q,i){h+=ujSoalHTML(q,i);});
+  h+='<div class="ujc"><button class="ujgo" type="button" onclick="ujKirim(false)">Kirim Jawaban</button><div class="ujhint" style="text-align:center">Periksa kembali jawaban Anda sebelum mengirim. Jawaban yang sudah dikirim tidak dapat diubah.</div></div></div>'+
+    '<div id="uj-wr" class="ujov" hidden><div class="ujbox"><h2>⚠ PERINGATAN</h2><p id="uj-wt"></p><p><b>Menutup atau me-refresh halaman akan MENGHAPUS semua jawaban</b> dan Anda harus mengulang dari awal. Aktivitas ini dilaporkan kepada guru.</p><button class="ujgo" type="button" onclick="ujEl(\'uj-wr\').hidden=true">Kembali ke ujian</button></div></div>'+
+    '<div id="uj-st" class="ujov" hidden></div>';
+  ujShow(h);ujProg();
+}
+function ujNilai(i){
+  var q=UJ.soal[i],ins=document.querySelectorAll('#uq-'+i+' input:checked'),v;
+  if(q.t==='PGK'){v=[];ins.forEach(function(x){v.push(+x.value);});return v;}
+  if(q.t==='PG')return ins.length?+ins[0].value:null;
+  return ins.length?ins[0].value:null;
+}
+function ujPil(i){
+  var q=UJ.soal[i],v=ujNilai(i);
+  if(v===null||(Array.isArray(v)&&!v.length))delete UJ.jw[q.id];else UJ.jw[q.id]=v;
+  document.querySelectorAll('#uq-'+i+' .ujo').forEach(function(l){var c=l.querySelector('input');l.classList.toggle('on',!!(c&&c.checked));});
+  ujProg();
+}
+function ujUr(i,v){var q=UJ.soal[i];if(String(v).trim())UJ.jw[q.id]=v;else delete UJ.jw[q.id];ujProg();}
+function ujJawab(){return Object.keys(UJ.jw).length;}
+function ujProg(){var e=ujEl('uj-pr');if(e)e.textContent=ujJawab()+'/'+UJ.soal.length+' terjawab';}
+function ujKlTampil(){var e=ujEl('uj-kl');if(e&&UJ.kl>0){e.hidden=false;e.textContent='Keluar halaman: '+UJ.kl+'×';}}
+function ujBU(e){if(UJ.aktif&&!UJ.done){e.preventDefault();e.returnValue='Jawaban Anda akan hilang jika meninggalkan halaman ini.';return e.returnValue;}}
+function ujLeave(){
+  if(!UJ.aktif||UJ.done||UJ.dlg)return;
+  var n=Date.now();if(n-UJ.lastLeave<1500)return;UJ.lastLeave=n;
+  UJ.kl++;ujKlTampil();
+  var w=ujEl('uj-wr'),t=ujEl('uj-wt');
+  if(t)t.textContent='Anda terdeteksi meninggalkan halaman ujian ('+UJ.kl+' kali). Tetaplah di halaman ini sampai jawaban dikirim.';
+  if(w)w.hidden=false;
+}
+function ujAktif(){
+  if(!UJ.bound){
+    UJ.bound=true;
+    window.addEventListener('beforeunload',ujBU);
+    document.addEventListener('visibilitychange',function(){if(document.hidden)ujLeave();});
+    window.addEventListener('blur',ujLeave);
+  }
+  clearInterval(UJ.tmr);
+  if(UJ.dur){ujTick();UJ.tmr=setInterval(ujTick,1000);}
+}
+function ujTick(){
+  if(!UJ.aktif||UJ.done)return;
+  var sisa=UJ.dur*60-Math.floor((performance.now()-UJ.p0)/1000),e=ujEl('uj-tm');
+  if(e){var s=Math.max(0,sisa),m=Math.floor(s/60);e.textContent=(m<10?'0':'')+m+':'+(s%60<10?'0':'')+(s%60);e.classList.toggle('low',sisa<=300);}
+  if(sisa<=0&&!UJ.timeUp){
+    UJ.timeUp=true;
+    ujStatus('<div class="ujbox n"><h2>Waktu habis</h2><p>Jawaban Anda sedang dikirim otomatis…</p></div>');
+    setTimeout(function(){ujKirim(true);},Math.random()*8000);  // sebaran acak agar ratusan siswa tidak mengirim serentak
+  }
+}
+function ujStatus(html){var s=ujEl('uj-st');if(!s)return;s.innerHTML=html;s.hidden=!html;}
+function ujBelum(){return UJ.soal.length-ujJawab();}
+function ujKirim(auto){
+  if(UJ.sending||UJ.done)return;
+  if(!auto){
+    var b=ujBelum();
+    UJ.dlg=true;
+    var ya=confirm((b?b+' soal belum dijawab. ':'')+'Kirim jawaban sekarang? Jawaban yang sudah dikirim tidak dapat diubah.');
+    setTimeout(function(){UJ.dlg=false;},400);
+    if(!ya)return;
+  }
+  UJ.sending=true;
+  ujStatus('<div class="ujbox n"><h2>Mengirim jawaban…</h2><p>Mohon tunggu dan jangan menutup halaman.</p></div>');
+  var coba=0;
+  (function kirim(){
+    coba++;
+    ujApi('ujianKirim',{kode:UJ.kode,tk:UJ.tk,jw:UJ.jw,kl:UJ.kl}).then(ujSelesai).catch(function(e){
+      var sibuk=/sibuk|simultaneous|too many|terlalu banyak eksekusi|invoked/i.test(e.message||'');
+      var fatal=e.srv&&!sibuk;
+      if(fatal||coba>=8){
+        UJ.sending=false;
+        ujStatus('<div class="ujbox"><h2>Jawaban belum terkirim</h2><p>'+ujEsc(e.message)+'</p>'+(fatal?'<p>Hubungi guru Anda.</p>':'<p>Periksa koneksi internet Anda, lalu coba kirim lagi. Jangan menutup halaman.</p><button class="ujgo" type="button" onclick="ujKirim(true)">Coba kirim lagi</button>')+'</div>');
+        return;
+      }
+      setTimeout(kirim,1500*coba+Math.random()*1500);
+    });
+  })();
+}
+function ujSelesai(){
+  UJ.done=true;UJ.aktif=false;UJ.sending=false;clearInterval(UJ.tmr);
+  window.removeEventListener('beforeunload',ujBU);
+  UJ.jw={};UJ.soal=[];
+  ujShow('<div class="ujw"><div class="ujc ujdone"><div class="ck">✓</div><h1>Jawaban terkirim</h1><p class="ujm">Terima kasih, '+ujEsc(UJ.nama)+'. Jawaban Anda sudah diterima. Anda boleh menutup halaman ini.</p></div></div>');
+}
+</script>
 <script>
 const K=(...a)=>a.join('|'),$=i=>document.getElementById(i);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1462,9 +1669,9 @@ function gsCall(action,token,p){
   return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,token:token||null,p:p||{}})})
     .then(res=>{if(!res.ok)throw new Error('Koneksi gagal ('+res.status+')');lpBump(70);return res.json();}).then(d=>{lpBump(90);return d;});
 }
-const SVW={};"soalPaketSave soalPaketDel soalFormBuat soalFormStatus soalFormNilai saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
+const SVW={};"soalPaketSave soalPaketDel soalFormBuat soalUjianBuat soalUjianAtur soalFormStatus soalFormNisn soalFormNilai saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
 const SVP={v:0,t:0,n:0,h:0};
-const svLabel=a=>a==='soalFormBuat'?'Membuat Google Form\u2026':a==='soalFormNilai'?'Menyimpan nilai ke menu Nilai\u2026':a==='soalFormStatus'?'Mengubah status Form\u2026':a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
+const svLabel=a=>a==='soalFormBuat'?'Membuat Google Form\u2026':a==='soalUjianBuat'?'Membuat ujian\u2026':a==='soalUjianAtur'?'Menyimpan durasi\u2026':a==='soalFormNilai'?'Menyimpan nilai ke menu Nilai\u2026':a==='soalFormStatus'?'Mengubah status Form\u2026':a==='soalFormNisn'?'Memperbarui daftar NISN\u2026':a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
 function svEl(){
   let e=document.getElementById('svp');
   if(!e){
@@ -4279,11 +4486,13 @@ function spkCard(x){
   let acts='';
   if(can){
     acts=x.fu
-      ?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Form':'Tutup Form',`spkStatus('${id}')`)+btn('Edit di Google Form',`spkEdit('${id}')`,'ghost',1)+btn('Lihat soal',`spkOpen('${id}')`)
-      :btn('Buat Form',`spkForm('${id}')`,'pri',1)+btn('Ubah soal',`spkOpen('${id}')`);
+      ?(x.fm==='IN'
+        ?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Ujian':'Tutup Ujian',`spkStatus('${id}')`)+btn('Atur durasi',`spkDur('${id}')`)+btn('Lihat soal',`spkOpen('${id}')`)
+        :btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Form':'Tutup Form',`spkStatus('${id}')`)+btn('Edit di Google Form',`spkEdit('${id}')`,'ghost',1)+btn('Perbarui NISN',`spkNisn('${id}')`)+btn('Lihat soal',`spkOpen('${id}')`))
+      :btn('Buat Ujian',`spkUjian('${id}')`,'pri',1)+btn('Ubah soal',`spkOpen('${id}')`);
     if(del)acts+=btn('Hapus',`spkDel('${id}')`,'ghost dg');
   }else if(del)acts=btn('Hapus',`spkDel('${id}')`,'ghost dg',1);
-  const meta=`<span>${x.n} soal</span><span>Skor ${x.sk!=null?x.sk:'-'}</span>${S.user.r!=='GURU'?`<span>${esc(x.gn)}</span>`:''}<span>${timeShow(x.u)}</span>`;
+  const meta=`<span>${x.n} soal</span><span>Skor ${x.sk!=null?x.sk:'-'}</span>${x.fm==='IN'?`<span>${x.fd?x.fd+' menit':'Tanpa batas waktu'}</span>`:''}${S.user.r!=='GURU'?`<span>${esc(x.gn)}</span>`:''}<span>${timeShow(x.u)}</span>`;
   return`<div class="spk-c"><div class="spk-h"><div class="spk-t" title="${esc(x.nm)}">${esc(x.nm)}</div>${x.fu?bd(x.fs||'BUKA'):''}</div><div class="spk-m">${meta}</div>${chips?`<div class="spk-chs">${chips}</div>`:''}${acts?`<div class="spk-a">${acts}</div>`:''}</div>`;
 }
 function spkListHTML(){
@@ -4294,15 +4503,44 @@ function spkListHTML(){
 /* ===== Google Form dari paket soal + penarikan hasil ke menu Nilai ===== */
 function spkForm(id){
   const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
-  confirmM('Buat Google Form','Form untuk paket "'+x.nm+'" ('+x.n+' soal) akan dibuat atas nama pemilik skrip. Siswa mengisi tanpa login dan wajib menulis NISN. Setelah Form dibuat, isi soal paket tidak dapat diubah lagi. Lanjutkan?',
+  confirmM('Buat Google Form','Form untuk paket "'+x.nm+'" ('+x.n+' soal) akan dibuat atas nama pemilik skrip. Siswa mengisi tanpa login. Halaman pertama berisi verifikasi NISN: hanya NISN siswa kelas pada paket ini yang bisa lanjut ke soal. Setelah Form dibuat, isi soal paket tidak dapat diubah lagi. Lanjutkan?',
     ()=>rpc('soalFormBuat',{paketId:id}).then(r=>{
       const i=r.info||{};toast(i.ada?'Form untuk paket ini sudah ada':'Form berhasil dibuat','ok');
       SPKK='';spkLoad();
       if(i.url)spkLink(i.url);
     }).catch(e=>toast(e.message,'er')));
 }
+/* ===== Ujian di dalam EduTrack (siswa mengerjakan di halaman ?ujian=KODE) ===== */
+function ujUrl(kode){const u=new URL(location.href);u.search='';u.hash='';u.searchParams.set('ujian',kode);return u.href;}
+function spkUjian(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  modal('Buat Ujian',
+    `<p class="mu" style="margin-top:0">Ujian untuk paket "${esc(x.nm)}" (${x.n} soal) dikerjakan siswa langsung di EduTrack tanpa login. Siswa wajib memasukkan NISN yang terdaftar pada kelas paket ini. Setelah ujian dibuat, isi soal paket tidak dapat diubah lagi.</p>`+
+    `<label for="spk-dur">Durasi pengerjaan (menit)</label><input id="spk-dur" class="in" type="number" min="0" max="600" inputmode="numeric" placeholder="Kosongkan bila tanpa batas waktu">`+
+    `<p class="mu mt">Bila durasi diisi, jawaban terkirim otomatis saat waktu habis. Bila siswa menutup atau me-refresh halaman, jawabannya hilang dan ia mengulang dari awal. Jawaban dari kelas lain tidak diterima.</p>`,
+    [CANCEL,{t:'Buat Ujian',c:'pri',f:()=>{
+      const d=(($('spk-dur')||{}).value||'').trim();
+      closeM();
+      rpc('soalUjianBuat',{paketId:id,durasi:d}).then(r=>{
+        const i=r.info||{};toast(i.ada?'Ujian untuk paket ini sudah ada':'Ujian berhasil dibuat','ok');
+        SPKK='';spkLoad();
+        if(i.kode)spkLink(ujUrl(i.kode));
+      }).catch(e=>toast(e.message,'er'));
+    }}]);
+}
+function spkDur(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  modal('Atur durasi ujian',
+    `<p class="mu" style="margin-top:0">Durasi dihitung sejak siswa memasukkan NISN. Kosongkan atau isi 0 bila tanpa batas waktu. Perubahan berlaku untuk siswa yang mulai sesudahnya dan untuk pengiriman jawaban berikutnya.</p>`+
+    `<label for="spk-dur">Durasi pengerjaan (menit)</label><input id="spk-dur" class="in" type="number" min="0" max="600" inputmode="numeric" value="${x.fd||''}">`,
+    [CANCEL,{t:'Simpan',c:'pri',f:()=>{
+      const d=(($('spk-dur')||{}).value||'').trim();
+      closeM();
+      rpc('soalUjianAtur',{paketId:id,durasi:d}).then(()=>{toast('Durasi disimpan','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er'));
+    }}]);
+}
 function spkLink(url){
-  modal('Tautan Form ujian',`<p class="mu" style="margin-top:0">Bagikan tautan ini kepada siswa. Siswa diminta mengisi NISN pada pertanyaan pertama.</p><input id="spk-url" class="in" readonly value="${esc(url)}" onfocus="this.select()"><p class="mu"><a href="${esc(url)}" target="_blank" rel="noopener">Buka Form di tab baru</a></p>`,
+  modal('Tautan ujian',`<p class="mu" style="margin-top:0">Bagikan tautan ini kepada siswa. Siswa wajib mengisi NISN yang terdaftar pada halaman pertama sebelum bisa melanjutkan ke soal.</p><input id="spk-url" class="in" readonly value="${esc(url)}" onfocus="this.select()"><p class="mu"><a href="${esc(url)}" target="_blank" rel="noopener">Buka di tab baru</a></p>`,
     [{t:'Tutup',c:'ghost',f:()=>closeM()},{t:'Salin',c:'pri',f:()=>{
       const e=$('spk-url');if(!e)return;e.select();
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Tautan disalin','ok')).catch(()=>{try{document.execCommand('copy');toast('Tautan disalin','ok');}catch(x){toast('Salin manual dari kotak tautan','er');}});
@@ -4313,7 +4551,7 @@ function spkEdit(id){
   modal('Edit di Google Form',
     `<p class="mu" style="margin-top:0">Form dimiliki akun Google pemilik skrip. Agar akun Google Anda bisa mengeditnya, tulis email Google Anda; Anda akan ditambahkan sebagai editor. Kosongkan bila akun Anda sudah punya akses.</p>`+
     `<label for="spk-em">Email Google Anda (opsional)</label><input id="spk-em" class="in" type="email" inputmode="email" autocomplete="email" placeholder="nama@gmail.com" value="${esc(sessionStorage.getItem('spkEm')||'')}">`+
-    `<p class="mu mt"><b>Catatan:</b> aman untuk menambah soal, mengubah teks soal, menambah atau mengganti gambar, dan mengatur tampilan Form. Jangan mengubah teks pilihan jawaban dan jangan menghapus atau memindah soal yang sudah ada, karena nilai otomatis dicocokkan dengan teks pilihan dan urutan soal asli. Soal yang ditambah langsung di Google Form tidak ikut dinilai otomatis di aplikasi.</p>`,
+    `<p class="mu mt"><b>Catatan:</b> aman untuk menambah soal, mengubah teks soal, menambah atau mengganti gambar, dan mengatur tampilan Form. Jangan menghapus atau mengubah pertanyaan NISN beserta aturan validasinya, jangan menghapus halaman pemisah setelah NISN, jangan mengubah teks pilihan jawaban dan jangan menghapus atau memindah soal yang sudah ada, karena nilai otomatis dicocokkan dengan teks pilihan dan urutan soal asli. Soal yang ditambah langsung di Google Form tidak ikut dinilai otomatis di aplikasi.</p>`,
     [CANCEL,{t:'Buka editor',c:'pri',f:()=>{
       const em=($('spk-em')||{}).value||'';
       rpc('soalFormEdit',{paketId:id,email:em.trim()}).then(r=>{
@@ -4325,12 +4563,17 @@ function spkEdit(id){
       }).catch(e=>toast(e.message,'er'));
     }}]);
 }
-function spkCopy(id){const x=(SPKL||[]).find(t=>t.id===id);if(x&&x.fu)spkLink(x.fu);}
+function spkNisn(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  confirmM('Perbarui daftar NISN','Daftar NISN yang diterima Form \"'+x.nm+'\" akan disamakan dengan data siswa terbaru (kelas '+(x.kl||'paket')+'). Gunakan bila ada siswa baru atau NISN diubah. Lanjutkan?',
+    ()=>rpc('soalFormNisn',{paketId:id}).then(r=>{const i=r.info||{};toast('Daftar NISN diperbarui ('+(i.jml||0)+' siswa)','ok');}).catch(e=>toast(e.message,'er')));
+}
+function spkCopy(id){const x=(SPKL||[]).find(t=>t.id===id);if(!x||!x.fu)return;spkLink(x.fm==='IN'?ujUrl(x.fk):x.fu);}
 function spkStatus(id){
   const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
-  const buka=x.fs==='TUTUP';
-  confirmM(buka?'Buka Form':'Tutup Form',buka?'Form akan kembali menerima jawaban siswa. Lanjutkan?':'Form tidak lagi menerima jawaban baru. Jawaban yang sudah masuk tetap aman. Lanjutkan?',
-    ()=>rpc('soalFormStatus',{paketId:id,buka:buka}).then(()=>{toast(buka?'Form dibuka':'Form ditutup','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er')));
+  const buka=x.fs==='TUTUP',w=x.fm==='IN'?'Ujian':'Form';
+  confirmM((buka?'Buka ':'Tutup ')+w,buka?w+' akan kembali menerima siswa dan jawaban. Lanjutkan?':w+' tidak lagi menerima siswa baru maupun jawaban baru; siswa yang sedang mengerjakan tidak dapat mengirim. Jawaban yang sudah masuk tetap aman. Lanjutkan?',
+    ()=>rpc('soalFormStatus',{paketId:id,buka:buka}).then(()=>{toast(w+(buka?' dibuka':' ditutup'),'ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er')));
 }
 let HSL=null;
 const hsNum=v=>{const t=String(v==null?'':v).trim().replace(',','.');return t===''||isNaN(+t)?null:+t;};
@@ -4363,7 +4606,7 @@ function hsTblHTML(){
       const v=((HSL.ur[b.sid]||{})[x.id]);
       return`<td style="min-width:150px"><div class="mu" style="max-width:240px;max-height:72px;overflow:auto;white-space:pre-wrap">${esc(b.uj[j]||'(tidak dijawab)')}</div><input type="number" class="in" min="0" max="${x.p}" step="any" inputmode="decimal" style="width:72px;padding:6px;text-align:center;margin-top:4px" value="${esc(v==null?'':v)}" oninput="hsUr('${esc(b.sid)}','${esc(x.id)}',this.value)" aria-label="Skor uraian ${x.n} ${esc(b.nama)}"></td>`;
     }).join('');
-    return`<tr><td>${i+1}</td><td class="nw"><b>${esc(b.nama)}</b>${b.dup>1?`<div class="mu">mengirim ${b.dup}×, dihitung yang terakhir</div>`:''}</td><td class="ctr">${b.auto}</td>${tdU}<td class="ctr"><b id="hn-${esc(b.sid)}">${hsNilaiTxt(b)}</b></td></tr>`;
+    return`<tr><td>${i+1}</td><td class="nw"><b>${esc(b.nama)}</b>${b.dup>1?`<div class="mu">mengirim ${b.dup}×, dihitung yang terakhir</div>`:''}${b.kl>0?`<div class="mu" style="color:var(--er)">keluar dari halaman ujian ${b.kl}×</div>`:''}</td><td class="ctr">${b.auto}</td>${tdU}<td class="ctr"><b id="hn-${esc(b.sid)}">${hsNilaiTxt(b)}</b></td></tr>`;
   }).join('');
   return`<div class="tw" style="max-height:46vh;overflow:auto"><table><thead><tr><th>No</th><th>Siswa</th><th class="ctr">Skor otomatis<br><span class="mu">maks ${H.maxAuto}</span></th>${thU}<th class="ctr">Nilai</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
@@ -4386,7 +4629,7 @@ function spkHasilShow(){
   const tak=(H.tak||[]).length?`<p class="mu" style="color:var(--er)">${H.tak.length} jawaban dengan NISN yang tidak dikenali tidak ikut dihitung: ${esc(H.tak.map(t=>t.nisn||'(kosong)').join(', '))}.</p>`:'';
   const tn=H.tanpaNisn?`<p class="mu">${H.tanpaNisn} siswa pada kelas paket ini belum memiliki NISN di data siswa, sehingga tidak dapat dicocokkan.</p>`:'';
   const sel=(id,lab,opts,cur,fn,dis)=>`<select id="${id}" class="in" style="width:auto" aria-label="${lab}" onchange="${fn}" ${dis?'disabled':''}><option value="">${lab}</option>${opts}</select>`;
-  modal('Hasil Form · '+H.nm,
+  modal('Hasil Ujian · '+H.nm,
     `<div style="margin-bottom:8px">${info}</div>${tak}${tn}`+
     `<div class="row" style="margin:8px 0;flex-wrap:wrap">`+
       sel('hs-m','Mapel tujuan',mps.map(m=>`<option value="${esc(m.id)}" ${m.id===HSL.mp?'selected':''}>${esc(m.n)}</option>`).join(''),HSL.mp,"hsSet('mp',this.value)")+
@@ -7309,6 +7552,7 @@ function bootErr(m){
 }
 window.addEventListener('error',e=>bootErr(e.message));
 window.addEventListener('unhandledrejection',e=>bootErr(e.reason&&e.reason.message||String(e.reason)));
+if(ujAda()){ujBoot();}else{
 TOKEN=tokGet();
 try{const cc=JSON.parse(localStorage.getItem('er-cfg')||'null');if(cc)applyCfg(cc);}catch(_){}
 if(!TOKEN){
@@ -7319,6 +7563,7 @@ if(TOKEN){
   rpc('state').then(()=>{if(S.user){S.tab=tabAwal(S.user.r);S.view=viewAwal(S.user.r);}render();}).catch(e=>{S.user=null;render();if(!/Sesi berakhir/.test(e.message))toast(e.message,'er');});
 } else {
   render();
+}
 }
 </script>
 <script>
