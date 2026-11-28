@@ -5,7 +5,8 @@
   },
   "rewrites": [
     { "source": "/", "destination": "/api/page" },
-    { "source": "/index.html", "destination": "/api/page" }
+    { "source": "/index.html", "destination": "/api/page" },
+    { "source": "/:semester/:jenis/:mapel/:kelas", "destination": "/api/page" }
   ],
   "headers": [
     { "source": "/(.*)", "headers": [
