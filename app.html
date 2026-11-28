@@ -189,6 +189,19 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
   .dnav.dtabs .btn{flex:0 0 auto;white-space:nowrap;scroll-snap-align:center}
 }
 
+.hsg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.hsc{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card);min-width:0}
+.hsc-h{display:flex;align-items:flex-start;gap:10px}
+.hsc-no{flex:none;width:26px;height:26px;border-radius:50%;background:var(--bd);color:var(--tx);font-size:.78rem;display:flex;align-items:center;justify-content:center}
+.hsc-nm{flex:1;min-width:0;overflow-wrap:anywhere;font-size:.92rem}
+.hsc-nl{flex:none;display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+.hsc-nl b{font-size:1.2rem}
+.hsc-a{display:flex;align-items:baseline;gap:6px;font-size:.85rem}
+.hsc-u{border-top:1px solid var(--bd);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.hsc-ul{display:flex;justify-content:space-between;font-size:.85rem}
+.hsc-ans{font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;overflow:auto;padding:8px;border-radius:8px;background:var(--bd)}
+.hsc-sk{display:flex;align-items:center;gap:8px}
+.hsc-sk .in{width:90px;padding:6px;text-align:center}
 .spk{display:flex;flex-direction:column;gap:12px}
 .spk-c{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card);min-width:0}
 .spk-i{display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -4515,6 +4528,7 @@ function simSave(){
 function vUjian(){
   if(S.up==='edit'&&SIM&&SIM.page)return simPageHTML();
   if(S.up==='hasil'&&HSL)return hsPageHTML();
+  if(S.up==='set'&&(SPKL||[]).some(t=>t.id===S.sid))return spkSetPageHTML();
   S.up='';
   return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ujian Online</h2></div><div class="row">${spkFilterHTML()}</div></div>`+spkHTML();
 }
@@ -4536,7 +4550,7 @@ function spkFilterHTML(){
 function spkFil(key,v){S[key]=v||'';render(true);}
 /* ===== Daftar paket soal terstruktur (tab Ujian Online) ===== */
 let SPKL=null,SPKK='',SPKB=false;
-function spkRefresh(){if(S.tab==='ujian'&&!S.up)render(true);else spkDraw();}
+function spkRefresh(){if(S.tab==='ujian'&&(!S.up||S.up==='set'))render(true);else spkDraw();}
 function spkLoad(){
   if(SPKB)return;
   SPKB=true;
@@ -4558,21 +4572,61 @@ function spkCard(x){
 }
 function spkSet(id){
   const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
-  const can=S.user.r==='GURU'||isPAAdm();if(!can)return;
-  const own=S.user.r==='GURU'&&x.g===S.user.id,del=S.user.r==='ADMIN'||own,tutup=x.fs==='TUTUP';
-  const row=(lbl,val,txt,fn,c)=>`<div class="spk-set"><div class="spk-set-t"><b>${lbl}</b>${val?`<div class="mc-sub">${val}</div>`:''}</div><button type="button" class="btn ghost sm${c?' '+c:''}" onclick="closeM();${fn}">${txt}</button></div>`;
-  let rows='';
+  if(!(S.user.r==='GURU'||isPAAdm()))return;
+  if(SJL===null){rpc('soJenisList').then(r=>{SJL=(r.info&&r.info.js)||[];spkSet(id);}).catch(()=>{SJL=[];spkSet(id);});return;}
+  S.sid=id;S.up='set';render();try{window.scrollTo(0,0);}catch(e){}
+}
+function spkSetTutup(){S.up='';S.sid='';render();}
+function spkSetPageHTML(){
+  const x=(SPKL||[]).find(t=>t.id===S.sid);
+  const own=S.user.r==='GURU'&&x.g===S.user.id,del=S.user.r==='ADMIN'||own,tutup=x.fs==='TUTUP',id=esc(x.id);
+  const sub=[x.mp,x.kl?'Kelas '+x.kl:'',x.n+' soal'].filter(Boolean).map(esc).join(' · ');
+  const btn=(t,f,c)=>`<button type="button" class="btn ${c||'ghost'}" onclick="${f}">${t}</button>`;
+  const sec=(t,d,body)=>`<div class="card" style="margin-top:12px"><h3 style="margin:0 0 4px">${t}</h3>${d?`<p class="mu" style="margin:0 0 10px">${d}</p>`:''}${body}</div>`;
+  let h=`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Pengaturan ujian: ${esc(x.nm)}</h2><div class="mu">${sub}</div></div><div class="row">${btn('← Kembali','spkSetTutup()')}${x.fu?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri'):''}</div></div>`;
   if(x.fu){
-    rows+=row('Tautan ujian','Bagikan kepada siswa','Salin tautan',`spkCopy('${esc(id)}')`);
-    rows+=row('Status',tutup?'Ujian ditutup':'Ujian dibuka',tutup?'Buka Ujian':'Tutup Ujian',`spkStatus('${esc(id)}')`);
-    rows+=row('Durasi',x.fd?x.fd+' menit':'Tanpa batas waktu','Atur durasi',`spkDur('${esc(id)}')`);
-    rows+=row('Pembatasan otomatis',x.fb?'Maks. keluar halaman '+x.fb+'×':'Tanpa pembatasan','Atur',`spkBatas('${esc(id)}')`);
-    rows+=row('Soal',x.n+' soal','Edit soal',`spkOpen('${esc(id)}')`);
+    const url=ujUrl(x.fk,x.fp);
+    h+=sec('Tautan ujian','Bagikan tautan ini kepada siswa. Siswa wajib mengisi NISN yang terdaftar pada halaman pertama sebelum bisa melanjutkan ke soal.',
+      `<input id="spk-url" class="in" readonly value="${esc(url)}" onfocus="this.select()"><div class="row mt" style="flex-wrap:wrap">${btn('Salin tautan','spkCopyUrl()','pri')}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Buka di tab baru</a></div>`);
+    h+=sec('Status ujian',tutup?'Ujian ditutup: siswa tidak bisa masuk dan jawaban tidak diterima.':'Ujian dibuka: siswa bisa masuk dan mengirim jawaban.',
+      `<div class="row" style="flex-wrap:wrap;align-items:center">${bd(x.fs||'BUKA')}${btn(tutup?'Buka Ujian':'Tutup Ujian',`spkStatus('${id}')`)}</div>`);
+    h+=sec('Durasi','Dihitung sejak siswa memasukkan NISN. Kosongkan atau isi 0 bila tanpa batas waktu. Berlaku untuk siswa yang mulai sesudahnya.',
+      `<div class="row" style="flex-wrap:wrap;align-items:center"><input id="spk-dur" class="in" style="max-width:180px" type="number" min="0" max="600" inputmode="numeric" placeholder="Tanpa batas" value="${x.fd||''}" aria-label="Durasi (menit)"><span class="mu">menit</span>${btn('Simpan',`spkSetDur('${id}')`,'pri')}</div>`);
+    h+=sec('Pembatasan otomatis','Berapa kali siswa boleh keluar dari halaman ujian (pindah tab atau aplikasi). Bila terlampaui, jawaban terkirim otomatis. Kosongkan atau isi 0 bila tanpa pembatasan.',
+      `<div class="row" style="flex-wrap:wrap;align-items:center"><input id="spk-bk" class="in" style="max-width:180px" type="number" min="0" max="50" inputmode="numeric" placeholder="Tanpa pembatasan" value="${x.fb||''}" aria-label="Maksimal keluar halaman"><span class="mu">kali</span>${btn('Simpan',`spkSetBk('${id}')`,'pri')}</div>`);
   }else{
-    rows+=row('Soal',x.n+' soal (ujian belum dibuat)','Edit soal',`spkOpen('${esc(id)}')`);
+    const jl=(SJL&&SJL.length?SJL.map(j=>j.n):['Ulangan Harian','Kuis','PTS','UTS','PAS','UAS','PAT','Lainnya']);
+    h+=sec('Buat ujian','Ujian dikerjakan siswa langsung di EduTrack tanpa login. Siswa wajib memasukkan NISN yang terdaftar pada kelas paket ini. Jenis soal, semester aktif, mapel, dan kelas akan menjadi bagian tautan ujian.',
+      `<label for="spk-jn">Jenis soal</label><select id="spk-jn" class="in" style="max-width:280px">${jl.map(j=>`<option>${esc(j)}</option>`).join('')}</select>`+
+      `<label for="spk-dur" class="mt">Durasi pengerjaan (menit)</label><input id="spk-dur" class="in" style="max-width:180px" type="number" min="0" max="600" inputmode="numeric" placeholder="Tanpa batas waktu">`+
+      `<p class="mu mt">Bila durasi diisi, jawaban terkirim otomatis saat waktu habis. Bila siswa menutup atau me-refresh halaman, jawabannya hilang dan ia mengulang dari awal. Jawaban dari kelas lain tidak diterima.</p>`+
+      `<div class="row">${btn('Buat Ujian',`spkSetBuat('${id}')`,'pri')}</div>`);
   }
-  if(del)rows+=row('Hapus paket soal','Paket beserta ujiannya dihapus','Hapus',`spkDel('${esc(id)}')`,'dg');
-  modal('Pengaturan ujian',`<p class="mu" style="margin-top:0">${esc(x.nm)}</p>${rows}`,[{t:'Tutup',c:'ghost',f:()=>closeM()}]);
+  h+=sec('Soal',x.n+' soal'+(x.fu?'. Soal hanya bisa diedit saat ujian ditutup dan belum ada jawaban siswa.':''),`<div class="row">${btn('Edit soal',`spkOpen('${id}')`)}</div>`);
+  if(del)h+=sec('Hapus paket soal','Paket beserta ujiannya dihapus. Berkas Word aslinya tidak terpengaruh.',`<div class="row">${btn('Hapus paket soal',`spkDel('${id}')`,'dg')}</div>`);
+  return h;
+}
+function spkSetBuat(id){
+  const d=(($('spk-dur')||{}).value||'').trim(),jn=(($('spk-jn')||{}).value||'').trim();
+  if(d!==''&&(!/^\d+$/.test(d)||+d>600))return toast('Durasi: angka 0 sampai 600 menit','er');
+  rpc('soalUjianBuat',{paketId:id,durasi:d,jenis:jn}).then(r=>{
+    const i=r.info||{};toast(i.ada?'Ujian untuk paket ini sudah ada':'Ujian berhasil dibuat','ok');
+    SPKK='';spkLoad();
+  }).catch(e=>toast(e.message,'er'));
+}
+function spkSetDur(id){
+  const d=(($('spk-dur')||{}).value||'').trim();
+  if(d!==''&&(!/^\d+$/.test(d)||+d>600))return toast('Durasi: angka 0 sampai 600 menit','er');
+  rpc('soalUjianAtur',{paketId:id,durasi:d}).then(()=>{toast('Durasi disimpan','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er'));
+}
+function spkSetBk(id){
+  const d=(($('spk-bk')||{}).value||'').trim();
+  if(d!==''&&(!/^\d+$/.test(d)||+d>50))return toast('Isi angka 0 sampai 50','er');
+  rpc('soalUjianBatas',{paketId:id,batas:d===''?0:+d}).then(()=>{toast(+d>0?'Pembatasan disimpan: maks. '+d+' kali keluar':'Pembatasan dimatikan','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er'));
+}
+function spkCopyUrl(){
+  const e=$('spk-url');if(!e)return;e.select();const url=e.value;
+  (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Tautan disalin','ok')).catch(()=>{try{document.execCommand('copy');toast('Tautan disalin','ok');}catch(x){toast('Salin manual dari kotak tautan','er');}});
 }
 function spkListHTML(){
   if(SPKL===null)return lbar('Memuat…');
@@ -4583,25 +4637,7 @@ function spkListHTML(){
 }
 /* ===== Ujian di dalam EduTrack (siswa mengerjakan di halaman ?ujian=KODE) ===== */
 function ujUrl(kode,path){const u=new URL(location.href);u.search='';u.hash='';if(path){u.pathname='/'+String(path).split('/').map(encodeURIComponent).join('/');}else u.searchParams.set('ujian',kode);return u.href;}
-function spkUjian(id){
-  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
-  if(SJL===null){rpc('soJenisList').then(r=>{SJL=(r.info&&r.info.js)||[];spkUjian(id);}).catch(()=>{SJL=[];spkUjian(id);});return;}
-  const jl=(SJL.length?SJL.map(j=>j.n):['Ulangan Harian','Kuis','PTS','UTS','PAS','UAS','PAT','Lainnya']);
-  modal('Buat Ujian',
-    `<p class="mu" style="margin-top:0">Ujian untuk paket "${esc(x.nm)}" (${x.n} soal) dikerjakan siswa langsung di EduTrack tanpa login. Siswa wajib memasukkan NISN yang terdaftar pada kelas paket ini. Isi soal masih bisa diperbaiki lewat tombol Edit soal selama ujian ditutup dan belum ada jawaban siswa.</p>`+
-    `<label for="spk-jn">Jenis soal (masuk ke tautan ujian)</label><select id="spk-jn" class="in">${jl.map(j=>`<option>${esc(j)}</option>`).join('')}</select>`+
-    `<label for="spk-dur" class="mt">Durasi pengerjaan (menit)</label><input id="spk-dur" class="in" type="number" min="0" max="600" inputmode="numeric" placeholder="Kosongkan bila tanpa batas waktu">`+
-    `<p class="mu mt">Bila durasi diisi, jawaban terkirim otomatis saat waktu habis. Bila siswa menutup atau me-refresh halaman, jawabannya hilang dan ia mengulang dari awal. Jawaban dari kelas lain tidak diterima.</p>`,
-    [CANCEL,{t:'Buat Ujian',c:'pri',f:()=>{
-      const d=(($('spk-dur')||{}).value||'').trim(),jn=(($('spk-jn')||{}).value||'').trim();
-      closeM();
-      rpc('soalUjianBuat',{paketId:id,durasi:d,jenis:jn}).then(r=>{
-        const i=r.info||{};toast(i.ada?'Ujian untuk paket ini sudah ada':'Ujian berhasil dibuat','ok');
-        SPKK='';spkLoad();
-        if(i.path||i.kode)spkLink(ujUrl(i.kode,i.path));
-      }).catch(e=>toast(e.message,'er'));
-    }}]);
-}
+function spkUjian(id){spkSet(id);}
 function spkDur(id){
   const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
   modal('Atur durasi ujian',
@@ -4665,15 +4701,14 @@ function hsTblHTML(){
   const H=HSL.h,rows=hsRows();
   if(!HSL.kl)return'<p class="mu">Pilih kelas untuk menampilkan daftar siswa.</p>';
   if(!rows.length)return'<p class="mu">Belum ada siswa kelas '+esc(HSL.kl)+' yang mengirim jawaban.</p>';
-  const thU=H.ur.map(x=>`<th class="ctr" title="${esc(x.t)}">Uraian ${x.n}<br><span class="mu">maks ${x.p}</span></th>`).join('');
-  const body=rows.map((b,i)=>{
-    const tdU=H.ur.map((x,j)=>{
+  const cards=rows.map((b,i)=>{
+    const ur=H.ur.map((x,j)=>{
       const v=((HSL.ur[b.sid]||{})[x.id]);
-      return`<td style="min-width:150px"><div class="mu" style="max-width:240px;max-height:72px;overflow:auto;white-space:pre-wrap">${esc(b.uj[j]||'(tidak dijawab)')}</div><input type="number" class="in" min="0" max="${x.p}" step="any" inputmode="decimal" style="width:72px;padding:6px;text-align:center;margin-top:4px" value="${esc(v==null?'':v)}" oninput="hsUr('${esc(b.sid)}','${esc(x.id)}',this.value)" aria-label="Skor uraian ${x.n} ${esc(b.nama)}"></td>`;
+      return`<div class="hsc-u"><div class="hsc-ul"><b>Uraian ${x.n}</b><span class="mu">maks ${x.p}</span></div><div class="hsc-ans">${esc(b.uj[j]||'(tidak dijawab)')}</div><div class="hsc-sk"><label class="mu" for="hu-${esc(b.sid)}-${esc(x.id)}">Skor</label><input id="hu-${esc(b.sid)}-${esc(x.id)}" type="number" class="in" min="0" max="${x.p}" step="any" inputmode="decimal" value="${esc(v==null?'':v)}" oninput="hsUr('${esc(b.sid)}','${esc(x.id)}',this.value)" aria-label="Skor uraian ${x.n} ${esc(b.nama)}"></div></div>`;
     }).join('');
-    return`<tr><td>${i+1}</td><td class="nw"><b>${esc(b.nama)}</b>${b.dup>1?`<div class="mu">mengirim ${b.dup}×, dihitung yang terakhir</div>`:''}${b.kl>0?`<div class="mu" style="color:var(--er)">keluar dari halaman ujian ${b.kl}×</div>`:''}</td><td class="ctr">${b.auto}</td>${tdU}<td class="ctr"><b id="hn-${esc(b.sid)}">${hsNilaiTxt(b)}</b></td></tr>`;
+    return`<div class="hsc"><div class="hsc-h"><span class="hsc-no">${i+1}</span><div class="hsc-nm"><b>${esc(b.nama)}</b>${b.dup>1?`<div class="mu">mengirim ${b.dup}×, dihitung yang terakhir</div>`:''}${b.kl>0?`<div class="mu" style="color:var(--er)">keluar dari halaman ujian ${b.kl}×</div>`:''}</div><div class="hsc-nl"><span class="mu">Nilai</span><b id="hn-${esc(b.sid)}">${hsNilaiTxt(b)}</b></div></div><div class="hsc-a"><span class="mu">Skor otomatis</span><b>${b.auto}</b><span class="mu">/ ${H.maxAuto}</span></div>${ur}</div>`;
   }).join('');
-  return`<div class="tw" style="max-height:70vh;overflow:auto"><table><thead><tr><th>No</th><th>Siswa</th><th class="ctr">Skor otomatis<br><span class="mu">maks ${H.maxAuto}</span></th>${thU}<th class="ctr">Nilai</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  return`<div class="hsg">${cards}</div>`;
 }
 function hsNilaiTxt(b){
   if(!HSL.kode)return'-';
