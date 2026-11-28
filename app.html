@@ -189,10 +189,9 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
   .dnav.dtabs .btn{flex:0 0 auto;white-space:nowrap;scroll-snap-align:center}
 }
 
-.spk{display:grid;grid-template-columns:1fr;gap:12px}
-@media(min-width:700px){.spk{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(min-width:1180px){.spk{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.spk{display:flex;flex-direction:column;gap:12px}
 .spk-c{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card);min-width:0}
+.spk-i{display:flex;flex-direction:column;gap:8px;min-width:0}
 .spk-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .spk-t{font-weight:700;font-size:.92rem;line-height:1.3;min-width:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .spk-m{display:flex;flex-wrap:wrap;gap:2px 12px;color:var(--mu);font-size:.78rem}
@@ -201,7 +200,9 @@ ul{margin:4px 0 4px 18px}li{margin:2px 0}
 .spk-ch b{font-weight:700}
 .spk-ch.g{background:var(--okb);color:var(--ok)}
 .spk-a{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:auto;padding-top:2px}
-.spk-a .btn{width:100%;padding:8px 6px;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spk-a .btn{width:100%;padding:7px 6px;font-size:.78rem;line-height:1.2;min-height:34px;white-space:normal;overflow-wrap:anywhere}
+@media(min-width:861px){.spk-a{grid-template-columns:repeat(auto-fit,minmax(132px,1fr))}.spk-a .w{grid-column:auto}}
+@media(min-width:1180px){.spk-c{flex-direction:row;align-items:center;gap:20px;padding:14px 18px}.spk-i{flex:1 1 0}.spk-a{flex:0 0 auto;width:min(570px,58%);grid-template-columns:repeat(4,minmax(0,1fr));margin-top:0;padding-top:0}}
 .spk-a .w{grid-column:1/-1}
 .spk-a .dg{color:var(--er)}
 .sim-im{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 8px}
@@ -1010,6 +1011,7 @@ function ujGate(msg){
       '<li><b>Jangan menutup browser, menutup tab, atau me-refresh halaman</b> selama ujian.</li>'+
       '<li>Bila halaman ditutup atau di-refresh, <b>semua jawaban HILANG</b> dan Anda harus mengulang dari awal.</li>'+
       '<li>Berpindah tab atau aplikasi akan <b>dicatat dan dilaporkan kepada guru</b>.</li>'+
+      (+d.bk>0?'<li>Anda hanya boleh keluar dari halaman ujian <b>maksimal '+(+d.bk)+' kali</b>. Bila lebih, jawaban Anda <b>terkirim otomatis</b>.</li>':'')+
       (d.dur?'<li>Waktu berjalan sejak NISN diverifikasi. Jawaban terkirim otomatis saat waktu habis.</li>':'')+
       '</ul></div>'+
       '<label class="ujl" for="uj-n">NISN</label><input id="uj-n" class="ujin" inputmode="numeric" autocomplete="off" placeholder="Tulis NISN Anda" onkeydown="if(event.key===\'Enter\')ujMulai()">'+
@@ -1070,14 +1072,17 @@ function ujPil(i){
 function ujUr(i,v){var q=UJ.soal[i];if(String(v).trim())UJ.jw[q.id]=v;else delete UJ.jw[q.id];ujProg();}
 function ujJawab(){return Object.keys(UJ.jw).length;}
 function ujProg(){var e=ujEl('uj-pr');if(e)e.textContent=ujJawab()+'/'+UJ.soal.length+' terjawab';}
-function ujKlTampil(){var e=ujEl('uj-kl');if(e&&UJ.kl>0){e.hidden=false;e.textContent='Keluar halaman: '+UJ.kl+'×';}}
+function ujBatas(){var n=UJ.info?+UJ.info.bk:0;return n>0?n:0;}
+function ujKlTampil(){var e=ujEl('uj-kl');if(e&&UJ.kl>0){e.hidden=false;e.textContent='Keluar halaman: '+UJ.kl+'×'+(ujBatas()?' / maks '+ujBatas():'');}}
 function ujBU(e){if(UJ.aktif&&!UJ.done){e.preventDefault();e.returnValue='Jawaban Anda akan hilang jika meninggalkan halaman ini.';return e.returnValue;}}
 function ujLeave(){
   if(!UJ.aktif||UJ.done||UJ.dlg)return;
   var n=Date.now();if(n-UJ.lastLeave<1500)return;UJ.lastLeave=n;
   UJ.kl++;ujKlTampil();
+  var mx=ujBatas();
+  if(mx&&UJ.kl>mx){UJ.timeUp=true;ujStatus('<div class="ujbox n"><h2>Batas keluar halaman terlampaui</h2><p>Anda keluar dari halaman ujian lebih dari '+mx+' kali. Jawaban Anda dikirim otomatis…</p></div>');ujKirim(true);return;}
   var w=ujEl('uj-wr'),t=ujEl('uj-wt');
-  if(t)t.textContent='Anda terdeteksi meninggalkan halaman ujian ('+UJ.kl+' kali). Tetaplah di halaman ini sampai jawaban dikirim.';
+  if(t)t.textContent='Anda terdeteksi meninggalkan halaman ujian ('+UJ.kl+' kali).'+(mx?' Batas yang diizinkan '+mx+' kali; bila terlampaui jawaban dikirim otomatis.':'')+' Tetaplah di halaman ini sampai jawaban dikirim.';
   if(w)w.hidden=false;
 }
 function ujAktif(){
@@ -1152,7 +1157,7 @@ function tabsFor(r){
   o.push({k:'dbd',l:'Dashboard',i:'dash',g:'Dashboard'});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='PIMPINAN')o.push({k:'usulan',l:'Kritik/Saran/Usulan',i:'inbox',g:KIN});
   if(r==='ADMIN'||r==='KURIKULUM')o.push({k:'tugas',l:'Master tugas',i:'list',g:KIN},{k:'tpl',l:'Template isian',i:'tpl',g:KIN});
-  if(r==='ADMIN'||r==='KURIKULUM'||r==='PIMPINAN')o.push({k:'perangkat',l:'Perangkat ajar',i:'book',g:'Materi & soal'},{k:'soal',l:'Bank soal',i:'help',g:'Materi & soal'});
+  if(r==='ADMIN'||r==='KURIKULUM'||r==='PIMPINAN')o.push({k:'perangkat',l:'Perangkat ajar',i:'book',g:'Materi & soal'},{k:'soal',l:'Bank soal',i:'help',g:'Materi & soal'},{k:'ujian',l:'Ujian Online',i:'checksq',g:'Materi & soal'});
   if(r==='ADMIN'||r==='TU'||r==='PIMPINAN')o.push({k:'absen',l:'Absen guru',i:'chk',g:ABS});
   if(r==='ADMIN'||r==='TU')o.push({k:'jadwal',l:'Jadwal absen',i:'cal',g:ABS});
   if(r==='ADMIN'||r==='KURIKULUM'||r==='TU')o.push({k:'izinver',l:'Verifikasi izin',i:'izin',g:'Izin guru',b:(IZN&&IZN.m)||0});
@@ -1183,7 +1188,7 @@ let BKSL=null,BKSLB=false,SPGL=null,SPGLB=false;
 let SPA=[],SPP=[],SPN=null,SALS=null,SALSB=false,SPLS=null,SPLSB=false,SILS=null,SILSB=false;
 let KSL=[],KSN=null,KSPL=null,KSPLB=false,KPLS=null,KPLSB=false,KJLS=null,KJLSB=false,KJWK='';
 let KEGLS=null,KEGLSB=false;
-let S={user:null,ar:'',view:'dash',tab:'dash',vp:'',tugasId:null,q:'',fs:'',fu:'',ad:'',sa:false,qt:'',qk:'',openT:'',nm:'',nk:'',nf:'',nt:'sem',njv:'',pm:'',pk:'',pj:'',pg:'',sm:'',sk:'',suq:'',suj:'',am:'',ami:'',ak:'',at:'isi',amd:'',arm:'',ae:'',aet:'isi',aed:'',aerm:'',akc:'',akb:'',iztab:'',sat:'',spt:'',srkat:'',kltab:'',kpf:'',kpq:'',kegj:'',wb:'',ws:''};
+let S={user:null,ar:'',view:'dash',tab:'dash',vp:'',tugasId:null,q:'',fs:'',fu:'',ad:'',sa:false,qt:'',qk:'',openT:'',nm:'',nk:'',nf:'',nt:'sem',njv:'',pm:'',pk:'',pj:'',pg:'',sm:'',sk:'',xm:'',xk:'',up:'',suq:'',suj:'',am:'',ami:'',ak:'',at:'isi',amd:'',arm:'',ae:'',aet:'isi',aed:'',aerm:'',akc:'',akb:'',iztab:'',sat:'',spt:'',srkat:'',kltab:'',kpf:'',kpq:'',kegj:'',wb:'',ws:''};
 let WD=null;
 try{S.ar=localStorage.getItem('er-ar')||'';}catch(_){}
 S.lm='staf';
@@ -1278,6 +1283,7 @@ function navItems(){
       {k:'dbd',l:'Dashboard',i:'dash',on:v==='dbd'},
       {k:'perangkat',l:'Perangkat ajar',i:'book',on:v==='perangkat'},
       {k:'soal',l:'Bank soal',i:'help',on:v==='soal'},
+      {k:'ujian',l:'Ujian Online',i:'checksq',on:v==='ujian'},
       {k:'absen',l:'Absensi saya',i:'chk',on:v==='absen'},
       {k:'izin',l:'Ajukan izin',i:'izin',on:v==='izin'},
       {k:'keslanggar',l:'Lapor pelanggaran',i:'kes',on:v==='keslanggar'},
@@ -1607,6 +1613,7 @@ function go(k){
   cancelPend();if(k!=='kop')KED=null;
   if(k==='perangkat')PAL=null;
     if(k==='soal'){SUL=null;SQS=null;}
+  if(k==='ujian'){SPKL=null;SPKK='';S.up='';HSL=null;SIM=null;}
   if(k==='dbd'){S.dt='lap';AGR=null;AGRB=false;AKL=null;AKR=null;S.akc='';AKP=null;AKPB=false;AKSP=null;AKSPB=false;PRK=null;PRKB=false;SRK=null;SRKB=false;S.rkq='';S.rks='';RLP=null;RLPB=false;}
   if(k==='absmapel'){AML=null;AMR=null;AMK=null;S.amd='';}
   if(k==='abseskul'){AXS=null;AXL=null;AXR=null;}
@@ -1669,9 +1676,9 @@ function gsCall(action,token,p){
   return fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,token:token||null,p:p||{}})})
     .then(res=>{if(!res.ok)throw new Error('Koneksi gagal ('+res.status+')');lpBump(70);return res.json();}).then(d=>{lpBump(90);return d;});
 }
-const SVW={};"soalPaketSave soalPaketDel soalFormBuat soalUjianBuat soalUjianAtur soalFormStatus soalFormNisn soalFormNilai saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
+const SVW={};"soalPaketSave soalPaketDel soalFormBuat soalUjianBuat soalUjianAtur soalUjianBatas soalFormStatus soalFormNisn soalFormNilai saveLaporan kirimUsulan paJenisSave paJenisDel savePA delPA soJenisSave soJenisDel soUSave soUDel absMapelSave absEkskulSave absEkskulSaveMaster absEkskulAnggota absEkskulDel tahSave tahMateriSave tahMateriDel izinAjukan izinBatal izinVerif izinSetujui bkSesiSave bkSesiDel bkPerjanjianSave bkPerjanjianDel sarItemSave sarItemDel sarAduan sarAduanBatal sarAduanProses sarAduanSelesai sarPinjam sarPinjamBatal sarPinjamAksi sarPinjamSerah sarPinjamKembali kesJenisSave kesJenisDel kesLanggar kesLanggarBatal kesLanggarProses kesLanggarSelesai kesPrestSave kesPrestDel kesKegSave kesKegDel ubahAkun returnDraft setPeriode addPeriode deletePeriode toggleKunci saveJadwal saveAbsensi saveTugas toggleTugas saveKop delKop setKopUtama saveCfg saveNt delNt saveUser resetUsername resetUsernameMassal resetSandiMassal resetSandi delUser importGuru saveTemplate delTemplate saveNilai setSemester saveJenisNilai saveMapel importMapel delMapel jadwalCfgSave jadwalMapelSave importSiswa saveSiswa delSiswa delKelas".split(' ').forEach(x=>{SVW[x]=1;});
 const SVP={v:0,t:0,n:0,h:0};
-const svLabel=a=>a==='soalFormBuat'?'Membuat Google Form\u2026':a==='soalUjianBuat'?'Membuat ujian\u2026':a==='soalUjianAtur'?'Menyimpan durasi\u2026':a==='soalFormNilai'?'Menyimpan nilai ke menu Nilai\u2026':a==='soalFormStatus'?'Mengubah status Form\u2026':a==='soalFormNisn'?'Memperbarui daftar NISN\u2026':a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
+const svLabel=a=>a==='soalFormBuat'?'Membuat Google Form\u2026':a==='soalUjianBuat'?'Membuat ujian\u2026':a==='soalUjianAtur'?'Menyimpan durasi\u2026':a==='soalUjianBatas'?'Menyimpan pembatasan\u2026':a==='soalFormNilai'?'Menyimpan nilai ke menu Nilai\u2026':a==='soalFormStatus'?'Mengubah status Form\u2026':a==='soalFormNisn'?'Memperbarui daftar NISN\u2026':a==='pindahRole'?'Beralih ke '+(ROLE_L[S.ar]||'role lain')+'\u2026':/^del|Del$|^deletePeriode$/.test(a)?'Menghapus data\u2026':/^import/.test(a)?'Mengimpor data\u2026':'Menyimpan data\u2026';
 function svEl(){
   let e=document.getElementById('svp');
   if(!e){
@@ -2346,7 +2353,7 @@ function jenisLoad(){
   jenisReload();
 }
 const jenisReload=()=>{PJLB=true;rpc('paJenisList').then(r=>{PJL=(r.info&&r.info.js)||[];PJLB=false;jenisRefresh();render(true);}).catch(e=>{PJLB=false;toast(e.message,'er');});};
-const ampuKey=view=>view==='soal'?'fks':'fkp';
+const ampuKey=view=>view==='soal'?'fks':view==='ujian'?'fku':'fkp';
 const ampuKf=view=>String(S[ampuKey(view)]||'');
 function ampuKelasSel(view){
   if(!AMP||!AMP.length)return'';
@@ -2356,7 +2363,7 @@ function ampuKelasSel(view){
   return`<select class="in" style="width:auto" aria-label="Filter kelas" onchange="S['${ampuKey(view)}']=this.value;render(true)"><option value="">Semua kelas</option>${ks.map(k=>`<option value="${esc(k)}" ${cur===k?'selected':''}>Kelas ${esc(k)}</option>`).join('')}</select>`;
 }
 function ampuSwSel(view){
-  const m=view==='soal'?S.sm:S.pm,cur=view==='soal'?S.sk:S.pk;
+  const m=view==='soal'?S.sm:view==='ujian'?S.xm:S.pm,cur=view==='soal'?S.sk:view==='ujian'?S.xk:S.pk;
   const a=(AMP||[]).find(x=>x.m===m);
   const ks=a?[...new Set(a.ks||[])].sort((x,y)=>String(x).localeCompare(String(y),'id',{numeric:true})):[];
   if(ks.length<2)return'';
@@ -2364,6 +2371,7 @@ function ampuSwSel(view){
 }
 function ampuSw(view,k){
   if(view==='perangkat'){if(!k||k===S.pk)return;S.pk=k;S.paq='';PAL=null;render();paLoad();}
+  else if(view==='ujian'){if(!k||k===S.xk)return;S.xk=k;SPKL=null;SPKK='';S.up='';render();}
   else{if(!k||k===S.sk)return;S.sk=k;SUL=null;render();}
 }
 function ampuCards(view){
@@ -2380,14 +2388,15 @@ function ampuCards(view){
   return`<div class="mcl">${AMPC.map((c,i)=>fk2&&c.k!==fk2?'':(()=>{
     let sub='Kelas '+esc(c.k),bdg='';
     if(isSoal){const t=sqsGet(c.m,c.k),ok=t.u>0;sub+=' · '+t.u+' unggahan';bdg=`<span class="badge ${ok?'b-ok':'b-er'}">${ok?'Sudah':'Belum'}</span>`;}
-    return`<div class="mcard tap" role="button" tabindex="0" onclick="ampuGo('${view}',${i})"><div class="mc-h"><div><b>${esc(c.m)}</b><div class="mc-sub">${sub}</div></div>${bdg}<div class="mc-more">${view==='perangkat'?'Buka folder ›':'Buka unggahan ›'}</div></div></div>`;})()).join('')}</div>`;
+    return`<div class="mcard tap" role="button" tabindex="0" onclick="ampuGo('${view}',${i})"><div class="mc-h"><div><b>${esc(c.m)}</b><div class="mc-sub">${sub}</div></div>${bdg}<div class="mc-more">${view==='perangkat'?'Buka folder ›':view==='ujian'?'Buka ujian ›':'Buka unggahan ›'}</div></div></div>`;})()).join('')}</div>`;
 }
 function ampuGo(view,i){
   const c=AMPC[i];if(!c)return;
   if(view==='perangkat'){S.pm=c.m;S.pk=c.k;S.pj='';S.pg='';S.paq='';PAL=null;render();paLoad();}
+  else if(view==='ujian'){S.xm=c.m;S.xk=c.k;SPKL=null;SPKK='';S.up='';render();}
   else{S.sm=c.m;S.sk=c.k;SUL=null;render();}
 }
-const ampuBack=view=>{if(view==='perangkat'){S.pm='';S.pk='';S.pj='';S.pg='';}else{S.sm='';S.sk='';SQS=null;}render();};
+const ampuBack=view=>{if(view==='perangkat'){S.pm='';S.pk='';S.pj='';S.pg='';}else if(view==='ujian'){S.xm='';S.xk='';SPKL=null;SPKK='';}else{S.sm='';S.sk='';SQS=null;}render();};
 function paLoad(){
   PALB=true;render(true);
   const m=S.pm,k=S.pk;
@@ -2623,7 +2632,7 @@ function vSoalUnggah(){
   const tools=`<div class="row" style="flex-wrap:wrap"><input class="in" style="max-width:190px" placeholder="Cari judul/keterangan…" aria-label="Cari unggahan soal" value="${esc(S.suq||'')}" oninput="S.suq=this.value;suRefreshList()">`+
     `<select class="in" style="width:auto" aria-label="Filter jenis soal" onchange="S.suj=this.value;suRefreshList()"><option value="">Semua jenis</option>${(SJL||[]).map(j=>`<option value="${esc(j.n)}" ${S.suj===j.n?'selected':''}>${esc(j.n)}</option>`).join('')}</select>`+
     `${guru?`<button class="btn pri" onclick="suM()">+ Unggah soal</button>`:''}${adm?`<button class="btn ghost" onclick="sjM()">Kelola jenis soal</button>`:''}</div>`;
-  return tools+`<div id="su-list" style="margin-top:12px">${suListHTML()}</div>`+spkHTML();
+  return tools+`<div id="su-list" style="margin-top:12px">${suListHTML()}</div>`;
 }
 function suListHTML(){
   const q=String(S.suq||'').trim().toLowerCase();
@@ -3739,7 +3748,7 @@ function vAdmin(){
   if(S.user.mc){setTimeout(autoAkun,80);return`<div class="card"><h2>Keamanan akun</h2><p class="mu mt">Anda wajib mengganti kata sandi bawaan sebelum dapat menggunakan aplikasi. Username bawaan juga dapat Anda ubah.</p><button class="btn pri" style="margin-top:16px" onclick="akunM()">Atur akun sekarang</button></div>`;}
   const al=tabsFor(S.user.r).map(t=>t.k);
   if(al.indexOf(S.tab)<0)S.tab=al[0]||'dbd';
-  return({dbd:vDbd,pengaturan:aCfg,absen:aAbsen,jadwal:aJadwal,usulan:aUsulan,tugas:aTugas,user:aUser,kop:aKop,tpl:aTpl,log:aLog,nilai:vNilai,nilaimgr:aNilaiMgr,siswa:aNilaiSw,pengkur:aPengKur,tahfidz:vTahfidz,perangkat:vPerangkat,soal:vSoal,absmapel:vAbsMapel,abseskul:vAbsEkskul,izinver:vIzinAdmin,izinset:vIzinAdmin,bksesi:vBKSesi,bksp:vBKSP,saraduadm:vSarAduanAdmin,sarpinjamadm:vSarPinjamAdmin,sarinven:vSarInven,kespelanggaran:vKesLanggarAdmin,kesprest:vKesPrest,kespoin:vKesPoin,keskegiatan:vKesKeg}[S.tab]||vDbd)();
+  return({dbd:vDbd,pengaturan:aCfg,absen:aAbsen,jadwal:aJadwal,usulan:aUsulan,tugas:aTugas,user:aUser,kop:aKop,tpl:aTpl,log:aLog,nilai:vNilai,nilaimgr:aNilaiMgr,siswa:aNilaiSw,pengkur:aPengKur,tahfidz:vTahfidz,perangkat:vPerangkat,soal:vSoal,ujian:vUjian,absmapel:vAbsMapel,abseskul:vAbsEkskul,izinver:vIzinAdmin,izinset:vIzinAdmin,bksesi:vBKSesi,bksp:vBKSP,saraduadm:vSarAduanAdmin,sarpinjamadm:vSarPinjamAdmin,sarinven:vSarInven,kespelanggaran:vKesLanggarAdmin,kesprest:vKesPrest,kespoin:vKesPoin,keskegiatan:vKesKeg}[S.tab]||vDbd)();
 }
 
 /* ===== Dashboard: rekap laporan, rekap perangkat ajar, rekap soal (+ analisis kinerja untuk Admin Operator) ===== */
@@ -4441,7 +4450,7 @@ function simJ(i,v){
 function simAddO(i){SIM.soal[i].opsi.push({t:'',k:false});$('sq-'+i).outerHTML=simCard(i);simSum();}
 function simDelO(i,j){SIM.soal[i].opsi.splice(j,1);$('sq-'+i).outerHTML=simCard(i);simSum();}
 function simDelQ(i){SIM.soal.splice(i,1);simList();}
-function simAddQ(){SIM.soal.push({jenis:'PG',teks:'',skor:1,rubrik:'',bs:'',w0:[],gq:[],opsi:[{t:'',k:false},{t:'',k:false},{t:'',k:false},{t:'',k:false}]});simList();const l=$('sim-list');if(l)l.scrollTop=l.scrollHeight;}
+function simAddQ(){SIM.soal.push({jenis:'PG',teks:'',skor:1,rubrik:'',bs:'',w0:[],gq:[],opsi:[{t:'',k:false},{t:'',k:false},{t:'',k:false},{t:'',k:false}]});simList();const l=$('sim-list');if(l){if(SIM.page){const c=l.lastElementChild;if(c)c.scrollIntoView({behavior:'smooth',block:'center'});}else l.scrollTop=l.scrollHeight;}}
 function simBuild(){
   return SIM.soal.map((q,i)=>{
     const opt=q.jenis==='PG'||q.jenis==='PGK',o={no:i+1,jenis:q.jenis,teks:String(q.teks).trim(),skor:+q.skor||0};
@@ -4461,19 +4470,31 @@ function simSave(){
   if(bad)return toast(bad+' soal belum lengkap (teks, opsi, atau kunci). Lihat tulisan merah pada kartu soal.','er');
   SIMBUSY=true;
   rpc('soalPaketSave',{id:SIM.paketId||'',uploadId:SIM.uploadId||'',nama:nama,kop:SIM.kop||'',kopGbr:SIM.kopGbr||undefined,kopGbrDel:!!SIM.kopGbrDel,soal:simBuild()}).then(r=>{
-    SIMBUSY=false;SIM=null;closeM();
-    toast('Paket soal tersimpan ('+((r.info&&r.info.n)||0)+' soal)','ok');
+    SIMBUSY=false;const pg=!!(SIM&&SIM.page);SIM=null;
+    toast('Paket soal tersimpan ('+((r.info&&r.info.n)||0)+' soal)'+(pg?'':'. Buka tab Ujian Online untuk membuat ujian.'),'ok');
     SPKK='';spkLoad();
+    if(pg){S.up='';render();}else closeM();
   }).catch(e=>{SIMBUSY=false;toast(e.message,'er');});
 }
-/* ===== Daftar paket soal terstruktur di halaman Bank soal ===== */
+/* ===== Tab Ujian Online: pilih mapel & kelas, daftar paket soal, halaman Hasil & Nilai dan Edit soal ===== */
+function vUjian(){
+  ampLoad();
+  if(S.up==='edit'&&SIM&&SIM.page)return simPageHTML();
+  if(S.up==='hasil'&&HSL)return hsPageHTML();
+  S.up='';
+  if(!S.xm||!S.xk){
+    return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ujian Online</h2></div><div class="row">${ampuKelasSel('ujian')}</div></div>`+ampuCards('ujian');
+  }
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Ujian Online: ${esc(S.xm)} · Kelas ${esc(S.xk)}</h2></div><div class="row">${ampuSwSel('ujian')}<button class="btn ghost" onclick="ampuBack('ujian')">← Mapel & kelas lain</button></div></div>`+spkHTML();
+}
+/* ===== Daftar paket soal terstruktur (tab Ujian Online) ===== */
 let SPKL=null,SPKK='',SPKB=false;
 function spkLoad(){
   if(SPKB)return;
-  const m=S.sm,k=S.sk,key=m+'|'+k;
+  const m=S.xm,k=S.xk,key=m+'|'+k;
   SPKB=true;
   rpc('soalPaketList',{m:m,k:k}).then(r=>{
-    SPKB=false;if(m!==S.sm||k!==S.sk)return;
+    SPKB=false;if(m!==S.xm||k!==S.xk)return;
     SPKL=(r.info&&r.info.pk)||[];SPKK=key;spkDraw();
   }).catch(e=>{SPKB=false;SPKL=[];SPKK=key;spkDraw();toast(e.message,'er');});
 }
@@ -4487,17 +4508,17 @@ function spkCard(x){
   if(can){
     acts=x.fu
       ?(x.fm==='IN'
-        ?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Ujian':'Tutup Ujian',`spkStatus('${id}')`)+btn('Atur durasi',`spkDur('${id}')`)+btn('Lihat soal',`spkOpen('${id}')`)
-        :btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Form':'Tutup Form',`spkStatus('${id}')`)+btn('Edit di Google Form',`spkEdit('${id}')`,'ghost',1)+btn('Perbarui NISN',`spkNisn('${id}')`)+btn('Lihat soal',`spkOpen('${id}')`))
-      :btn('Buat Ujian',`spkUjian('${id}')`,'pri',1)+btn('Ubah soal',`spkOpen('${id}')`);
+        ?btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Ujian':'Tutup Ujian',`spkStatus('${id}')`)+btn('Atur durasi',`spkDur('${id}')`)+btn('Pembatasan otomatis',`spkBatas('${id}')`)+btn('Edit soal',`spkOpen('${id}')`)
+        :btn('Hasil &amp; Nilai',`spkHasil('${id}')`,'pri',1)+btn('Salin tautan',`spkCopy('${id}')`)+btn(x.fs==='TUTUP'?'Buka Form':'Tutup Form',`spkStatus('${id}')`)+btn('Edit di Google Form',`spkEdit('${id}')`,'ghost',1)+btn('Perbarui NISN',`spkNisn('${id}')`))
+      :btn('Buat Ujian',`spkUjian('${id}')`,'pri',1)+btn('Edit soal',`spkOpen('${id}')`);
     if(del)acts+=btn('Hapus',`spkDel('${id}')`,'ghost dg');
   }else if(del)acts=btn('Hapus',`spkDel('${id}')`,'ghost dg',1);
-  const meta=`<span>${x.n} soal</span><span>Skor ${x.sk!=null?x.sk:'-'}</span>${x.fm==='IN'?`<span>${x.fd?x.fd+' menit':'Tanpa batas waktu'}</span>`:''}${S.user.r!=='GURU'?`<span>${esc(x.gn)}</span>`:''}<span>${timeShow(x.u)}</span>`;
-  return`<div class="spk-c"><div class="spk-h"><div class="spk-t" title="${esc(x.nm)}">${esc(x.nm)}</div>${x.fu?bd(x.fs||'BUKA'):''}</div><div class="spk-m">${meta}</div>${chips?`<div class="spk-chs">${chips}</div>`:''}${acts?`<div class="spk-a">${acts}</div>`:''}</div>`;
+  const meta=`<span>${x.n} soal</span><span>Skor ${x.sk!=null?x.sk:'-'}</span>${x.fm==='IN'?`<span>${x.fd?x.fd+' menit':'Tanpa batas waktu'}</span><span>${x.fb?'Maks. keluar '+x.fb+'×':'Tanpa batas keluar'}</span>`:''}${S.user.r!=='GURU'?`<span>${esc(x.gn)}</span>`:''}<span>${timeShow(x.u)}</span>`;
+  return`<div class="spk-c"><div class="spk-i"><div class="spk-h"><div class="spk-t" title="${esc(x.nm)}">${esc(x.nm)}</div>${x.fu?bd(x.fs||'BUKA'):''}</div><div class="spk-m">${meta}</div>${chips?`<div class="spk-chs">${chips}</div>`:''}</div>${acts?`<div class="spk-a">${acts}</div>`:''}</div>`;
 }
 function spkListHTML(){
   if(SPKL===null)return lbar('Memuat…');
-  if(!SPKL.length)return'<p class="mu">Belum ada paket soal. Buka berkas Word pada daftar unggahan di atas, lalu klik "Impor ke ujian".</p>';
+  if(!SPKL.length)return'<p class="mu">Belum ada paket soal untuk mapel & kelas ini. Buka tab Bank soal, lalu klik "Impor ke ujian" pada berkas Word.</p>';
   return'<div class="spk">'+SPKL.map(spkCard).join('')+'</div>';
 }
 /* ===== Google Form dari paket soal + penarikan hasil ke menu Nilai ===== */
@@ -4515,7 +4536,7 @@ function ujUrl(kode){const u=new URL(location.href);u.search='';u.hash='';u.sear
 function spkUjian(id){
   const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
   modal('Buat Ujian',
-    `<p class="mu" style="margin-top:0">Ujian untuk paket "${esc(x.nm)}" (${x.n} soal) dikerjakan siswa langsung di EduTrack tanpa login. Siswa wajib memasukkan NISN yang terdaftar pada kelas paket ini. Setelah ujian dibuat, isi soal paket tidak dapat diubah lagi.</p>`+
+    `<p class="mu" style="margin-top:0">Ujian untuk paket "${esc(x.nm)}" (${x.n} soal) dikerjakan siswa langsung di EduTrack tanpa login. Siswa wajib memasukkan NISN yang terdaftar pada kelas paket ini. Isi soal masih bisa diperbaiki lewat tombol Edit soal selama ujian ditutup dan belum ada jawaban siswa.</p>`+
     `<label for="spk-dur">Durasi pengerjaan (menit)</label><input id="spk-dur" class="in" type="number" min="0" max="600" inputmode="numeric" placeholder="Kosongkan bila tanpa batas waktu">`+
     `<p class="mu mt">Bila durasi diisi, jawaban terkirim otomatis saat waktu habis. Bila siswa menutup atau me-refresh halaman, jawabannya hilang dan ia mengulang dari awal. Jawaban dari kelas lain tidak diterima.</p>`,
     [CANCEL,{t:'Buat Ujian',c:'pri',f:()=>{
@@ -4537,6 +4558,19 @@ function spkDur(id){
       const d=(($('spk-dur')||{}).value||'').trim();
       closeM();
       rpc('soalUjianAtur',{paketId:id,durasi:d}).then(()=>{toast('Durasi disimpan','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er'));
+    }}]);
+}
+function spkBatas(id){
+  const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
+  modal('Pembatasan otomatis',
+    `<p class="mu" style="margin-top:0">Atur berapa kali siswa boleh keluar dari halaman ujian (pindah tab, pindah aplikasi, atau membuka browser lain). Bila batas terlampaui, jawaban siswa terkirim otomatis dan ujiannya berakhir. Kosongkan atau isi 0 bila tanpa pembatasan.</p>`+
+    `<label for="spk-bk">Maksimal keluar halaman (kali)</label><input id="spk-bk" class="in" type="number" min="0" max="50" inputmode="numeric" placeholder="Tanpa pembatasan" value="${x.fb||''}">`+
+    `<p class="mu mt">Contoh: diisi 3, maka saat siswa keluar untuk ke-4 kalinya jawabannya terkirim otomatis. Perubahan berlaku untuk siswa yang mulai sesudahnya.</p>`,
+    [CANCEL,{t:'Simpan',c:'pri',f:()=>{
+      const d=(($('spk-bk')||{}).value||'').trim();
+      if(d!==''&&(!/^\d+$/.test(d)||+d>50))return toast('Isi angka 0 sampai 50','er');
+      closeM();
+      rpc('soalUjianBatas',{paketId:id,batas:d===''?0:+d}).then(()=>{toast(+d>0?'Pembatasan disimpan: maks. '+d+' kali keluar':'Pembatasan dimatikan','ok');SPKK='';spkLoad();}).catch(e=>toast(e.message,'er'));
     }}]);
 }
 function spkLink(url){
@@ -4584,7 +4618,7 @@ function spkHasil(id){
     const mp=MP.find(m=>(!gur||mpMine(m,S.user.id))&&String(m.n).trim().toLowerCase()===String(h.mp||'').trim().toLowerCase());
     const kls=[...new Set((h.baris||[]).map(b=>b.kelas))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
     HSL={id:id,h:h,mp:mp?mp.id:'',kl:kls.length===1?kls[0]:'',kode:'',ur:{},kls:kls};
-    spkHasilShow();
+    S.up='hasil';render();
   }).catch(e=>toast(e.message,'er'));
 }
 function hsKodeList(){const o=[];nj().forEach(j=>{for(let i=1;i<=j.n;i++)o.push({k:j.k+'-'+i,l:j.n>1?j.l+' '+i:j.l,sc:skalaOf(j)});});return o;}
@@ -4608,7 +4642,7 @@ function hsTblHTML(){
     }).join('');
     return`<tr><td>${i+1}</td><td class="nw"><b>${esc(b.nama)}</b>${b.dup>1?`<div class="mu">mengirim ${b.dup}×, dihitung yang terakhir</div>`:''}${b.kl>0?`<div class="mu" style="color:var(--er)">keluar dari halaman ujian ${b.kl}×</div>`:''}</td><td class="ctr">${b.auto}</td>${tdU}<td class="ctr"><b id="hn-${esc(b.sid)}">${hsNilaiTxt(b)}</b></td></tr>`;
   }).join('');
-  return`<div class="tw" style="max-height:46vh;overflow:auto"><table><thead><tr><th>No</th><th>Siswa</th><th class="ctr">Skor otomatis<br><span class="mu">maks ${H.maxAuto}</span></th>${thU}<th class="ctr">Nilai</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  return`<div class="tw" style="max-height:70vh;overflow:auto"><table><thead><tr><th>No</th><th>Siswa</th><th class="ctr">Skor otomatis<br><span class="mu">maks ${H.maxAuto}</span></th>${thU}<th class="ctr">Nilai</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 function hsNilaiTxt(b){
   if(!HSL.kode)return'-';
@@ -4621,23 +4655,28 @@ function hsUr(sid,qid,v){
   if(b&&e)e.innerHTML=hsNilaiTxt(b);
 }
 function hsSet(f,v){HSL[f]=v;const t=$('hs-t');if(t)t.innerHTML=hsTblHTML();}
-function spkHasilShow(){
+function spkHasilShow(){render(true);}
+function spkHasilTutup(){HSL=null;S.up='';render();}
+function spkHasilMuat(){
+  const keep=HSL;if(!keep)return;
+  rpc('soalFormHasil',{paketId:keep.id}).then(r=>{keep.h=r.info||keep.h;keep.kls=[...new Set((keep.h.baris||[]).map(b=>b.kelas))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));spkHasilShow();}).catch(e=>toast(e.message,'er'));
+}
+function hsPageHTML(){
   const H=HSL.h,gur=S.user.r==='GURU';
   const mps=MP.filter(m=>!gur||mpMine(m,S.user.id));
   const kodes=hsKodeList();
   const info=`${bd(H.status||'BUKA')} <span class="mu">${(H.baris||[]).length} siswa terbaca · ${H.belum} siswa belum mengirim · skor maksimum ${Math.round(((H.maxAuto||0)+(H.maxUr||0))*100)/100}${H.ur.length?' (termasuk '+H.ur.length+' uraian yang dinilai guru)':''}</span>`;
   const tak=(H.tak||[]).length?`<p class="mu" style="color:var(--er)">${H.tak.length} jawaban dengan NISN yang tidak dikenali tidak ikut dihitung: ${esc(H.tak.map(t=>t.nisn||'(kosong)').join(', '))}.</p>`:'';
   const tn=H.tanpaNisn?`<p class="mu">${H.tanpaNisn} siswa pada kelas paket ini belum memiliki NISN di data siswa, sehingga tidak dapat dicocokkan.</p>`:'';
-  const sel=(id,lab,opts,cur,fn,dis)=>`<select id="${id}" class="in" style="width:auto" aria-label="${lab}" onchange="${fn}" ${dis?'disabled':''}><option value="">${lab}</option>${opts}</select>`;
-  modal('Hasil Ujian · '+H.nm,
-    `<div style="margin-bottom:8px">${info}</div>${tak}${tn}`+
+  const sel=(id,lab,opts,fn)=>`<select id="${id}" class="in" style="width:auto" aria-label="${lab}" onchange="${fn}"><option value="">${lab}</option>${opts}</select>`;
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Hasil Ujian: ${esc(H.nm)}</h2></div><div class="row"><button type="button" class="btn ghost" onclick="spkHasilTutup()">← Kembali</button><button type="button" class="btn ghost" onclick="spkHasilMuat()">Muat ulang jawaban</button><button type="button" class="btn pri" onclick="spkHasilSimpan()">Simpan ke Nilai</button></div></div>`+
+    `<div class="card"><div style="margin-bottom:8px">${info}</div>${tak}${tn}`+
     `<div class="row" style="margin:8px 0;flex-wrap:wrap">`+
-      sel('hs-m','Mapel tujuan',mps.map(m=>`<option value="${esc(m.id)}" ${m.id===HSL.mp?'selected':''}>${esc(m.n)}</option>`).join(''),HSL.mp,"hsSet('mp',this.value)")+
-      sel('hs-k','Kelas',HSL.kls.map(k=>`<option value="${esc(k)}" ${k===HSL.kl?'selected':''}>${esc(k)}</option>`).join(''),HSL.kl,"hsSet('kl',this.value)")+
-      sel('hs-j','Simpan sebagai penilaian',kodes.map(k=>`<option value="${esc(k.k)}" ${k.k===HSL.kode?'selected':''}>${esc(k.l)} (skala ${k.sc.lab})</option>`).join(''),HSL.kode,"hsSet('kode',this.value)")+
+      sel('hs-m','Mapel tujuan',mps.map(m=>`<option value="${esc(m.id)}" ${m.id===HSL.mp?'selected':''}>${esc(m.n)}</option>`).join(''),"hsSet('mp',this.value)")+
+      sel('hs-k','Kelas',HSL.kls.map(k=>`<option value="${esc(k)}" ${k===HSL.kl?'selected':''}>${esc(k)}</option>`).join(''),"hsSet('kl',this.value)")+
+      sel('hs-j','Simpan sebagai penilaian',kodes.map(k=>`<option value="${esc(k.k)}" ${k.k===HSL.kode?'selected':''}>${esc(k.l)} (skala ${k.sc.lab})</option>`).join(''),"hsSet('kode',this.value)")+
     `</div><div id="hs-t">${hsTblHTML()}</div>`+
-    `<p class="mu">Nilai = skor siswa ÷ skor maksimum × skala penilaian. ${H.ur.length?'Siswa yang skor uraiannya belum diisi dilewati. ':''}Nilai yang sudah ada pada kolom tujuan akan diganti.</p>`,
-    [{t:'Tutup',c:'ghost',f:()=>{HSL=null;closeM();}},{t:'Muat ulang jawaban',c:'ghost',f:()=>{const keep=HSL;rpc('soalFormHasil',{paketId:keep.id}).then(r=>{keep.h=r.info||keep.h;keep.kls=[...new Set((keep.h.baris||[]).map(b=>b.kelas))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));spkHasilShow();}).catch(e=>toast(e.message,'er'));}},{t:'Simpan ke Nilai',c:'pri',f:spkHasilSimpan}]);
+    `<p class="mu">Nilai = skor siswa ÷ skor maksimum × skala penilaian. ${H.ur.length?'Siswa yang skor uraiannya belum diisi dilewati. ':''}Nilai yang sudah ada pada kolom tujuan akan diganti.</p></div>`;
 }
 function spkHasilSimpan(){
   if(!HSL)return;
@@ -4650,27 +4689,39 @@ function spkHasilSimpan(){
   if(!siap)return toast('Skor uraian belum diisi untuk siswa mana pun','er');
   const mp=MP.find(m=>m.id===HSL.mp),kd=hsKodeList().find(x=>x.k===HSL.kode);
   modal('Simpan ke menu Nilai',`<p class="mu" style="margin-top:0">Nilai ${siap} siswa kelas ${esc(HSL.kl)} akan disimpan ke <b>${esc(mp?mp.n:'')}</b> · <b>${esc(kd?kd.l:'')}</b>.${lewat?` ${lewat} siswa dilewati karena skor uraian belum lengkap.`:''} Nilai yang sudah ada pada kolom itu akan diganti. Lanjutkan?</p>`,
-    [{t:'Kembali',c:'ghost',f:()=>spkHasilShow()},{t:'Ya, simpan',c:'pri',f:()=>{
+    [{t:'Kembali',c:'ghost',f:()=>closeM()},{t:'Ya, simpan',c:'pri',f:()=>{
       const ur={};rows.forEach(b=>{if(HSL.h.ur.length)ur[b.sid]=HSL.ur[b.sid]||{};});
       const keep=HSL;
       rpc('soalFormNilai',{paketId:keep.id,mapelId:keep.mp,kelas:keep.kl,kode:keep.kode,ur:ur}).then(r=>{
         const i=r.info||{};
         toast('Nilai '+(i.siswa||0)+' siswa tersimpan ke menu Nilai'+(i.lewat?' ('+i.lewat+' dilewati)':''),'ok');
-        closeM();HSL=null;
+        closeM();HSL=null;S.up='';render();
         if((S.user.r==='GURU'?S.view:S.tab)==='nilai'&&S.nm===keep.mp&&S.nk===keep.kl)nilLoad();
-      }).catch(e=>{toast(e.message,'er');spkHasilShow();});
+      }).catch(e=>{closeM();toast(e.message,'er');});
     }}]);
 }
 function spkHTML(){
-  if(SPKK!==S.sm+'|'+S.sk&&!SPKB){SPKL=null;setTimeout(spkLoad,0);}
-  return`<div class="card" style="margin-top:16px"><h3 style="margin-bottom:8px">Paket soal terstruktur</h3><div id="spk-l">${spkListHTML()}</div></div>`;
+  if(SPKK!==S.xm+'|'+S.xk&&!SPKB){SPKL=null;setTimeout(spkLoad,0);}
+  return`<div id="spk-l">${spkListHTML()}</div>`;
 }
 function spkOpen(id){
   rpc('soalPaketGet',{id:id}).then(r=>{
     const x=r.info||{};
-    SIM={pid:'',fid:'',uploadId:'',paketId:x.id,nama:x.nm,nm:x.nm,meta:{mapel:x.mp,kelas:x.kl},kop:x.kop||'',kopImg:false,kopGbr:null,kopAda:!!x.ki,kopGbrDel:false,soal:(x.soal||[]).map(simNorm)};
-    simShow();
+    SIM={pid:'',fid:'',uploadId:'',paketId:x.id,nama:x.nm,nm:x.nm,meta:{mapel:x.mp,kelas:x.kl},kop:x.kop||'',kopImg:false,kopGbr:null,kopAda:!!x.ki,kopGbrDel:false,soal:(x.soal||[]).map(simNorm),page:true};
+    S.up='edit';render();simSum();
   }).catch(e=>toast(e.message,'er'));
+}
+function simPageBack(){
+  confirmM('Tutup editor soal','Perubahan yang belum disimpan akan hilang. Lanjutkan?',()=>{SIM=null;S.up='';render();});
+}
+function simPageHTML(){
+  const m=SIM.meta||{};
+  const sub=[m.mapel,m.kelas?'Kelas '+m.kelas:''].filter(Boolean).map(esc).join(' · ');
+  return`<div class="bt" style="flex-wrap:wrap;margin:12px 0"><div><h2>Edit soal: ${esc(SIM.nm)}</h2><div class="mu">${sub}</div></div><div class="row"><button type="button" class="btn ghost" onclick="simPageBack()">← Kembali</button><button type="button" class="btn ghost" onclick="simJson()">Unduh JSON</button><button type="button" class="btn pri" onclick="simSave()">Simpan perubahan</button></div></div>`+
+    `<div class="card"><p class="mu" style="margin-top:0">Periksa tipe soal, opsi, gambar, dan kunci jawaban, lalu klik Simpan perubahan. Pakai ikon klip atau tombol gambar untuk menambah atau mengganti gambar.</p>`+
+    `<label for="sim-nm">Nama paket soal *</label><input id="sim-nm" class="in" dir="auto" maxlength="150" value="${esc(SIM.nama||'')}" oninput="SIM.nama=this.value" style="margin-bottom:10px"><label for="sim-kop">Kop / identitas soal</label><textarea id="sim-kop" class="in" dir="auto" rows="4" maxlength="1500" placeholder="Satu baris per baris kop, mis. nama madrasah, jenis ujian, mapel, kelas, waktu" oninput="SIM.kop=this.value" style="margin-bottom:4px">${esc(SIM.kop||'')}</textarea><div class="mc-sub" style="margin-bottom:10px">Periksa dan rapikan teks kop di atas.</div><div id="sim-kg" style="margin-bottom:10px">${simKgHTML()}</div><div id="sim-sum"></div></div>`+
+    `<div id="sim-list" style="margin-top:12px">${SIM.soal.map((q,i)=>simCard(i)).join('')}</div>`+
+    `<div class="row" style="margin-top:8px"><button type="button" class="btn ghost" onclick="simAddQ()">+ Tambah soal</button><button type="button" class="btn pri" onclick="simSave()">Simpan perubahan</button></div>`;
 }
 function spkDel(id){
   const x=(SPKL||[]).find(t=>t.id===id);if(!x)return;
@@ -7517,6 +7568,7 @@ function render(keep){
         :S.view==='tahfidz'?vTahfidz()
         :S.view==='perangkat'?vPerangkat()
         :S.view==='soal'?vSoal()
+        :S.view==='ujian'?vUjian()
         :S.view==='dbd'?vDbd()
         :S.view==='inbox'?vInbox()
         :vGuru())
